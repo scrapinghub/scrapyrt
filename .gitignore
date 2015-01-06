@@ -1,0 +1,29 @@
+# python
+*.py[cod]
+/build/
+/dist/
+/*.egg-info/
+
+# twisted
+dropin.cache
+twistd.log
+twistd.pid
+_trial_temp
+
+# workspace
+/eggs/
+/logs/
+
+# development
+/.vagrant/
+/dev/
+/src/
+/dist/
+/test_urls*
+testing_scripts*
+
+# IDE
+/.idea/
+
+# tests
+.coverage

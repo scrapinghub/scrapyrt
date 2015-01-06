@@ -1,0 +1,7 @@
+-r requirements.txt
+
+fabric
+requests
+mock
+pytest
+pytest-cov

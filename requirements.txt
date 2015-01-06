@@ -1,0 +1,4 @@
+# we support scrapy dev version from github
+https://github.com/scrapy/scrapy/archive/0dce2834599d6c7417b780d2051d26490398e766.zip#egg=Scrapy
+service-identity==1.0.0
+demjson
