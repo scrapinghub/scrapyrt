@@ -77,7 +77,7 @@ class BaseTestServer(object):
             s = socket.socket()
             try:
                 s.connect((self.host, self.port))
-            except Exception as e:
+            except Exception:
                 time.sleep(delay)
                 attempts -= 1
             else:
