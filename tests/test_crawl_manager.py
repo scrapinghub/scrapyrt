@@ -15,7 +15,6 @@ from scrapyrt.core import CrawlManager
 from scrapyrt.conf import settings
 
 from .spiders import MetaSpider
-from .utils import get_settings
 
 
 class TestCrawlManager(unittest.TestCase):
@@ -47,6 +46,29 @@ class TestCrawl(TestCrawlManager):
         self.assertGreater(len(result.callbacks), 0)
         self.assertEqual(
             result.callbacks[0][0][0], self.crawl_manager.return_items)
+
+    def test_no_spider(self, crawler_process_mock):
+        # spider wasn't found
+        crawler_process_mock.side_effect = KeyError
+        exception = self.assertRaises(
+            Error, self.crawl_manager.crawl)
+        self.assertTrue(crawler_process_mock.called)
+        self.assertEqual(exception.status, '404')
+
+    def test_spider_exists(self, crawler_process_mock):
+        result = self.crawl_manager.crawl()
+        self.assertTrue(crawler_process_mock.called)
+        self.assertIs(result, crawler_process_mock.return_value)
+
+    def test_spider_arguments_are_passed(self, crawler_process_mock):
+        spider_args = ['a', 'b']
+        spider_kwargs = {'a': 1, 'b': 2}
+        self.crawl_manager.crawl(*spider_args, **spider_kwargs)
+        self.assertTrue(crawler_process_mock.called)
+        call_args, call_kwargs = crawler_process_mock.call_args
+        for arg in spider_args:
+            self.assertIn(arg, call_args)
+        self.assertDictContainsSubset(spider_kwargs, call_kwargs)
 
 
 class TestGetProjectSettings(TestCrawlManager):
@@ -284,28 +306,6 @@ class TestReturnItems(TestCrawlManager):
         result = self.crawl_manager.return_items(None)
         self.assertDictEqual(self.expected_result, result)
         self.assertNotIn('errors', result)
-
-
-@patch('scrapy.crawler.CrawlerRunner.crawl')
-class TestCreateCrawler(TestCrawlManager):
-
-    def setUp(self):
-        super(TestCreateCrawler, self).setUp()
-        self.settings = get_settings()
-
-    def test_no_spider(self, crawl_mock):
-        # spider wasn't found
-        crawl_mock.side_effect = KeyError
-        exception = self.assertRaises(
-            Error, self.crawl_manager.create_crawler, self.settings)
-        self.assertTrue(crawl_mock.called)
-        self.assertEqual(exception.status, '404')
-
-    def test_spider_exists(self, crawl_mock):
-        crawl_mock.return_value = Deferred()
-        result = self.crawl_manager.create_crawler(self.settings)
-        self.assertTrue(crawl_mock.called)
-        self.assertIs(result, crawl_mock.return_value)
 
 
 class TestCreateSpiderRequest(TestCrawlManager):
