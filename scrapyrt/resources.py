@@ -163,7 +163,7 @@ class CrawlResource(ServiceResource):
             raise Error('400', message=error_msg)
         return value
 
-    def prepare_crawl(self, request_data, spider_data, **kwargs):
+    def prepare_crawl(self, request_data, spider_data, *args, **kwargs):
         """Schedule given spider with CrawlManager.
 
         :param dict request_data:
@@ -179,17 +179,19 @@ class CrawlResource(ServiceResource):
             max_requests = request_data['max_requests']
         except (KeyError, IndexError):
             max_requests = None
-        dfd = self.run_crawl(spider_name, spider_data, max_requests)
+        dfd = self.run_crawl(
+            spider_name, spider_data, max_requests, *args, **kwargs)
         dfd.addCallback(
-            self.prepare_response, request_data=request_data, **kwargs)
+            self.prepare_response, request_data=request_data, *args, **kwargs)
         return dfd
 
-    def run_crawl(self, spider_name, spider_data, max_requests=None):
+    def run_crawl(self, spider_name, spider_data,
+                  max_requests=None, *args, **kwargs):
         manager = CrawlManager(spider_name, spider_data, max_requests)
-        dfd = manager.crawl()
+        dfd = manager.crawl(*args, **kwargs)
         return dfd
 
-    def prepare_response(self, result, **kwargs):
+    def prepare_response(self, result, *args, **kwargs):
         items = result.get("items")
         response = {
             "status": "ok",
