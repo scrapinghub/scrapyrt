@@ -88,7 +88,6 @@ class TestHandleRenderErrors(TestServiceResource):
     def setUp(self):
         super(TestHandleRenderErrors, self).setUp()
 
-
     def test_exception(self, log_err_mock):
         exc = Exception('blah')
         result = self.resource.handle_render_errors(self.request, exc)

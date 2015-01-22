@@ -1,20 +1,20 @@
 # -*- coding: utf-8 -*-
 from collections import OrderedDict
 from copy import deepcopy
-import os
 import datetime
-from twisted.web.error import Error
-from twisted.internet import defer
+import os
 import six
-
 
 from scrapy import signals
 from scrapy.crawler import CrawlerProcess, Crawler
 from scrapy.http import Request
+from twisted.web.error import Error
+from twisted.internet import defer
 
 from . import log
 from .conf import settings
 from .conf.spider_settings import get_scrapyrt_settings, get_project_settings
+from .decorators import deprecated
 
 
 class ScrapyrtCrawler(Crawler):
@@ -104,8 +104,14 @@ class CrawlManager(object):
         self.callback_name = request_kwargs.pop('callback', None) or 'parse'
         self.request = self.create_spider_request(deepcopy(request_kwargs))
 
-    def crawl(self):
-        dfd = self.create_crawler(self.get_project_settings())
+    def crawl(self, *args, **kwargs):
+        self.crawler_process = ScrapyrtCrawlerProcess(
+            self.get_project_settings(), self)
+        try:
+            dfd = self.crawler_process.crawl(self.spider_name, *args, **kwargs)
+        except KeyError as e:
+            # Spider not found.
+            raise Error('404', message=e.message)
         dfd.addCallback(self.return_items)
         return dfd
 
@@ -122,14 +128,9 @@ class CrawlManager(object):
         custom_settings = get_scrapyrt_settings(log_file=log_file)
         return get_project_settings(custom_settings=custom_settings)
 
-    def create_crawler(self, settings, **kwargs):
-        self.crawler_process = ScrapyrtCrawlerProcess(settings, self)
-        try:
-            dfd = self.crawler_process.crawl(self.spider_name, **kwargs)
-        except KeyError as e:
-            # spider not found
-            raise Error('404', message=e.message)
-        return dfd
+    @deprecated(use_instead='.crawl()')
+    def create_crawler(self, **kwargs):
+        return self.crawl()
 
     def spider_opened(self, spider):
         """Handler of spider_opened signal.
