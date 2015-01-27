@@ -2,6 +2,9 @@
 Scrapyrt (Scrapy realtime)
 ==========================
 
+.. image:: https://travis-ci.org/scrapinghub/scrapyrt.svg
+    :target: https://travis-ci.org/scrapinghub/scrapyrt
+
 HTTP server which provides API for scheduling Scrapy spiders and
 making requests with spiders.
 
