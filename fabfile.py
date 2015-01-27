@@ -14,8 +14,3 @@ def run(project_dir, port=9080):
     cmd = ('sudo docker run -p {port}:{port} -tid '
            '-v {project_dir}:/scrapyrt/project scrapyrt')
     local(cmd.format(project_dir=project_dir, port=port))
-
-
-@task
-def test(options=''):
-    local('py.test {options} tests'.format(options=options))
