@@ -359,6 +359,14 @@ You can pass custom resource here and start Scrapyrt with it.
 
 Default: ``scrapyrt.resources.RealtimeApi``.
 
+CRAWL_MANAGER
+~~~~~~~~~~~~~
+
+Crawl manager that is used to create and control crawl.
+You can override default crawl manager and pass path to custom class here.
+
+Default: ``scrapyrt.core.CrawlManager``.
+
 RESOURCES
 ~~~~~~~~~
 

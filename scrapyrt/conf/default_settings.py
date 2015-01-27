@@ -18,6 +18,8 @@ RESOURCES = {
     'crawl.json': 'scrapyrt.resources.CrawlResource',
 }
 
+CRAWL_MANAGER = 'scrapyrt.core.CrawlManager'
+
 # Limit spider run time
 TIMEOUT_LIMIT = 1000
 # disable in production

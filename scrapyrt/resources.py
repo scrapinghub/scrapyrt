@@ -187,7 +187,8 @@ class CrawlResource(ServiceResource):
 
     def run_crawl(self, spider_name, spider_data,
                   max_requests=None, *args, **kwargs):
-        manager = CrawlManager(spider_name, spider_data, max_requests)
+        crawl_manager_cls = load_object(settings.CRAWL_MANAGER)
+        manager = crawl_manager_cls(spider_name, spider_data, max_requests)
         dfd = manager.crawl(*args, **kwargs)
         return dfd
 
