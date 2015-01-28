@@ -40,7 +40,7 @@ class TestCrawlResourceGetRequiredArgument(unittest.TestCase):
 class TestCrawlResourceIntegration(unittest.TestCase):
 
     def setUp(self):
-        self.server = ScrapyrtTestServer(load_egg=True)
+        self.server = ScrapyrtTestServer()
         self.server.start()
         self.crawl_url = self.server.url('crawl.json')
         self.site = MockServer()

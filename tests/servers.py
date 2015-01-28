@@ -101,7 +101,7 @@ class BaseTestServer(object):
 
 class ScrapyrtTestServer(BaseTestServer):
 
-    def __init__(self, load_egg=False, *args, **kwargs):
+    def __init__(self, *args, **kwargs):
         super(ScrapyrtTestServer, self).__init__(*args, **kwargs)
         self.arguments = [
             sys.executable, '-m', 'scrapyrt.cmdline', '-p', str(self.port)
