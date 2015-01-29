@@ -8,7 +8,7 @@ from .servers import MockServer, ScrapyrtTestServer
 class TestRootResourceIntegration(unittest.TestCase):
 
     def setUp(self):
-        self.server = ScrapyrtTestServer(load_egg=True)
+        self.server = ScrapyrtTestServer()
         self.server.start()
         self.root_url = self.server.url()
         self.site = MockServer()
