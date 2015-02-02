@@ -103,7 +103,7 @@ class TestHandleErrors(TestServiceResource):
         try:
             raise Exception('blah')
         except Exception as exc:
-            result = self.resource.handle_errors(exc, self.request)
+            result = self.resource.handle_error(exc, self.request)
         self.assertEqual(self.request.code, 500)
         self.assertEqual(result['message'], exc.message)
         self._assert_log_err_called(log_msg_mock, exc)
@@ -111,28 +111,28 @@ class TestHandleErrors(TestServiceResource):
     def test_failure(self, log_msg_mock):
         exc = Exception('blah')
         failure = Failure(exc)
-        result = self.resource.handle_errors(failure, self.request)
+        result = self.resource.handle_error(failure, self.request)
         self.assertEqual(self.request.code, 500)
         self.assertEqual(result['message'], exc.message)
         self._assert_log_err_called(log_msg_mock, failure)
 
     def test_error_400(self, log_msg_mock):
         exc = Error('400', 'blah_400')
-        result = self.resource.handle_errors(exc, self.request)
+        result = self.resource.handle_error(exc, self.request)
         self.assertEqual(self.request.code, 400)
         self.assertFalse(log_msg_mock.called)
         self.assertEqual(result['message'], exc.message)
 
     def test_error_403(self, log_msg_mock):
         exc = Error('403', 'blah_403')
-        result = self.resource.handle_errors(exc, self.request)
+        result = self.resource.handle_error(exc, self.request)
         self.assertEqual(self.request.code, 403)
         self.assertFalse(log_msg_mock.called)
         self.assertEqual(result['message'], exc.message)
 
     def test_error_not_supported_method(self, log_msg_mock):
         exc = UnsupportedMethod(['GET'])
-        result = self.resource.handle_errors(exc, self.request)
+        result = self.resource.handle_error(exc, self.request)
         self.assertEqual(self.request.code, 405)
         self.assertFalse(log_msg_mock.called)
         self.assertIn('GET', result['message'])

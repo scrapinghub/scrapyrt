@@ -23,13 +23,13 @@ class ServiceResource(resource.Resource, object):
         try:
             result = resource.Resource.render(self, request)
         except Exception as e:
-            result = self.handle_errors(e, request)
+            result = self.handle_error(e, request)
 
         if not isinstance(result, Deferred):
             return self.render_object(result, request)
 
         # deferred result - add appropriate callbacks and errbacks
-        result.addErrback(self.handle_errors, request)
+        result.addErrback(self.handle_error, request)
 
         def finish_request(obj):
             request.write(self.render_object(obj, request))
@@ -38,7 +38,7 @@ class ServiceResource(resource.Resource, object):
         result.addCallback(finish_request)
         return server.NOT_DONE_YET
 
-    def handle_errors(self, exception_or_failure, request):
+    def handle_error(self, exception_or_failure, request):
         """Override this method to add custom exception handling.
 
         :param request: twisted.web.server.Request
