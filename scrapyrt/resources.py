@@ -44,7 +44,7 @@ class ServiceResource(resource.Resource, object):
         :param request: twisted.web.server.Request
         :param exception_or_failure: Exception or
             twisted.python.failure.Failure
-        :return: JSON error response
+        :return: dict which will be converted to JSON error response
 
         """
         failure = None
