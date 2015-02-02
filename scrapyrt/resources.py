@@ -23,27 +23,25 @@ class ServiceResource(resource.Resource, object):
         try:
             result = resource.Resource.render(self, request)
         except Exception as e:
-            result = self.handle_errors(request, e)
+            result = self.handle_errors(e, request)
 
         if not isinstance(result, Deferred):
             return self.render_object(result, request)
 
         # deferred result - add appropriate callbacks and errbacks
-        def handle_crawl_errors(failure):
-            return self.handle_errors(request, failure)
+        result.addErrback(self.handle_errors, request)
 
         def finish_request(obj):
             request.write(self.render_object(obj, request))
             request.finish()
 
-        result.addErrback(handle_crawl_errors)
         result.addCallback(finish_request)
         return server.NOT_DONE_YET
 
-    def handle_errors(self, request, exception_or_failure):
+    def handle_errors(self, exception_or_failure, request):
         """Override this method to add custom exception handling.
 
-        :param request:
+        :param request: twisted.web.server.Request
         :param exception_or_failure: Exception or
             twisted.python.failure.Failure
         :return: JSON error response
@@ -72,9 +70,9 @@ class ServiceResource(resource.Resource, object):
                 request.setResponseCode(500)
             if request.code == 500:
                 log.err(failure)
-        return self.format_error_response(request, exception)
+        return self.format_error_response(exception, request)
 
-    def format_error_response(self, request, exception):
+    def format_error_response(self, exception, request):
         return {
             "status": "error",
             "message": str(exception.message),
