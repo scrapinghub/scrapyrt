@@ -7,7 +7,6 @@ from twisted.web.error import UnsupportedMethod, Error
 import demjson
 
 from . import log
-from .core import CrawlManager
 from .conf import settings
 
 

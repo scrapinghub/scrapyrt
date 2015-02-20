@@ -4,8 +4,10 @@ import datetime
 
 from mock import patch, MagicMock
 from scrapy import Item
+from scrapy.exceptions import DontCloseSpider
 from scrapy.http import Response
 from scrapy.settings import Settings
+from scrapy.utils.test import get_crawler
 from twisted.internet.defer import Deferred
 from twisted.python.failure import Failure
 from twisted.trial import unittest
@@ -78,20 +80,26 @@ class TestGetProjectSettings(TestCrawlManager):
         self.assertIsInstance(result, Settings)
 
 
-class TestSpiderOpened(TestCrawlManager):
+class TestSpiderIdle(TestCrawlManager):
 
     def setUp(self):
-        super(TestSpiderOpened, self).setUp()
+        super(TestSpiderIdle, self).setUp()
         self.crawler.spider = self.spider
         # test callback
         self.spider.parse_something = lambda: None
         self.crawl_manager.callback_name = 'parse_something'
         self.request = self.crawl_manager.request
 
+    def _call_spider_idle(self):
+        try:
+            self.crawl_manager.spider_idle(self.spider)
+        except DontCloseSpider:
+            pass
+
     def test_spider_opened(self):
         self.assertIsNone(self.crawl_manager.request.callback)
-        self.crawl_manager.spider_opened(self.spider)
-        self.crawler.engine.schedule.assert_called_once_with(
+        self._call_spider_idle()
+        self.crawler.engine.crawl.assert_called_once_with(
             self.crawl_manager.request, self.spider)
         self.assertNotEqual(self.request, self.crawl_manager.request)
         self.assertEquals(
@@ -100,8 +108,8 @@ class TestSpiderOpened(TestCrawlManager):
     def test_raise_error_if_not_callable(self):
         self.spider.parse_something = None
         self.assertRaises(
-            AssertionError, self.crawl_manager.spider_opened, self.spider)
-        self.assertFalse(self.crawler.engine.schedule.called)
+            AssertionError, self.crawl_manager.spider_idle, self.spider)
+        self.assertFalse(self.crawler.engine.crawl.called)
 
     def test_modify_realtime_request(self):
         self.assertDictEqual(self.crawl_manager.request.meta, {})
@@ -113,16 +121,16 @@ class TestSpiderOpened(TestCrawlManager):
             return request
 
         self.spider.modify_realtime_request = modify_realtime_request
-        self.crawl_manager.spider_opened(self.spider)
-        self.crawler.engine.schedule.assert_called_once_with(
+        self._call_spider_idle()
+        self.crawler.engine.crawl.assert_called_once_with(
             self.crawl_manager.request, self.spider)
         self.assertEqual(self.crawl_manager.request.method, 'POST')
         self.assertEqual(self.crawl_manager.request.meta['foo'], 'bar')
 
     def test_modify_realtime_request_is_not_callable(self):
         self.spider.modify_realtime_request = None
-        self.crawl_manager.spider_opened(self.spider)
-        self.crawler.engine.schedule.assert_called_once_with(
+        self._call_spider_idle()
+        self.crawler.engine.crawl.assert_called_once_with(
             self.crawl_manager.request, self.spider)
         self.assertNotEqual(self.request, self.crawl_manager.request)
 
@@ -330,3 +338,43 @@ class TestCreateSpiderRequest(TestCrawlManager):
         exception = self.assertRaises(
             Error, self.crawl_manager.create_spider_request, self.kwargs)
         self.assertEqual(exception.status, '400')
+
+
+class TestStartRequests(unittest.TestCase):
+
+    def setUp(self):
+        self.url = 'http://localhost'
+        self.kwargs = {'url': self.url}
+        self.start_requests_mock = MagicMock()
+        self.spidercls = MetaSpider
+        self._start_requests = self.spidercls.start_requests
+        self.spidercls.start_requests = self.start_requests_mock
+        self.crawler = get_crawler(self.spidercls)
+
+        class CustomCrawlManager(CrawlManager):
+
+            def get_project_settings(self):
+                crawl_settings = super(
+                    CustomCrawlManager, self).get_project_settings()
+                crawl_settings.setdict(
+                    {'SPIDER_MODULES': 'tests.spiders'}, priority='cmdline')
+                return crawl_settings
+
+        self.crawl_manager = CustomCrawlManager(
+            self.spidercls.name, self.kwargs.copy())
+        self.crawl_manager.crawler = self.crawler
+
+    def tearDown(self):
+        self.spidercls.start_requests = self._start_requests
+
+    @patch('scrapy.crawler.ExecutionEngine')
+    def test_start_requests_true(self, _):
+        self.crawl_manager.start_requests = True
+        self.crawl_manager.crawl()
+        self.assertEqual(self.start_requests_mock.call_count, 1)
+
+    @patch('scrapy.crawler.ExecutionEngine')
+    def test_start_requests_false(self, _):
+        self.crawl_manager.start_requests = False
+        self.crawl_manager.crawl()
+        self.assertEqual(self.start_requests_mock.call_count, 0)

@@ -27,7 +27,7 @@ class CralwerProcessTestCase(unittest.TestCase):
         signals_and_handlers = [
             ('item_scraped', 'get_item'),
             ('item_dropped', 'collect_dropped'),
-            ('spider_opened', 'spider_opened'),
+            ('spider_idle', 'spider_idle'),
             ('spider_error', 'handle_spider_error'),
             ('request_scheduled', 'handle_scheduling'),
         ]
