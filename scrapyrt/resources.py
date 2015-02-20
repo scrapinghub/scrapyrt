@@ -2,6 +2,7 @@
 from scrapy.utils.misc import load_object
 from scrapy.utils.serialize import ScrapyJSONEncoder
 from twisted.internet.defer import Deferred
+from twisted.python.failure import Failure
 from twisted.web import server, resource
 from twisted.web.error import UnsupportedMethod, Error
 import demjson
@@ -22,25 +23,42 @@ class ServiceResource(resource.Resource, object):
         try:
             result = resource.Resource.render(self, request)
         except Exception as e:
-            result = self.handle_render_errors(request, e)
+            result = self.handle_error(e, request)
 
         if not isinstance(result, Deferred):
             return self.render_object(result, request)
 
         # deferred result - add appropriate callbacks and errbacks
-        def handle_errors(failure):
-            return self.handle_render_errors(request, failure.value)
+        result.addErrback(self.handle_error, request)
 
         def finish_request(obj):
             request.write(self.render_object(obj, request))
             request.finish()
 
-        result.addErrback(handle_errors)
         result.addCallback(finish_request)
         return server.NOT_DONE_YET
 
-    def handle_render_errors(self, request, exception):
-        """Override this method to add custom exception handling."""
+    def handle_error(self, exception_or_failure, request):
+        """Override this method to add custom exception handling.
+
+        :param request: twisted.web.server.Request
+        :param exception_or_failure: Exception or
+            twisted.python.failure.Failure
+        :return: dict which will be converted to JSON error response
+
+        """
+        failure = None
+        if isinstance(exception_or_failure, Exception):
+            exception = exception_or_failure
+        elif isinstance(exception_or_failure, Failure):
+            exception = exception_or_failure.value
+            failure = exception_or_failure
+        else:
+            raise TypeError(
+                'Expected Exception or {} instances, got {}'.format(
+                    Failure,
+                    exception_or_failure.__class__
+                ))
         if request.code == 200:
             # Default code - means that error wasn't handled
             if isinstance(exception, UnsupportedMethod):
@@ -48,14 +66,13 @@ class ServiceResource(resource.Resource, object):
             elif isinstance(exception, Error):
                 code = int(exception.status)
                 request.setResponseCode(code)
-                if code == 500:
-                    log.err()
             else:
                 request.setResponseCode(500)
-                log.err()
-        return self.format_error_response(request, exception)
+            if request.code == 500:
+                log.err(failure)
+        return self.format_error_response(exception, request)
 
-    def format_error_response(self, request, exception):
+    def format_error_response(self, exception, request):
         return {
             "status": "error",
             "message": str(exception.message),

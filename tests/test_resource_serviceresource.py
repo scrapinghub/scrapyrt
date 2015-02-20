@@ -3,6 +3,7 @@ import json
 
 from mock import MagicMock, patch
 from twisted.internet.defer import succeed, fail
+from twisted.python.failure import Failure
 from twisted.web import server
 from twisted.web.error import Error, UnsupportedMethod
 from twisted.web.server import Request
@@ -82,38 +83,58 @@ class TestRender(TestServiceResource):
         self.assertTrue(log_err_mock.called)
 
 
-@patch('scrapyrt.resources.log.err')
-class TestHandleRenderErrors(TestServiceResource):
+@patch('twisted.python.log.msg')
+class TestHandleErrors(TestServiceResource):
 
     def setUp(self):
-        super(TestHandleRenderErrors, self).setUp()
+        super(TestHandleErrors, self).setUp()
 
-    def test_exception(self, log_err_mock):
-        exc = Exception('blah')
-        result = self.resource.handle_render_errors(self.request, exc)
+    def _assert_log_err_called(self, log_msg_mock, failure):
+        log_msg_mock.call_count = 1
+        _, kwargs = log_msg_mock.call_args
+        self.assertEqual(kwargs['isError'], 1)
+        self.assertEqual(kwargs['system'], 'scrapyrt')
+        if isinstance(failure, Failure):
+            self.assertEqual(kwargs['failure'], failure)
+        else:
+            self.assertEqual(kwargs['failure'].value, failure)
+
+    def test_exception(self, log_msg_mock):
+        try:
+            raise Exception('blah')
+        except Exception as exc:
+            result = self.resource.handle_error(exc, self.request)
         self.assertEqual(self.request.code, 500)
-        log_err_mock.assert_called_once_with()
         self.assertEqual(result['message'], exc.message)
+        self._assert_log_err_called(log_msg_mock, exc)
 
-    def test_error_400(self, log_err_mock):
+    def test_failure(self, log_msg_mock):
+        exc = Exception('blah')
+        failure = Failure(exc)
+        result = self.resource.handle_error(failure, self.request)
+        self.assertEqual(self.request.code, 500)
+        self.assertEqual(result['message'], exc.message)
+        self._assert_log_err_called(log_msg_mock, failure)
+
+    def test_error_400(self, log_msg_mock):
         exc = Error('400', 'blah_400')
-        result = self.resource.handle_render_errors(self.request, exc)
+        result = self.resource.handle_error(exc, self.request)
         self.assertEqual(self.request.code, 400)
-        self.assertFalse(log_err_mock.called)
+        self.assertFalse(log_msg_mock.called)
         self.assertEqual(result['message'], exc.message)
 
-    def test_error_403(self, log_err_mock):
+    def test_error_403(self, log_msg_mock):
         exc = Error('403', 'blah_403')
-        result = self.resource.handle_render_errors(self.request, exc)
+        result = self.resource.handle_error(exc, self.request)
         self.assertEqual(self.request.code, 403)
-        self.assertFalse(log_err_mock.called)
+        self.assertFalse(log_msg_mock.called)
         self.assertEqual(result['message'], exc.message)
 
-    def test_error_not_supported_method(self, log_err_mock):
+    def test_error_not_supported_method(self, log_msg_mock):
         exc = UnsupportedMethod(['GET'])
-        result = self.resource.handle_render_errors(self.request, exc)
+        result = self.resource.handle_error(exc, self.request)
         self.assertEqual(self.request.code, 405)
-        self.assertFalse(log_err_mock.called)
+        self.assertFalse(log_msg_mock.called)
         self.assertIn('GET', result['message'])
 
 
@@ -123,7 +144,7 @@ class TestFormatErrorResponse(TestServiceResource):
         code = 400
         self.request.code = code
         exc = Error(str(code), 'blah')
-        response = self.resource.format_error_response(self.request, exc)
+        response = self.resource.format_error_response(exc, self.request)
         self.assertEqual(response['status'], 'error')
         self.assertEqual(response['message'], exc.message)
         self.assertEqual(response['code'], code)
