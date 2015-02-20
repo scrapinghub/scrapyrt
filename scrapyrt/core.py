@@ -7,6 +7,7 @@ import six
 
 from scrapy import signals
 from scrapy.crawler import CrawlerProcess, Crawler
+from scrapy.exceptions import DontCloseSpider
 from scrapy.http import Request
 from twisted.web.error import Error
 from twisted.internet import defer
@@ -66,15 +67,16 @@ class ScrapyrtCrawlerProcess(CrawlerProcess):
         # creating our own crawler that will allow us to disable
         # start requests easily
         # TODO: PR to scrapy - set custom Crawler
-        crawler = ScrapyrtCrawler(spidercls, crawler_settings)
+        crawler = ScrapyrtCrawler(
+            spidercls, crawler_settings, self.scrapyrt_manager.start_requests)
         self.scrapyrt_manager.crawler = crawler
         # Connecting signals to handlers that control crawl process
         crawler.signals.connect(self.scrapyrt_manager.get_item,
                                 signals.item_scraped)
         crawler.signals.connect(self.scrapyrt_manager.collect_dropped,
                                 signals.item_dropped)
-        crawler.signals.connect(self.scrapyrt_manager.spider_opened,
-                                signals.spider_opened)
+        crawler.signals.connect(self.scrapyrt_manager.spider_idle,
+                                signals.spider_idle)
         crawler.signals.connect(self.scrapyrt_manager.handle_spider_error,
                                 signals.spider_error)
         crawler.signals.connect(self.scrapyrt_manager.handle_scheduling,
@@ -103,6 +105,8 @@ class CrawlManager(object):
         # because we need to know if spider has method available
         self.callback_name = request_kwargs.pop('callback', None) or 'parse'
         self.request = self.create_spider_request(deepcopy(request_kwargs))
+        self.start_requests = False
+        self._request_scheduled = False
 
     def crawl(self, *args, **kwargs):
         self.crawler_process = ScrapyrtCrawlerProcess(
@@ -132,17 +136,19 @@ class CrawlManager(object):
     def create_crawler(self, **kwargs):
         return self.crawl()
 
-    def spider_opened(self, spider):
-        """Handler of spider_opened signal.
+    def spider_idle(self, spider):
+        """Handler of spider_idle signal.
 
         Schedule request for url given to api, with optional callback
         that can be passed as GET parameter.
 
+        spider_idle signal is used because we want to optionally enable
+        start_requests for the spider and if request is scheduled in
+        spider_opened signal handler it's fired earlier then start_requests
+        which is totally wrong.
+
         """
-        if spider is self.crawler.spider:
-            # Need to update request here because spider_opened is called
-            # inside Crawler.crawl and it's hard to intercept flow
-            # in other places.
+        if spider is self.crawler.spider and not self._request_scheduled:
             callback = getattr(self.crawler.spider, self.callback_name)
             assert callable(callback), 'Invalid callback'
             self.request = self.request.replace(callback=callback)
@@ -150,7 +156,9 @@ class CrawlManager(object):
                 self.crawler.spider, "modify_realtime_request", None)
             if callable(modify_request):
                 self.request = modify_request(self.request)
-            spider.crawler.engine.schedule(self.request, spider)
+            spider.crawler.engine.crawl(self.request, spider)
+            self._request_scheduled = True
+            raise DontCloseSpider
 
     def handle_scheduling(self, request, spider):
         """Handler of request_scheduled signal.
@@ -217,7 +225,7 @@ class CrawlManager(object):
             # we don't want to schedule spider if someone
             # passes meaingless arguments to Request.
             # We must raise this here so that this will be returned to client,
-            # Otherwise if this is raised in spider_opened it goes to
+            # Otherwise if this is raised in spider_idle it goes to
             # spider logs where it does not really belong.
             # It is needed because in POST handler we can pass
             # all possible requests kwargs, so it is easy to make mistakes.
