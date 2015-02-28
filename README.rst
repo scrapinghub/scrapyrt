@@ -306,6 +306,22 @@ For example::
             request.meta["dont_redirect"] = True
             return request
 
+One more example (don't forget to import random)::
+
+    class SpiderName(Spider):
+        name = "some_other_spider"
+        
+        def parse(self, response):
+            pass
+        
+        def modify_realtime_request(self, request):
+            UA = [
+	        'Mozilla/5.0 (Windows NT 5.1; rv:31.0) Gecko/20100101 Firefox/31.0',
+	        'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/37.0.2062.94 Safari/537.36',
+            ]
+            request.headers["User-Agent"] = random.choice(UA)
+            return request
+
 
 Command line arguments
 ======================
