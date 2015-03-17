@@ -32,6 +32,6 @@ RUN pip install /scrapyrt/src
 
 WORKDIR /scrapyrt/project
 
-ENTRYPOINT ["scrapyrt"]
+ENTRYPOINT ["scrapyrt", "-i 0.0.0.0"]
 
 EXPOSE 9080
