@@ -20,6 +20,7 @@ class SingleRequestSpider(MetaSpider):
     seed = None
     callback_func = None
     errback_func = None
+    name = 'single_request'
 
     def start_requests(self):
         if isinstance(self.seed, Request):
