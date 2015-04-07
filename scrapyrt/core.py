@@ -91,6 +91,16 @@ class ScrapyrtCrawlerProcess(CrawlerProcess):
         if self.log_observer:
             monkey_patch_and_connect_log_observer(crawler, self.log_observer)
 
+    def _stop_logging(self):
+        if self.log_observer:
+            try:
+                self.log_observer.stop()
+            except ValueError:
+                # exception on kill
+                # exceptions.ValueError: list.remove(x): x not in list
+                # looks like it's safe to ignore it
+                pass
+
 
 def monkey_patch_and_connect_log_observer(crawler, log_observer):
     """Ugly hack to close log file.
