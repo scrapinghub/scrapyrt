@@ -86,23 +86,32 @@ class ScrapyrtCrawlerProcess(CrawlerProcess):
 
     def _setup_crawler_logging(self, crawler):
         log_observer = scrapy_log.start_from_crawler(crawler)
-
         if log_observer:
-            # Ugly hack to close log file - monkey patch log_observer.stop
-            # method to close file each time log observer is closed.
-            # I prefer this to be fixed in Scrapy itself, but as
-            # Scrapy is going to switch to standart python logging soon
-            # https://github.com/scrapy/scrapy/pull/1060
-            # this change wouldn't be accepted in preference of merging
-            # new logging sooner.
-            def stop_and_close_log_file(self):
-                self.__stop()
-                self.write.__self__.close()
+            monkey_patch_and_connect_log_observer(crawler, log_observer)
+        if self.log_observer:
+            monkey_patch_and_connect_log_observer(crawler, self.log_observer)
 
-            log_observer.__stop = log_observer.stop
-            log_observer.stop = types.MethodType(
-                stop_and_close_log_file, log_observer)
-            crawler.signals.connect(log_observer.stop, signals.engine_stopped)
+
+def monkey_patch_and_connect_log_observer(crawler, log_observer):
+    """Ugly hack to close log file.
+
+    Monkey patch log_observer.stop method to close file each time
+    log observer is closed.
+    I prefer this to be fixed in Scrapy itself, but as
+    Scrapy is going to switch to standart python logging soon
+    https://github.com/scrapy/scrapy/pull/1060
+    this change wouldn't be accepted in preference of merging
+    new logging sooner.
+
+    """
+    def stop_and_close_log_file(self):
+        self.__stop()
+        self.write.__self__.close()
+
+    log_observer.__stop = log_observer.stop
+    log_observer.stop = types.MethodType(
+        stop_and_close_log_file, log_observer)
+    crawler.signals.connect(log_observer.stop, signals.engine_stopped)
 
 
 class CrawlManager(object):
