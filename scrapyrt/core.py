@@ -221,7 +221,8 @@ class CrawlManager(object):
     def limit_requests(self, spider):
         """Stop crawl after reaching max_requests."""
         if self.max_requests and self.max_requests <= self.request_count:
-            reason = "stop generating requests, only one request allowed"
+            reason = "stop generating requests, only {} requests allowed".format(
+                self.max_requests)
             spider.crawler.engine.close_spider(spider, reason=reason)
         else:
             self.request_count += 1
