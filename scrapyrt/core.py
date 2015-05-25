@@ -57,19 +57,12 @@ class ScrapyrtCrawlerProcess(CrawlerProcess):
         super(ScrapyrtCrawlerProcess, self).__init__(settings)
         self.scrapyrt_manager = scrapyrt_manager
 
-    def _create_crawler(self, spidercls):
+    def crawl(self, spidercls, *args, **kwargs):
         if isinstance(spidercls, six.string_types):
             spidercls = self.spiders.load(spidercls)
-
-        crawler_settings = self.settings.copy()
-        spidercls.update_settings(crawler_settings)
-        crawler_settings.freeze()
-
-        # creating our own crawler that will allow us to disable
-        # start requests easily
-        # TODO: PR to scrapy - set custom Crawler
+        # creating our own crawler that will allow us to disable start requests easily
         crawler = ScrapyrtCrawler(
-            spidercls, crawler_settings, self.scrapyrt_manager.start_requests)
+            spidercls, self.settings, self.scrapyrt_manager.start_requests)
         self.scrapyrt_manager.crawler = crawler
         # Connecting signals to handlers that control crawl process
         crawler.signals.connect(self.scrapyrt_manager.get_item,
@@ -82,7 +75,7 @@ class ScrapyrtCrawlerProcess(CrawlerProcess):
                                 signals.spider_error)
         crawler.signals.connect(self.scrapyrt_manager.handle_scheduling,
                                 signals.request_scheduled)
-        return crawler
+        return super(ScrapyrtCrawlerProcess, self).crawl(crawler, *args, **kwargs)
 
     def _setup_crawler_logging(self, crawler):
         log_observer = scrapy_log.start_from_crawler(crawler)

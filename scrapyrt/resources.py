@@ -28,6 +28,8 @@ class ServiceResource(resource.Resource, object):
         if not isinstance(result, Deferred):
             return self.render_object(result, request)
 
+        # import pdb; pdb.set_trace()
+
         # deferred result - add appropriate callbacks and errbacks
         result.addErrback(self.handle_error, request)
 
@@ -125,6 +127,7 @@ class CrawlResource(ServiceResource):
             pass
         else:
             spider_data['callback'] = callback
+        # import pdb; pdb.set_trace()
         return self.prepare_crawl(request_data, spider_data, **kwargs)
 
     def render_POST(self, request, **kwargs):
