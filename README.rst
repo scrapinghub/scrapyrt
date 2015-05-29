@@ -488,7 +488,7 @@ For each crawl it creates handler that's attached to the root logger and
 collects log records for which it can determine what spider object
 current log is related to. The only way to pass object to the log record is
 ``extra`` argument (see explanation and another usage example `here
-<https://docs.python.org/2/library/logging.html#logging.debug>`)::
+<https://docs.python.org/2/library/logging.html#logging.debug>`_)::
 
     logger.debug('Log message', extra={'spider': spider})
 
@@ -498,7 +498,7 @@ if you're using them. All logs record that don't have reference to spider object
 or reference another spider object in the same process will be ignored.
 
 Spider logging setup in ScrapyRT happens only after spider object instantiation,
-so logging from `Spider.__init__` method as well as logging from
+so logging from ``Spider.__init__`` method as well as logging from
 middleware, pipeline or extension instantiation due to initialization order in Scrapy.
 
 Also ScrapyRT doesn't support `LOG_STDOUT`_ - you cannot write stdout to
@@ -514,6 +514,6 @@ appear in all log files for crawls that are running simultaneously.
 .. _Scrapy stats: http://doc.scrapy.org/en/latest/topics/stats.html
 .. _Scrapy extensions: http://doc.scrapy.org/en/latest/topics/extensions.html
 .. _Python logging: https://docs.python.org/2/library/logging.html
-.. _Spider.logger: http://doc.scrapy.org/en/latest/topics/settings.html#log-stdout
+.. _Spider.logger: http://doc.scrapy.org/en/1.0/topics/spiders.html#scrapy.spiders.Spider.logger
 .. _Spider.log: http://doc.scrapy.org/en/1.0/topics/spiders.html#scrapy.spiders.Spider.log
 .. _LOG_STDOUT: http://doc.scrapy.org/en/latest/topics/settings.html#log-stdout
