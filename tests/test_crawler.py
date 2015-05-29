@@ -21,7 +21,6 @@ class TestCrawler(unittest.TestCase):
         self.site.start()
         self.settings = get_settings()
         self.settings['EXTENSIONS']['scrapy.contrib.corestats.CoreStats'] = 0
-        self.settings.freeze()
         self.engine_status = []
 
     def tearDown(self):
