@@ -310,14 +310,14 @@ One more example (don't forget to import random)::
 
     class SpiderName(Spider):
         name = "some_other_spider"
-        
+
         def parse(self, response):
             pass
-        
+
         def modify_realtime_request(self, request):
             UA = [
-	        'Mozilla/5.0 (Windows NT 5.1; rv:31.0) Gecko/20100101 Firefox/31.0',
-	        'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/37.0.2062.94 Safari/537.36',
+                'Mozilla/5.0 (Windows NT 5.1; rv:31.0) Gecko/20100101 Firefox/31.0',
+                'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/37.0.2062.94 Safari/537.36',
             ]
             request.headers["User-Agent"] = random.choice(UA)
             return request
@@ -478,6 +478,34 @@ There's usually no need and thus no simple way to change those settings,
 but if you have reason to do so you need to override ``get_project_settings``
 method of ``scrapyrt.core.CrawlManager``.
 
+
+LOGGING
+=======
+
+ScrapyRT supports Scrapy logging with some limitations.
+
+For each crawl it creates handler that's attached to the root logger and
+collects log records for which it can determine what spider object
+current log is related to. The only way to pass object to the log record is
+``extra`` argument (see explanation and another usage example `here
+<https://docs.python.org/2/library/logging.html#logging.debug>`)::
+
+    logger.debug('Log message', extra={'spider': spider})
+
+Spider object is passed by default in `Spider.logger`_ and `Spider.log`_
+backwards compatibility wrapper so you don't have to pass it yourself
+if you're using them. All logs record that don't have reference to spider object
+or reference another spider object in the same process will be ignored.
+
+Spider logging setup in ScrapyRT happens only after spider object instantiation,
+so logging from `Spider.__init__` method as well as logging from
+middleware, pipeline or extension instantiation due to initialization order in Scrapy.
+
+Also ScrapyRT doesn't support `LOG_STDOUT`_ - you cannot write stdout to
+spider log in ScrapyRT because there's no way to filter such logs and they will
+appear in all log files for crawls that are running simultaneously.
+
+
 .. _dmoz spider: https://github.com/scrapy/dirbot/blob/master/dirbot/spiders/dmoz.py
 .. _Scrapy educational dirbot project: https://github.com/scrapy/dirbot
 .. _Scrapy Request: http://doc.scrapy.org/en/latest/topics/request-response.html#scrapy.http.Request
@@ -485,3 +513,7 @@ method of ``scrapyrt.core.CrawlManager``.
 .. _parse: http://doc.scrapy.org/en/latest/topics/spiders.html#scrapy.spider.Spider.parse
 .. _Scrapy stats: http://doc.scrapy.org/en/latest/topics/stats.html
 .. _Scrapy extensions: http://doc.scrapy.org/en/latest/topics/extensions.html
+.. _Python logging: https://docs.python.org/2/library/logging.html
+.. _Spider.logger: http://doc.scrapy.org/en/latest/topics/settings.html#log-stdout
+.. _Spider.log: http://doc.scrapy.org/en/1.0/topics/spiders.html#scrapy.spiders.Spider.log
+.. _LOG_STDOUT: http://doc.scrapy.org/en/latest/topics/settings.html#log-stdout
