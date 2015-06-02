@@ -498,8 +498,9 @@ if you're using them. All logs record that don't have reference to spider object
 or reference another spider object in the same process will be ignored.
 
 Spider logging setup in ScrapyRT happens only after spider object instantiation,
-so logging from ``Spider.__init__`` method as well as logging from
-middleware, pipeline or extension instantiation due to initialization order in Scrapy.
+so logging from ``Spider.__init__`` method as well as logging during
+middleware, pipeline or extension instantiation is not supported due to limitations
+of initialization order in Scrapy.
 
 Also ScrapyRT doesn't support `LOG_STDOUT`_ - you cannot write stdout to
 spider log in ScrapyRT because there's no way to filter such logs and they will
