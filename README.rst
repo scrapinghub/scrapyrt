@@ -479,7 +479,7 @@ but if you have reason to do so you need to override ``get_project_settings``
 method of ``scrapyrt.core.CrawlManager``.
 
 
-LOGGING
+Logging
 =======
 
 ScrapyRT supports Scrapy logging with some limitations.
@@ -502,9 +502,14 @@ so logging from ``Spider.__init__`` method as well as logging during
 middleware, pipeline or extension instantiation is not supported due to limitations
 of initialization order in Scrapy.
 
-Also ScrapyRT doesn't support `LOG_STDOUT`_ - you cannot write stdout to
-spider log in ScrapyRT because there's no way to filter such logs and they will
-appear in all log files for crawls that are running simultaneously.
+Also ScrapyRT doesn't support `LOG_STDOUT`_ - if you're using ``print`` statements in
+a spider they will never be logged to any log file. Reason behind this is
+that there's no way to filter such log records and they will appear in all log files
+for crawls that are running simultaneously. This is considered harmful and is not supported.
+But if you still want to save all stdout to some file - you can create custom
+`SERVICE_ROOT`_ where you can setup logging stdout to file using
+approach described in `Python Logging HOWTO`_ or redirect stdout to a file using
+`bash redirection syntax`_, `supervisord logging`_ etc.
 
 
 .. _dmoz spider: https://github.com/scrapy/dirbot/blob/master/dirbot/spiders/dmoz.py
@@ -518,3 +523,6 @@ appear in all log files for crawls that are running simultaneously.
 .. _Spider.logger: http://doc.scrapy.org/en/1.0/topics/spiders.html#scrapy.spiders.Spider.logger
 .. _Spider.log: http://doc.scrapy.org/en/1.0/topics/spiders.html#scrapy.spiders.Spider.log
 .. _LOG_STDOUT: http://doc.scrapy.org/en/latest/topics/settings.html#log-stdout
+.. _Python Logging HOWTO: https://docs.python.org/2/howto/logging.html
+.. _bash redirection syntax: http://www.gnu.org/software/bash/manual/html_node/Redirections.html
+.. _supervisord logging: http://supervisord.org/logging.html#child-process-logs
