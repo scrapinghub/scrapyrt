@@ -3,6 +3,7 @@ import logging
 import os
 import sys
 
+from scrapy.utils.python import unicode_to_str
 from twisted.python import log
 from twisted.python.log import startLoggingWithObserver
 from twisted.python.logfile import DailyLogFile
@@ -34,6 +35,10 @@ def err(_stuff=None, _why=None, **kwargs):
 
 class ScrapyrtFileLogObserver(log.FileLogObserver):
 
+    def __init__(self, f, encoding='utf-8'):
+        self.encoding = encoding.lower()
+        log.FileLogObserver.__init__(self, f)
+
     def _adapt_eventdict(self, event_dict):
         """Adapt event dict making it suitable for logging with Scrapyrt log
         observer.
@@ -49,10 +54,18 @@ class ScrapyrtFileLogObserver(log.FileLogObserver):
             return
         return event_dict
 
+    def _unicode_to_str(self, eventDict):
+        message = eventDict.get('message')
+        if message:
+            eventDict['message'] = tuple(
+                unicode_to_str(x, self.encoding) for x in message)
+        return eventDict
+
     def emit(self, eventDict):
         eventDict = self._adapt_eventdict(eventDict)
         if eventDict is None:
             return
+        eventDict = self._unicode_to_str(eventDict)
         log.FileLogObserver.emit(self, eventDict)
 
 
@@ -65,5 +78,5 @@ def setup_logging():
         )
     else:
         logfile = sys.stderr
-    observer = ScrapyrtFileLogObserver(logfile)
+    observer = ScrapyrtFileLogObserver(logfile, settings.LOG_ENCODING)
     startLoggingWithObserver(observer.emit, setStdout=False)
