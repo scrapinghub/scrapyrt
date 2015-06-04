@@ -257,7 +257,7 @@ class CrawlManager(object):
         return results
 
     def create_spider_request(self, kwargs):
-        url = kwargs.pop('url')
+        url = kwargs.pop('url').decode('utf-8')
         try:
             req = Request(url, **kwargs)
         except (TypeError, ValueError) as e:
