@@ -310,10 +310,10 @@ One more example (don't forget to import random)::
 
     class SpiderName(Spider):
         name = "some_other_spider"
-        
+
         def parse(self, response):
             pass
-        
+
         def modify_realtime_request(self, request):
             UA = [
 	        'Mozilla/5.0 (Windows NT 5.1; rv:31.0) Gecko/20100101 Firefox/31.0',
@@ -460,6 +460,15 @@ LOG_FILE
 Path to file to store logs from Scrapyrt with daily rotation.
 
 Default: ``None``. Writing log to file is disabled by default.
+
+
+LOG_ENCODING
+~~~~~~~~~~~~
+
+Encoding that's used to encode log messages.
+
+Default: ``utf-8``.
+
 
 Spider settings
 ---------------
