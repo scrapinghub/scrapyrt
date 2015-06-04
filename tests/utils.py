@@ -15,12 +15,6 @@ def get_testenv():
     return env
 
 
-def get_ephemeral_port(host=''):
-    s = socket.socket()
-    s.bind((host, 0))
-    return s.getsockname()[1]
-
-
 def get_settings():
     """Settings with all extensions disabled."""
     return Settings({
