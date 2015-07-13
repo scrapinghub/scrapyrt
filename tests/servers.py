@@ -9,8 +9,10 @@ import sys
 import tempfile
 import time
 
+import port_for
+
 from . import TESTS_PATH
-from .utils import get_ephemeral_port, get_testenv
+from .utils import get_testenv
 
 DEVNULL = open(os.devnull, 'wb')
 SAMPLE_DATA = os.path.join(TESTS_PATH, 'sample_data')
@@ -21,7 +23,7 @@ class BaseTestServer(object):
     def __init__(self, host='localhost', port=None, cwd=None, shell=False,
                  stdin=DEVNULL, stdout=DEVNULL, stderr=DEVNULL):
         self.host = host
-        self.port = port or get_ephemeral_port(self.host)
+        self.port = port or port_for.select_random()
         self.proc = None
         self.shell = shell
         self.cwd = cwd
