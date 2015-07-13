@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from mock import MagicMock
 from scrapy import signals
+from twisted.internet.defer import Deferred
 from twisted.trial import unittest
 
 from scrapyrt.core import CrawlManager, ScrapyrtCrawlerProcess
@@ -35,10 +36,11 @@ class CralwerProcessTestCase(unittest.TestCase):
             self._mock_method(crawl_manager, handler)
         settings = get_settings()
         crawler_process = ScrapyrtCrawlerProcess(settings, crawl_manager)
-        crawler = crawler_process._create_crawler(MetaSpider)
-        spider = MetaSpider()
+        dfd = crawler_process.crawl(MetaSpider)
+        self.assertIsInstance(dfd, Deferred)
+        crawler = crawl_manager.crawler
         for signal, handler in signals_and_handlers:
             crawler.signals.send_catch_log(
-                signal=getattr(signals, signal), spider=spider)
+                signal=getattr(signals, signal), spider=crawler.spider)
             handler_mock = getattr(crawl_manager, handler)
             self.assertEquals(handler_mock.call_count, 1)

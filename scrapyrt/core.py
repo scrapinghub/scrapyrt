@@ -7,7 +7,7 @@ import six
 import types
 
 from scrapy import signals, log as scrapy_log
-from scrapy.crawler import CrawlerProcess, Crawler
+from scrapy.crawler import CrawlerRunner, Crawler
 from scrapy.exceptions import DontCloseSpider
 from scrapy.http import Request
 from twisted.web.error import Error
@@ -17,6 +17,7 @@ from . import log
 from .conf import settings
 from .conf.spider_settings import get_scrapyrt_settings, get_project_settings
 from .decorators import deprecated
+from .log import setup_spider_logging
 
 
 class ScrapyrtCrawler(Crawler):
@@ -51,25 +52,18 @@ class ScrapyrtCrawler(Crawler):
             raise
 
 
-class ScrapyrtCrawlerProcess(CrawlerProcess):
+class ScrapyrtCrawlerProcess(CrawlerRunner):
 
     def __init__(self, settings, scrapyrt_manager):
         super(ScrapyrtCrawlerProcess, self).__init__(settings)
         self.scrapyrt_manager = scrapyrt_manager
 
-    def _create_crawler(self, spidercls):
+    def crawl(self, spidercls, *args, **kwargs):
         if isinstance(spidercls, six.string_types):
             spidercls = self.spiders.load(spidercls)
-
-        crawler_settings = self.settings.copy()
-        spidercls.update_settings(crawler_settings)
-        crawler_settings.freeze()
-
-        # creating our own crawler that will allow us to disable
-        # start requests easily
-        # TODO: PR to scrapy - set custom Crawler
+        # creating our own crawler that will allow us to disable start requests easily
         crawler = ScrapyrtCrawler(
-            spidercls, crawler_settings, self.scrapyrt_manager.start_requests)
+            spidercls, self.settings, self.scrapyrt_manager.start_requests)
         self.scrapyrt_manager.crawler = crawler
         # Connecting signals to handlers that control crawl process
         crawler.signals.connect(self.scrapyrt_manager.get_item,
@@ -82,7 +76,14 @@ class ScrapyrtCrawlerProcess(CrawlerProcess):
                                 signals.spider_error)
         crawler.signals.connect(self.scrapyrt_manager.handle_scheduling,
                                 signals.request_scheduled)
-        return crawler
+        dfd = super(ScrapyrtCrawlerProcess, self).crawl(crawler, *args, **kwargs)
+        _cleanup_handler = setup_spider_logging(crawler.spider, self.settings)
+
+        def cleanup_logging(result):
+            _cleanup_handler()
+            return result
+
+        return dfd.addBoth(cleanup_logging)
 
     def _setup_crawler_logging(self, crawler):
         log_observer = scrapy_log.start_from_crawler(crawler)
