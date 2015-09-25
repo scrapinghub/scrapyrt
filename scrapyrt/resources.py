@@ -110,8 +110,10 @@ class CrawlResource(ServiceResource):
         At the moment kwargs for scrapy request are not supported in GET.
         They are supported in POST handler.
         """
-        request_data = dict((name, value[0]) for name, value
-                            in request.args.items())
+        request_data = dict(
+            (name.decode('utf-8'), value[0].decode('utf-8'))
+            for name, value in request.args.items()
+        )
 
         spider_data = {
             'url': self.get_required_argument(request_data, 'url'),

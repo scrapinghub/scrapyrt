@@ -461,6 +461,15 @@ Path to file to store logs from Scrapyrt with daily rotation.
 
 Default: ``None``. Writing log to file is disabled by default.
 
+
+LOG_ENCODING
+~~~~~~~~~~~~
+
+Encoding that's used to encode log messages.
+
+Default: ``utf-8``.
+
+
 Spider settings
 ---------------
 

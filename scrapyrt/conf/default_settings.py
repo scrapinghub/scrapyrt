@@ -10,6 +10,8 @@ LOG_FILE = None
 # Path to spiders log directory
 LOG_DIR = 'logs'
 
+LOG_ENCODING = 'utf-8'
+
 # Root server resource, should inherit from scrapyrt.resources.RealtimeAPI
 SERVICE_ROOT = 'scrapyrt.resources.RealtimeApi'
 
