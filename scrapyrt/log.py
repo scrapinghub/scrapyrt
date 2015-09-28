@@ -100,7 +100,7 @@ def setup_logging():
         )
     else:
         logfile = sys.stderr
-    observer = ScrapyrtFileLogObserver(logfile, settings.LOG_ENCODING)
+    observer = ScrapyrtFileLogObserver(logfile, scrapyrt_settings.LOG_ENCODING)
     startLoggingWithObserver(observer.emit, setStdout=False)
 
     # setup general logging for Scrapy
