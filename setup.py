@@ -33,6 +33,7 @@ setup(
     install_requires=[
         'Twisted>=14.0.0',
         'Scrapy>=0.24.0',
+        'demjson'
     ],
     package_data={
         'scrapyrt': [
