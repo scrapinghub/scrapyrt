@@ -27,3 +27,5 @@ testing_scripts*
 
 # tests
 .coverage
+/.tox/
+
