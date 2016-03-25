@@ -101,10 +101,14 @@ class TestCrawlResourceIntegration(unittest.TestCase):
         r1, r2 = self.get_and_post(self.crawl_url, {
             'spider_name': self.spider_name,
             "start_requests": True
-        }, {})
+        }, {"url": self.site_url})
         for res in (r1, r2):
             assert res.status_code == 200
-            assert res.json().get("status") == "ok"
+            result = res.json()
+            assert result.get("status") == "ok"
+            assert result.get("stats") is not None
+            assert result["stats"].get("downloader/request_count") == 1
+            assert len(result.get("items", [])) == 3
 
     def test_no_spider_name(self):
         res = requests.get(
@@ -159,24 +163,18 @@ class TestCrawlResourceIntegration(unittest.TestCase):
             assert "Error while creating Scrapy Request" in res_json['message']
 
     def test_crawl(self):
-        res = requests.get(
-            self.crawl_url,
-            params={
-                'url': self.site_url,
-                'spider_name': self.spider_name
+        r1, r2 = self.get_and_post(self.crawl_url, {"spider_name": self.spider_name}, {"url": self.site_url})
+        for res in (r1, r2):
+            expected_result = {
+                u'status': u'ok',
+                u'items_dropped': []
             }
-        )
-
-        expected_result = {
-            u'status': u'ok',
-            u'items_dropped': []
-        }
-        expected_items = [{
-            u'name': ['Page 1'],
-        }]
-        res_json = res.json()
-        self.assertDictContainsSubset(expected_result, res_json)
-        assert res_json['items']
-        assert len(res_json['items']) == len(expected_items)
-        for exp_item, res_item in zip(expected_items, res_json['items']):
-            self.assertDictContainsSubset(exp_item, res_item)
+            expected_items = [{
+                u'name': ['Page 1'],
+            }]
+            res_json = res.json()
+            self.assertDictContainsSubset(expected_result, res_json)
+            assert res_json['items']
+            assert len(res_json['items']) == len(expected_items)
+            for exp_item, res_item in zip(expected_items, res_json['items']):
+                self.assertDictContainsSubset(exp_item, res_item)

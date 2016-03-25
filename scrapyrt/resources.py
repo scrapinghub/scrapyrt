@@ -126,7 +126,6 @@ class CrawlResource(ServiceResource):
         self.validate_options(spider_data, request_data)
         return self.prepare_crawl(request_data, spider_data, **kwargs)
 
-
     def render_POST(self, request, **kwargs):
         """
         :param request:
@@ -152,12 +151,13 @@ class CrawlResource(ServiceResource):
             raise Error('400', message=message)
 
         log.msg("{}".format(request_data))
-        spider_data = self.get_required_argument(request_data, "request")
         try:
-            spider_data = extract_scrapy_request_args(spider_data, raise_error=True)
+            spider_data = extract_scrapy_request_args(request_data.get("request", {}), raise_error=True)
         except ValueError as e:
             raise Error(400, e.message)
 
+        if not request_data.get("start_requests"):
+            self.get_required_argument(request_data, "request")
         request_data = self._get_api_params(request_data)
         self.validate_options(spider_data, request_data)
         return self.prepare_crawl(request_data, spider_data, **kwargs)
@@ -208,20 +208,21 @@ class CrawlResource(ServiceResource):
             Request object that will be created
         """
         spider_name = self.get_required_argument(request_data, 'spider_name')
+        start_requests = request_data.get("start_requests", False)
         try:
             max_requests = request_data['max_requests']
         except (KeyError, IndexError):
             max_requests = None
         dfd = self.run_crawl(
-            spider_name, spider_data, max_requests, *args, **kwargs)
+            spider_name, spider_data, max_requests, start_requests=start_requests, *args, **kwargs)
         dfd.addCallback(
             self.prepare_response, request_data=request_data, *args, **kwargs)
         return dfd
 
     def run_crawl(self, spider_name, spider_data,
-                  max_requests=None, *args, **kwargs):
+                  max_requests=None, start_requests=False, *args, **kwargs):
         crawl_manager_cls = load_object(settings.CRAWL_MANAGER)
-        manager = crawl_manager_cls(spider_name, spider_data, max_requests)
+        manager = crawl_manager_cls(spider_name, spider_data, max_requests, start_requests=start_requests)
         dfd = manager.crawl(*args, **kwargs)
         return dfd
 
