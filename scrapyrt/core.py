@@ -156,6 +156,7 @@ class CrawlManager(object):
             dfd = self.crawler_process.crawl(self.spider_name, *args, **kwargs)
         except KeyError as e:
             # Spider not found.
+            # TODO is it the only possible exception here?
             raise Error('404', message=e.message)
         dfd.addCallback(self.return_items)
         return dfd
@@ -263,17 +264,10 @@ class CrawlManager(object):
         try:
             req = Request(url, **kwargs)
         except (TypeError, ValueError) as e:
-            # Bad arguments for scrapy Request
-            # we don't want to schedule spider if someone
-            # passes meaingless arguments to Request.
-            # We must raise this here so that this will be returned to client,
-            # Otherwise if this is raised in spider_idle it goes to
-            # spider logs where it does not really belong.
-            # It is needed because in POST handler we can pass
-            # all possible requests kwargs, so it is easy to make mistakes.
-            message = "Error while creating Request, {}".format(e.message)
+            message = "Error while creating Scrapy Request, {}".format(e.message)
             raise Error('400', message=message)
 
+        # why is it here?
         req.dont_filter = True
         msg = u"Created request for spider {} with url {} and kwargs {}"
         msg = msg.format(self.spider_name, url, repr(kwargs))

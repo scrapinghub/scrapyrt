@@ -1,12 +1,14 @@
 # -*- coding: utf-8 -*-
+import demjson
+
 from scrapy.utils.misc import load_object
 from scrapy.utils.serialize import ScrapyJSONEncoder
 from twisted.internet.defer import Deferred
 from twisted.python.failure import Failure
 from twisted.web import server, resource
 from twisted.web.error import UnsupportedMethod, Error
-import demjson
 
+from scrapyrt.utils import extract_scrapy_request_args
 from . import log
 from .conf import settings
 
@@ -103,6 +105,11 @@ class CrawlResource(ServiceResource):
 
     isLeaf = True
     allowedMethods = ['GET', 'POST']
+    api_parameters = {
+        "spider_name",
+        "max_requests",
+        "start_requests"
+    }
 
     def render_GET(self, request, **kwargs):
         """Request querysting must contain following keys: url, spider_name.
@@ -114,20 +121,11 @@ class CrawlResource(ServiceResource):
             (name.decode('utf-8'), value[0].decode('utf-8'))
             for name, value in request.args.items()
         )
-
-        spider_data = {
-            'url': self.get_required_argument(request_data, 'url'),
-            # TODO get optional Request arguments here
-            # distinguish between proper Request args and
-            # api parameters
-        }
-        try:
-            callback = request_data['callback']
-        except KeyError:
-            pass
-        else:
-            spider_data['callback'] = callback
+        spider_data = extract_scrapy_request_args(request_data, raise_error=False)
+        request_data = self._get_api_params(request_data)
+        self.validate_options(spider_data, request_data)
         return self.prepare_crawl(request_data, spider_data, **kwargs)
+
 
     def render_POST(self, request, **kwargs):
         """
@@ -155,10 +153,27 @@ class CrawlResource(ServiceResource):
 
         log.msg("{}".format(request_data))
         spider_data = self.get_required_argument(request_data, "request")
-        error_msg = "Missing required key 'url' in 'request' object"
-        self.get_required_argument(spider_data, "url", error_msg=error_msg)
+        try:
+            spider_data = extract_scrapy_request_args(spider_data, raise_error=True)
+        except ValueError as e:
+            raise Error(400, e.message)
 
+        request_data = self._get_api_params(request_data)
+        self.validate_options(spider_data, request_data)
         return self.prepare_crawl(request_data, spider_data, **kwargs)
+
+    def _get_api_params(self, request_data):
+        api_params = {}
+        for k, v in request_data.items():
+            if any(k == p for p in self.api_parameters):
+                api_params[k] = v
+        return api_params
+
+    def validate_options(self, spider_data, api_params):
+        url = spider_data.get("url")
+        start_requests = api_params.get("start_requests")
+        if not url and not start_requests:
+            raise Error(400, "'url' is required if start_requests are disabled")
 
     def get_required_argument(self, request_data, name, error_msg=None):
         """Get required API key from dict-like object.
