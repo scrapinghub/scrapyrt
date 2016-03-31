@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import logging
 from collections import OrderedDict
 from copy import deepcopy
 import datetime
@@ -272,10 +273,11 @@ class CrawlManager(object):
             # It is needed because in POST handler we can pass
             # all possible requests kwargs, so it is easy to make mistakes.
             message = "Error while creating Request, {}".format(e.message)
+            log.msg(message, level=logging.WARNING)
             raise Error('400', message=message)
 
         req.dont_filter = True
         msg = u"Created request for spider {} with url {} and kwargs {}"
         msg = msg.format(self.spider_name, url, repr(kwargs))
-        log.msg(msg)
+        log.msg(msg, level=logging.DEBUG)
         return req
