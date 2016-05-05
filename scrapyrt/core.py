@@ -33,6 +33,7 @@ class ScrapyrtCrawler(Crawler):
     def __init__(self, spidercls, crawler_settings, start_requests=False):
         super(ScrapyrtCrawler, self).__init__(spidercls, crawler_settings)
         self.start_requests = start_requests
+        self.errors = []
 
     @defer.inlineCallbacks
     def crawl(self, *args, **kwargs):
@@ -72,8 +73,6 @@ class ScrapyrtCrawlerProcess(CrawlerRunner):
                                 signals.item_dropped)
         crawler.signals.connect(self.scrapyrt_manager.spider_idle,
                                 signals.spider_idle)
-        crawler.signals.connect(self.scrapyrt_manager.handle_spider_error,
-                                signals.spider_error)
         crawler.signals.connect(self.scrapyrt_manager.handle_scheduling,
                                 signals.request_scheduled)
         dfd = super(ScrapyrtCrawlerProcess, self).crawl(crawler, *args, **kwargs)
@@ -135,7 +134,6 @@ class CrawlManager(object):
         self.log_dir = settings.LOG_DIR
         self.items = []
         self.items_dropped = []
-        self.errors = []
         self.max_requests = int(max_requests) if max_requests else None
         self.timeout_limit = int(settings.TIMEOUT_LIMIT)
         self.request_count = 0
@@ -228,11 +226,6 @@ class CrawlManager(object):
         else:
             self.request_count += 1
 
-    def handle_spider_error(self, failure, spider):
-        if spider is self.crawler.spider and self.debug:
-            fail_data = failure.getTraceback()
-            self.errors.append(fail_data)
-
     def get_item(self, item, response, spider):
         if spider is self.crawler.spider:
             self.items.append(item)
@@ -255,7 +248,7 @@ class CrawlManager(object):
             "spider_name": self.spider_name,
         }
         if self.debug:
-            results["errors"] = self.errors
+            results["errors"] = self.crawler.errors
         return results
 
     def create_spider_request(self, kwargs):
