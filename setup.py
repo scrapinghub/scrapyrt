@@ -11,6 +11,7 @@ setup(
     version=version,
     author='Scrapinghub',
     author_email='info@scrapinghub.com',
+    url="https://github.com/scrapinghub/scrapyrt",
     maintainer='Scrapinghub',
     maintainer_email='info@scrapinghub.com',
     description='Put Scrapy spiders behind an HTTP API',
