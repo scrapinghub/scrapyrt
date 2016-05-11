@@ -3,7 +3,7 @@ Installation
 
 To install Scrapyrt::
 
-    python setup.py install
+    pip install scrapyrt
 
 Now you can run Scrapyrt from within Scrapy project by just typing::
 
