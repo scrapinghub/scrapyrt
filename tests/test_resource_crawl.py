@@ -40,13 +40,13 @@ class TestCrawlResourceGetRequiredArgument(unittest.TestCase):
 class TestCrawlResourceIntegration(unittest.TestCase):
 
     def setUp(self):
-        self.server = ScrapyrtTestServer()
-        self.server.start()
-        self.crawl_url = self.server.url('crawl.json')
         self.site = MockServer()
         self.site.start()
         self.site_url = self.site.url('page1.html')
         self.spider_name = 'test'
+        self.server = ScrapyrtTestServer(site=self.site)
+        self.server.start()
+        self.crawl_url = self.server.url('crawl.json')
 
     def tearDown(self):
         if not self._passed:
@@ -99,16 +99,23 @@ class TestCrawlResourceIntegration(unittest.TestCase):
 
     def test_no_url_but_start_requests_present(self):
         r1, r2 = self.get_and_post(self.crawl_url, {
-            'spider_name': self.spider_name,
+            'spider_name': "test_with_sr",
             "start_requests": True
-        }, {"url": self.site_url})
+        }, {})
         for res in (r1, r2):
             assert res.status_code == 200
             result = res.json()
             assert result.get("status") == "ok"
             assert result.get("stats") is not None
-            assert result["stats"].get("downloader/request_count") == 1
-            assert len(result.get("items", [])) == 3
+            assert len(result.get("items", [])) == 2
+            items = result["items"]
+            assert items[0]["name"][0] == u"Page 1"
+            assert items[1]["name"][0] == u"Page 2"
+            assert "page1" in items[0]["referer"]
+            assert "page2" in items[1]["referer"]
+            spider_errors = result.get("errors", [])
+            assert len(spider_errors) == 0
+            assert result["stats"].get("downloader/request_count") == 2
 
     def test_no_spider_name(self):
         res = requests.get(

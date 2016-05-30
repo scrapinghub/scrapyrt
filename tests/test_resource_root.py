@@ -8,11 +8,11 @@ from .servers import MockServer, ScrapyrtTestServer
 class TestRootResourceIntegration(unittest.TestCase):
 
     def setUp(self):
-        self.server = ScrapyrtTestServer()
-        self.server.start()
-        self.root_url = self.server.url()
         self.site = MockServer()
         self.site.start()
+        self.server = ScrapyrtTestServer(site=self.site)
+        self.server.start()
+        self.root_url = self.server.url()
 
     def tearDown(self):
         if not self._passed:
