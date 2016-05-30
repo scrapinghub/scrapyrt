@@ -29,3 +29,6 @@ testing_scripts*
 .coverage
 /.tox/
 
+
+# sphinx
+docs/build/*
