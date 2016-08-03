@@ -11,7 +11,7 @@ class Settings(object):
         self.setmodule(default_settings)
 
     def setmodule(self, module):
-        if isinstance(module, basestring):
+        if isinstance(module, str):
             module = import_module(module)
         for setting in dir(module):
             self.set(setting, getattr(module, setting))
