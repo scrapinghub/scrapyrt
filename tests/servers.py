@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from subprocess import Popen, PIPE
-from urlparse import urljoin
+from urllib.parse import urljoin
 import fcntl
 import os
 import shutil
