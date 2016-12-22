@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import pytest
 from twisted.trial import unittest
 from twisted.web.error import Error
 import requests
@@ -6,6 +7,22 @@ import requests
 from scrapyrt.resources import CrawlResource
 
 from .servers import ScrapyrtTestServer, MockServer
+
+
+@pytest.fixture()
+def server(request):
+    target_site = MockServer()
+    target_site.start()
+    server = ScrapyrtTestServer(site=target_site)
+
+    def close():
+        server.stop()
+        target_site.stop()
+
+    request.addfinalizer(close)
+    server.target_site = target_site
+    server.start()
+    return server
 
 
 class TestCrawlResource(unittest.TestCase):
@@ -37,151 +54,135 @@ class TestCrawlResourceGetRequiredArgument(unittest.TestCase):
         self.assertEqual(exception.status, '400')
 
 
-class TestCrawlResourceIntegration(unittest.TestCase):
+def perform_get(url, api_params, spider_data):
+    api_params.update(spider_data)
+    return requests.get(url, params=api_params)
 
-    def setUp(self):
-        self.site = MockServer()
-        self.site.start()
-        self.site_url = self.site.url('page1.html')
-        self.spider_name = 'test'
-        self.server = ScrapyrtTestServer(site=self.site)
-        self.server.start()
-        self.crawl_url = self.server.url('crawl.json')
 
-    def tearDown(self):
-        if not self._passed:
-            print self.server._non_block_read(self.server.proc.stderr)
-        self.server.stop()
-        self.site.stop()
+def perform_post(url, api_params, spider_data):
+    post_data = {"request": spider_data}
+    post_data.update(api_params)
+    return requests.post(url, json=post_data)
 
-    def get_and_post(self, url, api_params, spider_data):
-        get_params = api_params.copy()
-        get_params.update(spider_data)
-        res_get = requests.get(
-            url, params=get_params
-        )
-        post_data = {
-            "request": spider_data
+
+class TestCrawlResourceIntegration(object):
+    @pytest.mark.parametrize("method", [
+        perform_get, perform_post
+    ])
+    def test_no_parameters(self, server, method):
+        res = method(server.url('crawl.json'), {}, {})
+        assert res.status_code == 400
+        res_json = res.json()
+        expected_result = {u'status': u'error',  u'code': 400}
+        for key, value in expected_result.items():
+            assert res_json.get(key) == value
+        if res.request.method == "GET":
+            assert 'url' in res_json['message']
+        else:
+            assert "request" in res_json["message"]
+
+    @pytest.mark.parametrize("method", [
+        perform_get, perform_post
+    ])
+    def test_no_url_no_start_requests(self, server, method):
+        res = method(server.url('crawl.json'), {'spider_name': 'test'},
+                     {})
+        assert res.status_code == 400
+        expected_result = {
+            u'status': u'error',
+            u'code': 400
         }
-        post_data.update(api_params)
-        res_post = requests.post(
-            url,
-            json=post_data
-        )
-        return res_get, res_post
+        res_json = res.json()
+        for key, value in expected_result.items():
+            assert res_json[key] == value
+        if res.request.method == "GET":
+            assert 'url' in res_json['message']
+        else:
+            assert "request" in res_json["message"]
 
-    def test_no_parameters(self):
-        r1, r2 = self.get_and_post(self.crawl_url, {}, {})
-        for res in (r1, r2):
-            assert res.status_code == 400
-            res_json = res.json()
-            expected_result = {u'status': u'error',  u'code': 400}
-            self.assertDictContainsSubset(expected_result, res_json)
-            if res.request.method == "GET":
-                assert 'url' in res_json['message']
-            else:
-                assert "request" in res_json["message"]
-
-    def test_no_url_no_start_requests(self):
-        r1, r2 = self.get_and_post(self.crawl_url, {'spider_name': self.spider_name}, {})
-        for res in (r1, r2):
-            assert res.status_code == 400
-            expected_result = {
-                u'status': u'error',
-                u'code': 400
-            }
-            res_json = res.json()
-            self.assertDictContainsSubset(expected_result, res_json)
-            if res.request.method == "GET":
-                assert 'url' in res_json['message']
-            else:
-                assert "request" in res_json["message"]
-
-    def test_no_url_but_start_requests_present(self):
-        r1, r2 = self.get_and_post(self.crawl_url, {
+    @pytest.mark.parametrize("method", [
+        perform_get, perform_post
+    ])
+    def test_no_url_but_start_requests_present(self, server, method):
+        res = method(server.url("crawl.json"), {
             'spider_name': "test_with_sr",
             "start_requests": True
         }, {})
-        for res in (r1, r2):
-            assert res.status_code == 200
-            result = res.json()
-            assert result.get("status") == "ok"
-            assert result.get("stats") is not None
-            assert len(result.get("items", [])) == 2
-            items = result["items"]
-            assert items[0]["name"][0] == u"Page 1"
-            assert items[1]["name"][0] == u"Page 2"
-            assert "page1" in items[0]["referer"]
-            assert "page2" in items[1]["referer"]
-            spider_errors = result.get("errors", [])
-            assert len(spider_errors) == 0
-            assert result["stats"].get("downloader/request_count") == 2
+        assert res.status_code == 200
+        result = res.json()
+        assert result.get("status") == "ok"
+        assert result.get("stats") is not None
+        assert len(result.get("items", [])) == 2
+        items = result["items"]
+        assert items[0]["name"][0] == u"Page 1"
+        assert items[1]["name"][0] == u"Page 2"
+        assert "page1" in items[0]["referer"]
+        assert "page2" in items[1]["referer"]
+        spider_errors = result.get("errors", [])
+        assert len(spider_errors) == 0
+        assert result["stats"].get("downloader/request_count") == 2
 
-    def test_no_spider_name(self):
-        res = requests.get(
-            self.crawl_url,
-            params={
-                'url': self.site_url,
-            }
-        )
+    @pytest.mark.parametrize("method", [
+        perform_get, perform_post
+    ])
+    def test_no_spider_name(self, server, method):
+        res = method(server.url("crawl.json"),
+                     {},
+                     {"url": server.target_site.url("page1.html")})
         assert res.status_code == 400
         res_json = res.json()
         expected_result = {
             u'status': u'error',
             u'code': 400
         }
-        self.assertDictContainsSubset(expected_result, res_json)
+        for key, value in expected_result.items():
+            assert res_json[key] == value
         assert 'spider_name' in res_json['message']
 
-    def test_invalid_scrapy_request_detected_in_api(self):
-        res = requests.post(
-            self.crawl_url,
-            json={
-                "request": {
-                    'url': self.site_url,
-                    "not_an_argument": False
-                },
-                "spider_name": self.spider_name,
-            }
-        )
+    def test_invalid_scrapy_request_detected_in_api(self, server):
+        res = perform_post(server.url("crawl.json"),
+                           {"spider_name": "test"},
+                           {'url': server.target_site.url("page1.html"),
+                            "not_an_argument": False})
         assert res.status_code == 400
         res_json = res.json()
         expected_result = {
             u'status': u'error',
             u'code': 400
         }
-        self.assertDictContainsSubset(expected_result, res_json)
-        assert "'not_an_argument' is not a valid argument" in res_json['message']
+        for k, v in expected_result.items():
+            assert res_json[k] == v
+        assert "'not_an_argument' is not a valid arg" in res_json['message']
 
-    def test_invalid_scrapy_request_detected_by_scrapy(self):
-        r1, r2 = self.get_and_post(
-            self.crawl_url,
-            {"spider_name": self.spider_name},
+    @pytest.mark.parametrize("method", [
+        perform_get, perform_post
+    ])
+    def test_invalid_scrapy_request_detected_by_scrapy(self, server, method):
+        res = method(
+            server.url("crawl.json"),
+            {"spider_name": "test"},
             {'url': "no_rules"}
         )
-        for res in (r1, r2):
-            assert res.status_code == 400
-            res_json = res.json()
-            expected_result = {
-                u'status': u'error',
-                u'code': 400
-            }
-            self.assertDictContainsSubset(expected_result, res_json)
-            assert "Error while creating Scrapy Request" in res_json['message']
+        assert res.status_code == 400
+        res_json = res.json()
+        assert res_json["status"] == "error"
+        assert res_json["code"] == 400
+        assert "Error while creating Scrapy Request" in res_json['message']
 
-    def test_crawl(self):
-        r1, r2 = self.get_and_post(self.crawl_url, {"spider_name": self.spider_name}, {"url": self.site_url})
-        for res in (r1, r2):
-            expected_result = {
-                u'status': u'ok',
-                u'items_dropped': []
-            }
-            expected_items = [{
-                u'name': ['Page 1'],
-            }]
-            res_json = res.json()
-            self.assertDictContainsSubset(expected_result, res_json)
-            assert res_json['items']
-            assert len(res_json['items']) == len(expected_items)
-            for exp_item, res_item in zip(expected_items, res_json['items']):
-                self.assertDictContainsSubset(exp_item, res_item)
+    @pytest.mark.parametrize("method", [
+        perform_get, perform_post
+    ])
+    def test_crawl(self, server, method):
+        url = server.url("crawl.json")
+        res = method(url,
+                     {"spider_name": "test"},
+                     {"url": server.target_site.url("page1.html")})
+        expected_items = [{
+            u'name': ['Page 1'],
+        }]
+        res_json = res.json()
+        assert res_json["status"] == "ok"
+        assert res_json["items_dropped"] == []
+        assert res_json['items']
+        assert len(res_json['items']) == len(expected_items)
+        assert res_json["items"] == expected_items
