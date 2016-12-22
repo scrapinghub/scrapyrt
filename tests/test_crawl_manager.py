@@ -388,7 +388,7 @@ class TestCreateProperLogFile(TestCrawlManager):
         self.crawl_manager.log_dir = logdir
         path = self.crawl_manager._get_log_file_path()
         filename = os.path.basename(path)
-        expected_format = '%Y-%m-%dT%H%M.%S.%f.log'
+        expected_format = '%Y-%m-%dT%H%M%S.%f.log'
         datetime_object = datetime.datetime.strptime(filename, expected_format)
         now = datetime.datetime.now()
         assert datetime_object
