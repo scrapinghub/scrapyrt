@@ -164,7 +164,8 @@ class CrawlManager(object):
         log_dir = os.path.join(self.log_dir, self.spider_name)
         if not os.path.exists(log_dir):
             os.makedirs(log_dir)
-        filename = datetime.datetime.now().strftime('%Y-%m-%dT%H;%M;%S.%f') + '.log'
+        time_format = settings.SPIDER_LOGFILE_TIMEFORMAT
+        filename = datetime.datetime.now().strftime(time_format) + '.log'
         return os.path.join(log_dir, filename)
 
     def get_project_settings(self):
