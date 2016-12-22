@@ -199,14 +199,14 @@ class CrawlResource(ServiceResource):
             raise Error('400', message=error_msg)
         return value
 
-    def prepare_crawl(self, api_params, spider_data, *args, **kwargs):
+    def prepare_crawl(self, api_params, scrapy_request_args, *args, **kwargs):
         """Schedule given spider with CrawlManager.
 
         :param dict api_params:
             arguments needed to find spider and set proper api parameters
             for crawl (max_requests for example)
 
-        :param dict spider_data:
+        :param dict scrapy_request_args:
             should contain positional and keyword arguments for Scrapy
             Request object that will be created
         """
@@ -217,16 +217,16 @@ class CrawlResource(ServiceResource):
         except (KeyError, IndexError):
             max_requests = None
         dfd = self.run_crawl(
-            spider_name, spider_data, max_requests,
+            spider_name, scrapy_request_args, max_requests,
             start_requests=start_requests, *args, **kwargs)
         dfd.addCallback(
             self.prepare_response, request_data=api_params, *args, **kwargs)
         return dfd
 
-    def run_crawl(self, spider_name, spider_data,
+    def run_crawl(self, spider_name, scrapy_request_args,
                   max_requests=None, start_requests=False, *args, **kwargs):
         crawl_manager_cls = load_object(settings.CRAWL_MANAGER)
-        manager = crawl_manager_cls(spider_name, spider_data, max_requests, start_requests=start_requests)
+        manager = crawl_manager_cls(spider_name, scrapy_request_args, max_requests, start_requests=start_requests)
         dfd = manager.crawl(*args, **kwargs)
         return dfd
 
