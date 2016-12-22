@@ -161,7 +161,7 @@ class TestLimitRuntime(TestCrawlManager):
     def setUp(self):
         super(TestLimitRuntime, self).setUp()
         self.crawl_manager.timeout_limit = 1
-        self.crawler.stats.get_value.return_value = datetime.datetime.now()
+        self.crawler.stats.get_value.return_value = datetime.datetime.utcnow()
 
     def _test_limit_runtime(self):
         self.crawl_manager.limit_runtime(self.spider)
@@ -170,7 +170,6 @@ class TestLimitRuntime(TestCrawlManager):
         self.crawl_manager.limit_runtime(self.spider)
         self.assertTrue(self.crawler.engine.close_spider.called)
 
-    @pytest.skip("why is it failing?")
     def test_limit_runtime(self):
         self._test_limit_runtime()
 
