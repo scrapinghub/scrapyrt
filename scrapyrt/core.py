@@ -159,7 +159,6 @@ class CrawlManager(object):
             dfd = self.crawler_process.crawl(self.spider_name, *args, **kwargs)
         except KeyError as e:
             # Spider not found.
-            # TODO is it the only possible exception here?
             raise Error('404', message=e.message)
         dfd.addCallback(self.return_items)
         return dfd
@@ -270,7 +269,6 @@ class CrawlManager(object):
             message = "Error while creating Scrapy Request, {}".format(e.message)
             raise Error('400', message=message)
 
-        # why is it here?
         req.dont_filter = True
         msg = u"Created request for spider {} with url {} and kwargs {}"
         msg = msg.format(self.spider_name, url, repr(kwargs))
