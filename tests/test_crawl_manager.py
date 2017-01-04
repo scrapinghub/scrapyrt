@@ -384,7 +384,7 @@ class TestStartRequests(unittest.TestCase):
 
 class TestCreateProperLogFile(TestCrawlManager):
     def test_filename(self):
-        logdir = tempfile.mkdtemp()
+        logdir = "some_dir_name"
         self.crawl_manager.log_dir = logdir
         path = self.crawl_manager._get_log_file_path()
         filename = os.path.basename(path)
