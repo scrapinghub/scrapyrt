@@ -104,11 +104,6 @@ class CrawlResource(ServiceResource):
 
     isLeaf = True
     allowedMethods = ['GET', 'POST']
-    api_parameters = {
-        "spider_name",
-        "max_requests",
-        "start_requests"
-    }
 
     def render_GET(self, request, **kwargs):
         """Request querysting must contain following keys: url, spider_name.
@@ -122,7 +117,6 @@ class CrawlResource(ServiceResource):
         )
         scrapy_request_args = extract_scrapy_request_args(api_params,
                                                           raise_error=False)
-        api_params = self._get_api_params(api_params)
         self.validate_options(scrapy_request_args, api_params)
         return self.prepare_crawl(api_params, scrapy_request_args, **kwargs)
 
@@ -160,16 +154,8 @@ class CrawlResource(ServiceResource):
 
         if not api_params.get("start_requests"):
             self.get_required_argument(api_params, "request")
-        api_params = self._get_api_params(api_params)
         self.validate_options(scrapy_request_args, api_params)
         return self.prepare_crawl(api_params, scrapy_request_args, **kwargs)
-
-    def _get_api_params(self, request_data):
-        api_params = {}
-        for k, v in request_data.items():
-            if any(k == p for p in self.api_parameters):
-                api_params[k] = v
-        return api_params
 
     def validate_options(self, scrapy_request_args, api_params):
         url = scrapy_request_args.get("url")

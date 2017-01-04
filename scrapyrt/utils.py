@@ -6,7 +6,7 @@ def extract_scrapy_request_args(dictionary, raise_error=False):
     """
     :param dictionary: Dictionary with parameters passed to API
     :param raise_error: raise ValueError if key is not valid arg for
-                        scrapy.httpRequest
+                        scrapy.http.Request
     :return: dictionary of valid scrapy.http.Request positional and keyword
             arguments.
     """
