@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import os
 from time import sleep
 import datetime
 
@@ -378,3 +379,17 @@ class TestStartRequests(unittest.TestCase):
         self.crawl_manager.start_requests = False
         self.crawl_manager.crawl()
         self.assertEqual(self.start_requests_mock.call_count, 0)
+
+
+class TestCreateProperLogFile(TestCrawlManager):
+    def test_filename(self):
+        logdir = "some_dir_name"
+        self.crawl_manager.log_dir = logdir
+        path = self.crawl_manager._get_log_file_path()
+        filename = os.path.basename(path)
+        expected_format = '%Y-%m-%dT%H%M%S.%f.log'
+        datetime_object = datetime.datetime.strptime(filename, expected_format)
+        now = datetime.datetime.now()
+        assert datetime_object
+        delta = now - datetime_object
+        assert delta.seconds < 60
