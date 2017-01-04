@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
 """Default scrapyrt settings."""
+import logging
 
 # Project settings module - found at server initialization
+
 PROJECT_SETTINGS = None
 
 # Path to server log file
@@ -15,6 +17,8 @@ SPIDER_LOG_FILE_TIMEFORMAT = '%Y-%m-%dT%H%M%S.%f'
 LOG_DIR = 'logs'
 
 LOG_ENCODING = 'utf-8'
+
+LOG_LEVEL = logging.DEBUG
 
 # Root server resource, should inherit from scrapyrt.resources.RealtimeAPI
 SERVICE_ROOT = 'scrapyrt.resources.RealtimeApi'

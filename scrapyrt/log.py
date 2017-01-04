@@ -22,7 +22,10 @@ SILENT = CRITICAL + 1
 
 
 def msg(message=None, **kwargs):
-    kwargs['logLevel'] = kwargs.pop('level', INFO)
+    loglevel = kwargs.get('level', INFO)
+    configured_log_level = scrapyrt_settings.LOG_LEVEL
+    if loglevel < configured_log_level:
+        return
     kwargs.setdefault('system', 'scrapyrt')
     if message is None:
         log.msg(**kwargs)
