@@ -6,7 +6,10 @@ PROJECT_SETTINGS = None
 
 # Path to server log file
 LOG_FILE = None
-SPIDER_LOGFILE_TIMEFORMAT = '%Y-%m-%dT%H%M%S.%f'
+
+# Spider logs will be kept in file with name set to timestamp in following
+# format
+SPIDER_LOG_FILE_TIMEFORMAT = '%Y-%m-%dT%H%M%S.%f'
 
 # Path to spiders log directory
 LOG_DIR = 'logs'
