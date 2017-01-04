@@ -24,7 +24,7 @@ setup(
     zip_safe=False,
     classifiers=[
         'Programming Language :: Python',
-        'Programming Language :: Python :: 2.7',
+        'Programming Language :: Python :: 3.5',
         'Operating System :: OS Independent',
         'Environment :: Console',
         'Environment :: No Input/Output (Daemon)',

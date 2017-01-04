@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from ConfigParser import SafeConfigParser, NoOptionError, NoSectionError
+from configparser import SafeConfigParser, NoOptionError, NoSectionError
 import argparse
 import os
 import sys

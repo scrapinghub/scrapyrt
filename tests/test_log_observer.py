@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-import StringIO
+from io import StringIO
 
 from mock import patch
 from twisted.python.log import startLoggingWithObserver, removeObserver

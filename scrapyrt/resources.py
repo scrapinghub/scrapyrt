@@ -94,7 +94,7 @@ class RealtimeApi(ServiceResource):
 
     def __init__(self, **kwargs):
         super(RealtimeApi, self).__init__(self)
-        for route, resource_path in settings.RESOURCES.iteritems():
+        for route, resource_path in settings.RESOURCES.items():
             resource_cls = load_object(resource_path)
             self.putChild(route, resource_cls(self, **kwargs))
 
