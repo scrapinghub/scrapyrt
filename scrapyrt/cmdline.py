@@ -4,6 +4,10 @@ import argparse
 import os
 import sys
 
+# WARNING: Do place me before importing any Scrapy-related packages
+import scrapyrt.utils
+scrapyrt.utils.patch_logging()
+
 from scrapy.utils.conf import closest_scrapy_cfg
 from scrapy.utils.misc import load_object
 from twisted.application import app
