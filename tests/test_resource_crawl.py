@@ -145,6 +145,24 @@ class TestCrawlResourceIntegration(object):
         assert len(data["items"]) == 2
         assert data.get("errors") is None
 
+    def test_no_request_in_POST_handler(self, server):
+        """Test for POST handler checking if everything works fine
+        if there is no 'request' argument at all.
+        """
+        post_data = {
+            "no_request": {},
+            "spider_name": "test_with_sr"
+        }
+        post_data.update(post_data)
+        res = requests.post(server.url("crawl.json"),
+                            json=post_data)
+        assert res.status_code == 400
+        data = res.json()
+        msg = u"Missing required parameter: 'request'"
+        assert data["message"] == msg
+        assert data["status"] == "error"
+        assert data.get("items") is None
+
     @pytest.mark.parametrize("method", [
         perform_get, perform_post
     ])
