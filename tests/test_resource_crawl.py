@@ -129,6 +129,34 @@ class TestCrawlResourceIntegration(object):
     @pytest.mark.parametrize("method", [
         perform_get, perform_post
     ])
+    def test_url_and_start_requests_present(self, server, method):
+        spider_data = {
+            "url": server.target_site.url("page3.html")
+        }
+        api_params = {
+            "spider_name": "test_with_sr",
+            "start_requests": True,
+        }
+        res = method(server.url("crawl.json"), api_params,
+                     spider_data)
+        assert res.status_code == 200
+        output = res.json()
+        assert len(output.get("errors", [])) == 0
+        items = output.get("items", [])
+        assert len(items) == 3
+
+        for item in items:
+            name = item["name"][0]
+            if name == "Page 1":
+                assert "page1" in item["referer"]
+            elif name == "Page 2":
+                assert "page2" in item["referer"]
+            elif name == "Page 3":
+                assert item.get("referer") is None
+
+    @pytest.mark.parametrize("method", [
+        perform_get, perform_post
+    ])
     def test_no_spider_name(self, server, method):
         res = method(server.url("crawl.json"),
                      {},

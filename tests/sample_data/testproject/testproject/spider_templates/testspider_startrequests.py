@@ -16,3 +16,8 @@ class TestSpider(scrapy.Spider):
     def some_callback(self, response):
         name = response.xpath('//h1/text()').extract()
         return TestprojectItem(name=name, referer=response.meta["referer"])
+
+    def parse(self, response):
+        name = response.xpath("//h1/text()").extract()
+        return TestprojectItem(name=name, referer=response.meta.get("referer"),
+                               response=response.url)
