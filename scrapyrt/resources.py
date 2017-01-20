@@ -145,15 +145,19 @@ class CrawlResource(ServiceResource):
             raise Error('400', message=message)
 
         log.msg("{}".format(api_params))
+        if api_params.get("start_requests"):
+            # start requests passed so 'request' argument is optional
+            _request = api_params.get("request", {})
+        else:
+            # no start_requests, 'request' is required
+            _request = self.get_required_argument(api_params, "request")
         try:
             scrapy_request_args = extract_scrapy_request_args(
-                api_params.get("request", {}), raise_error=True
+                _request, raise_error=True
             )
         except ValueError as e:
             raise Error(400, e.message)
 
-        if not api_params.get("start_requests"):
-            self.get_required_argument(api_params, "request")
         self.validate_options(scrapy_request_args, api_params)
         return self.prepare_crawl(api_params, scrapy_request_args, **kwargs)
 

@@ -126,6 +126,25 @@ class TestCrawlResourceIntegration(object):
         assert len(spider_errors) == 0
         assert result["stats"].get("downloader/request_count") == 2
 
+    def test_no_request_but_start_requests_present(self, server):
+        """Test for POST handler checking if everything works fine
+        if there is no 'request' argument, but 'start_requests' are
+        present. Not checked above because of the way default test fixtures
+        are written.
+        """
+        post_data = {
+            "no_request": {},
+            "start_requests": True,
+            "spider_name": "test_with_sr"
+        }
+        post_data.update(post_data)
+        res = requests.post(server.url("crawl.json"),
+                            json=post_data)
+        assert res.status_code == 200
+        data = res.json()
+        assert len(data["items"]) == 2
+        assert data.get("errors") is None
+
     @pytest.mark.parametrize("method", [
         perform_get, perform_post
     ])
