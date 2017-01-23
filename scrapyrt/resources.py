@@ -1,14 +1,15 @@
 # -*- coding: utf-8 -*-
+import demjson
 from scrapy.utils.misc import load_object
 from scrapy.utils.serialize import ScrapyJSONEncoder
 from twisted.internet.defer import Deferred
 from twisted.python.failure import Failure
-from twisted.web import server, resource
-from twisted.web.error import UnsupportedMethod, Error
-import demjson
+from twisted.web import resource, server
+from twisted.web.error import Error, UnsupportedMethod
 
 from . import log
 from .conf import settings
+from .utils import extract_scrapy_request_args
 
 
 class ServiceResource(resource.Resource, object):
@@ -110,24 +111,14 @@ class CrawlResource(ServiceResource):
         At the moment kwargs for scrapy request are not supported in GET.
         They are supported in POST handler.
         """
-        request_data = dict(
+        api_params = dict(
             (name.decode('utf-8'), value[0].decode('utf-8'))
             for name, value in request.args.items()
         )
-
-        spider_data = {
-            'url': self.get_required_argument(request_data, 'url'),
-            # TODO get optional Request arguments here
-            # distinguish between proper Request args and
-            # api parameters
-        }
-        try:
-            callback = request_data['callback']
-        except KeyError:
-            pass
-        else:
-            spider_data['callback'] = callback
-        return self.prepare_crawl(request_data, spider_data, **kwargs)
+        scrapy_request_args = extract_scrapy_request_args(api_params,
+                                                          raise_error=False)
+        self.validate_options(scrapy_request_args, api_params)
+        return self.prepare_crawl(api_params, scrapy_request_args, **kwargs)
 
     def render_POST(self, request, **kwargs):
         """
@@ -147,26 +138,43 @@ class CrawlResource(ServiceResource):
         """
         request_body = request.content.getvalue()
         try:
-            request_data = demjson.decode(request_body)
+            api_params = demjson.decode(request_body)
         except ValueError as e:
             message = "Invalid JSON in POST body. {}"
             message.format(e.pretty_description())
             raise Error('400', message=message)
 
-        log.msg("{}".format(request_data))
-        spider_data = self.get_required_argument(request_data, "request")
-        error_msg = "Missing required key 'url' in 'request' object"
-        self.get_required_argument(spider_data, "url", error_msg=error_msg)
+        log.msg("{}".format(api_params))
+        if api_params.get("start_requests"):
+            # start requests passed so 'request' argument is optional
+            _request = api_params.get("request", {})
+        else:
+            # no start_requests, 'request' is required
+            _request = self.get_required_argument(api_params, "request")
+        try:
+            scrapy_request_args = extract_scrapy_request_args(
+                _request, raise_error=True
+            )
+        except ValueError as e:
+            raise Error(400, e.message)
 
-        return self.prepare_crawl(request_data, spider_data, **kwargs)
+        self.validate_options(scrapy_request_args, api_params)
+        return self.prepare_crawl(api_params, scrapy_request_args, **kwargs)
 
-    def get_required_argument(self, request_data, name, error_msg=None):
+    def validate_options(self, scrapy_request_args, api_params):
+        url = scrapy_request_args.get("url")
+        start_requests = api_params.get("start_requests")
+        if not url and not start_requests:
+            raise Error(400,
+                        "'url' is required if start_requests are disabled")
+
+    def get_required_argument(self, api_params, name, error_msg=None):
         """Get required API key from dict-like object.
 
-        :param dict request_data:
+        :param dict api_params:
             dictionary with names and values of parameters supplied to API.
         :param str name:
-            required key that must be found in request_data
+            required key that must be found in api_params
         :return: value of required param
         :raises Error: Bad Request response
 
@@ -174,39 +182,41 @@ class CrawlResource(ServiceResource):
         if error_msg is None:
             error_msg = 'Missing required parameter: {}'.format(repr(name))
         try:
-            value = request_data[name]
+            value = api_params[name]
         except KeyError:
             raise Error('400', message=error_msg)
         if not value:
             raise Error('400', message=error_msg)
         return value
 
-    def prepare_crawl(self, request_data, spider_data, *args, **kwargs):
+    def prepare_crawl(self, api_params, scrapy_request_args, *args, **kwargs):
         """Schedule given spider with CrawlManager.
 
-        :param dict request_data:
+        :param dict api_params:
             arguments needed to find spider and set proper api parameters
             for crawl (max_requests for example)
 
-        :param dict spider_data:
+        :param dict scrapy_request_args:
             should contain positional and keyword arguments for Scrapy
             Request object that will be created
         """
-        spider_name = self.get_required_argument(request_data, 'spider_name')
+        spider_name = self.get_required_argument(api_params, 'spider_name')
+        start_requests = api_params.get("start_requests", False)
         try:
-            max_requests = request_data['max_requests']
+            max_requests = api_params['max_requests']
         except (KeyError, IndexError):
             max_requests = None
         dfd = self.run_crawl(
-            spider_name, spider_data, max_requests, *args, **kwargs)
+            spider_name, scrapy_request_args, max_requests,
+            start_requests=start_requests, *args, **kwargs)
         dfd.addCallback(
-            self.prepare_response, request_data=request_data, *args, **kwargs)
+            self.prepare_response, request_data=api_params, *args, **kwargs)
         return dfd
 
-    def run_crawl(self, spider_name, spider_data,
-                  max_requests=None, *args, **kwargs):
+    def run_crawl(self, spider_name, scrapy_request_args,
+                  max_requests=None, start_requests=False, *args, **kwargs):
         crawl_manager_cls = load_object(settings.CRAWL_MANAGER)
-        manager = crawl_manager_cls(spider_name, spider_data, max_requests)
+        manager = crawl_manager_cls(spider_name, scrapy_request_args, max_requests, start_requests=start_requests)
         dfd = manager.crawl(*args, **kwargs)
         return dfd
 
@@ -223,4 +233,3 @@ class CrawlResource(ServiceResource):
         if errors:
             response["errors"] = errors
         return response
-

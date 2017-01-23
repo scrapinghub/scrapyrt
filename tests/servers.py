@@ -103,7 +103,7 @@ class BaseTestServer(object):
 
 class ScrapyrtTestServer(BaseTestServer):
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, site=None, *args, **kwargs):
         super(ScrapyrtTestServer, self).__init__(*args, **kwargs)
         self.arguments = [
             sys.executable, '-m', 'scrapyrt.cmdline', '-p', str(self.port)
@@ -111,9 +111,20 @@ class ScrapyrtTestServer(BaseTestServer):
         self.stderr = PIPE
         self.tmp_dir = tempfile.mkdtemp()
         self.cwd = os.path.join(self.tmp_dir, 'testproject')
+
         source = os.path.join(SAMPLE_DATA, 'testproject')
         shutil.copytree(
             source, self.cwd, ignore=shutil.ignore_patterns('*.pyc'))
+        # Pass site url to spider doing start requests
+        spider_name = "testspider_startrequests.py"
+        spider_filename = os.path.join(self.cwd, "testproject", "spider_templates", spider_name)
+        spider_target_place = os.path.join(self.cwd, "testproject", "spiders", spider_name)
+        if not site:
+            return
+        with open(spider_filename) as spider_file:
+            spider_string = spider_file.read().format(site.url("page1.html"), site.url("page2.html"))
+            with open(spider_target_place, "wb") as file_target:
+                file_target.write(spider_string)
 
     def stop(self):
         super(ScrapyrtTestServer, self).stop()

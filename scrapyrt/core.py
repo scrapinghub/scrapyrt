@@ -130,7 +130,7 @@ class CrawlManager(object):
     Runs crawls
     """
 
-    def __init__(self, spider_name, request_kwargs, max_requests=None):
+    def __init__(self, spider_name, request_kwargs, max_requests=None, start_requests=False):
         self.spider_name = spider_name
         self.log_dir = settings.LOG_DIR
         self.items = []
@@ -145,8 +145,11 @@ class CrawlManager(object):
         # callback will be added after instantiation of crawler object
         # because we need to know if spider has method available
         self.callback_name = request_kwargs.pop('callback', None) or 'parse'
-        self.request = self.create_spider_request(deepcopy(request_kwargs))
-        self.start_requests = False
+        if request_kwargs.get("url"):
+            self.request = self.create_spider_request(deepcopy(request_kwargs))
+        else:
+            self.request = None
+        self.start_requests = start_requests
         self._request_scheduled = False
 
     def crawl(self, *args, **kwargs):
@@ -190,7 +193,7 @@ class CrawlManager(object):
         which is totally wrong.
 
         """
-        if spider is self.crawler.spider and not self._request_scheduled:
+        if spider is self.crawler.spider and self.request and not self._request_scheduled:
             callback = getattr(self.crawler.spider, self.callback_name)
             assert callable(callback), 'Invalid callback'
             self.request = self.request.replace(callback=callback)
@@ -264,15 +267,7 @@ class CrawlManager(object):
         try:
             req = Request(url, **kwargs)
         except (TypeError, ValueError) as e:
-            # Bad arguments for scrapy Request
-            # we don't want to schedule spider if someone
-            # passes meaingless arguments to Request.
-            # We must raise this here so that this will be returned to client,
-            # Otherwise if this is raised in spider_idle it goes to
-            # spider logs where it does not really belong.
-            # It is needed because in POST handler we can pass
-            # all possible requests kwargs, so it is easy to make mistakes.
-            message = "Error while creating Request, {}".format(e.message)
+            message = "Error while creating Scrapy Request, {}".format(e.message)
             raise Error('400', message=message)
 
         req.dont_filter = True

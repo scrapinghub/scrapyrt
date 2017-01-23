@@ -3,6 +3,7 @@ import os
 from time import sleep
 import datetime
 
+import pytest
 from mock import patch, MagicMock
 from scrapy import Item
 from scrapy.exceptions import DontCloseSpider
@@ -161,7 +162,7 @@ class TestLimitRuntime(TestCrawlManager):
     def setUp(self):
         super(TestLimitRuntime, self).setUp()
         self.crawl_manager.timeout_limit = 1
-        self.crawler.stats.get_value.return_value = datetime.datetime.now()
+        self.crawler.stats.get_value.return_value = datetime.datetime.utcnow()
 
     def _test_limit_runtime(self):
         self.crawl_manager.limit_runtime(self.spider)
