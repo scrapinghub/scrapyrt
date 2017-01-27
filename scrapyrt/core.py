@@ -60,7 +60,7 @@ class ScrapyrtCrawlerProcess(CrawlerRunner):
 
     def crawl(self, spidercls, *args, **kwargs):
         if isinstance(spidercls, six.string_types):
-            spidercls = self.spiders.load(spidercls)
+            spidercls = self.spider_loader.load(spidercls)
         # creating our own crawler that will allow us to disable start requests easily
         crawler = ScrapyrtCrawler(
             spidercls, self.settings, self.scrapyrt_manager.start_requests)

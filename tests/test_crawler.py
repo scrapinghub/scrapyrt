@@ -20,7 +20,7 @@ class TestCrawler(unittest.TestCase):
         self.site = MockServer()
         self.site.start()
         self.settings = get_settings()
-        self.settings['EXTENSIONS']['scrapy.contrib.corestats.CoreStats'] = 0
+        self.settings['EXTENSIONS']['scrapy.extensions.corestats.CoreStats'] = 0
         self.engine_status = []
 
     def tearDown(self):

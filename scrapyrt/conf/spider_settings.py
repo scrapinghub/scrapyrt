@@ -11,10 +11,10 @@ def get_scrapyrt_settings(log_file=None):
         "LOG_FILE": log_file,
         "LOG_STDOUT": False,
         "EXTENSIONS": {
-            'scrapy.contrib.logstats.LogStats': None,
+            'scrapy.extensions.logstats.LogStats': None,
             'scrapy.webservice.WebService': None,
-            'scrapy.telnet.TelnetConsole': None,
-            'scrapy.contrib.throttle.AutoThrottle': None
+            'scrapy.extensions.telnet.TelnetConsole': None,
+            'scrapy.extensions.throttle.AutoThrottle': None
         }
     }
     return spider_settings
