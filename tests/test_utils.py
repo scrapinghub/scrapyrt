@@ -30,5 +30,5 @@ class TestUtils(object):
             extract_scrapy_request_args(args, raise_error=True)
 
         expected_msg =u"'noise' is not a valid argument for scrapy.Request"
-        assert re.search(expected_msg, e.value.message)
+        assert re.search(expected_msg, str(e.value))
 
