@@ -226,13 +226,13 @@ class TestHandleSpiderError(TestCrawlManager):
 class TestLimitRequests(TestCrawlManager):
 
     def test_max_requests_not_set(self):
-        for i in xrange(100):
+        for i in range(100):
             self.crawl_manager.limit_requests(self.spider)
         self.assertFalse(self.crawler.engine.close_spider.called)
 
     def test_max_requests_set(self):
         self.crawl_manager.max_requests = 10
-        for i in xrange(self.crawl_manager.max_requests):
+        for i in range(self.crawl_manager.max_requests):
             self.crawl_manager.limit_requests(self.spider)
         self.assertFalse(self.crawler.engine.close_spider.called)
         self.crawl_manager.limit_requests(self.spider)
@@ -266,7 +266,7 @@ class TestCollectDropped(TestCrawlManager):
         self.expected_result = {
             'item': self.item,
             'response': self.response,
-            'exception': self.exception.message
+            'exception': str(self.exception)
         }
 
     def test_collect_dropped(self):
@@ -306,7 +306,7 @@ class TestReturnItems(TestCrawlManager):
     def test_return_items(self):
         result = self.crawl_manager.return_items(None)
         self.assertDictContainsSubset(self.expected_result, result)
-        self.assertListEqual(sorted(self.stats.keys()), result['stats'].keys())
+        self.assertEqual(list(sorted(self.stats.keys())), list(result['stats'].keys()))
         # debug = True by default
         self.assertIn('errors', result)
         self.assertEquals(result['errors'], self.crawl_manager.errors)
