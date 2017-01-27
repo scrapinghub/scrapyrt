@@ -4,7 +4,7 @@ import logging
 import os
 import sys
 
-from scrapy.utils.python import unicode_to_str
+from scrapy.utils.python import to_bytes
 from twisted.python import log
 from twisted.python.log import startLoggingWithObserver
 from twisted.python.logfile import DailyLogFile
@@ -64,7 +64,7 @@ class ScrapyrtFileLogObserver(log.FileLogObserver):
         message = eventDict.get('message')
         if message:
             eventDict['message'] = tuple(
-                unicode_to_str(x, self.encoding) for x in message)
+                to_bytes(x, self.encoding) for x in message)
         return eventDict
 
     def emit(self, eventDict):

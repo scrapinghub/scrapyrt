@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-import StringIO
+from six import StringIO
 
 from mock import patch
 from twisted.python.log import startLoggingWithObserver, removeObserver
@@ -12,7 +12,7 @@ from scrapyrt.log import ScrapyrtFileLogObserver, msg
 class TestLogObserver(unittest.TestCase):
 
     def setUp(self):
-        self.file = StringIO.StringIO()
+        self.file = StringIO()
         self.log_observer = ScrapyrtFileLogObserver(self.file)
         startLoggingWithObserver(self.log_observer.emit, setStdout=False)
         self.event_dict = {'system': 'scrapyrt', 'message': 'blah'}
