@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
-from ConfigParser import SafeConfigParser, NoOptionError, NoSectionError
+from six.moves.configparser import (
+    SafeConfigParser, NoOptionError, NoSectionError
+)
 import argparse
 import os
 import sys

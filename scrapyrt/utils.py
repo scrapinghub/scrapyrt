@@ -1,4 +1,6 @@
 import inspect
+
+import sys
 from scrapy import Request
 
 
@@ -19,3 +21,7 @@ def extract_scrapy_request_args(dictionary, raise_error=False):
                 msg = u"{!r} is not a valid argument for scrapy.Request.__init__"
                 raise ValueError(msg.format(key))
     return result
+
+
+def is_python2():
+    return sys.version_info < (3,0)
