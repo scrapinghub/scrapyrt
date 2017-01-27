@@ -12,8 +12,9 @@ from .conf import settings
 from .utils import extract_scrapy_request_args
 
 
+# XXX super() calls won't work wihout object mixin in Python 2
+# maybe this can be removed at some point?
 class ServiceResource(resource.Resource, object):
-    """Taken from scrapyd and changed."""
     json_encoder = ScrapyJSONEncoder()
 
     def __init__(self, root=None):
@@ -74,9 +75,13 @@ class ServiceResource(resource.Resource, object):
         return self.format_error_response(exception, request)
 
     def format_error_response(self, exception, request):
+        # Python exceptions don't have message attribute in Python 3+ anymore.
+        # Twisted HTTP Error objects still have 'message' attribute even in 3+
+        # and they fail on str(exception) call.
+        msg = exception.message if hasattr(exception, 'message') else str(exception)
         return {
             "status": "error",
-            "message": str(exception.message),
+            "message": msg,
             "code": request.code
         }
 
