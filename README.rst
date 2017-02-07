@@ -28,5 +28,5 @@ issue`_ (ie. issue with "question" label).
 
 Commercial support is also available by `Scrapinghub`_.
 
-.. _create a question issue: https://github.com/scrapinghub/splash/issues/new?labels=question
+.. _create a question issue: https://github.com/scrapinghub/scrapyrt/issues/new?labels=question
 .. _Scrapinghub: http://scrapinghub.com
