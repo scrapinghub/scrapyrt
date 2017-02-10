@@ -102,6 +102,8 @@ class RealtimeApi(ServiceResource):
         super(RealtimeApi, self).__init__(self)
         for route, resource_path in settings.RESOURCES.items():
             resource_cls = load_object(resource_path)
+            if not isinstance(route, bytes):
+                route = route.encode('utf8')
             self.putChild(route, resource_cls(self, **kwargs))
 
 
@@ -161,7 +163,7 @@ class CrawlResource(ServiceResource):
                 _request, raise_error=True
             )
         except ValueError as e:
-            raise Error(400, str(e)) #.message)
+            raise Error(400, str(e))
 
         self.validate_options(scrapy_request_args, api_params)
         return self.prepare_crawl(api_params, scrapy_request_args, **kwargs)
