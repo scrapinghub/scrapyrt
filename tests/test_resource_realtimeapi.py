@@ -25,7 +25,7 @@ class TestRealtimeApi(unittest.TestCase):
         return '{}.{}.{}'.format(__package__, module_name, clsname)
 
     def test_realtimeapi_with_default_settings(self):
-        expected_entities = {'crawl.json': CrawlResource}
+        expected_entities = {b'crawl.json': CrawlResource}
         service_root = RealtimeApi()
         self._check_entities(service_root, expected_entities)
 
@@ -35,10 +35,10 @@ class TestRealtimeApi(unittest.TestCase):
     @patch('scrapyrt.resources.settings', deepcopy(settings))
     def test_realtimeapi_with_custom_settings(self):
         from scrapyrt.resources import settings
-        settings.RESOURCES['test.json'] = self._get_class_path('TestResource')
+        settings.RESOURCES[b'test.json'] = self._get_class_path('TestResource')
         expected_entities = {
-            'crawl.json': CrawlResource,
-            'test.json': TestResource
+            b'crawl.json': CrawlResource,
+            b'test.json': TestResource
         }
         service_root = RealtimeApi()
         self._check_entities(service_root, expected_entities)

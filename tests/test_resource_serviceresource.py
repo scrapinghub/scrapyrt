@@ -41,7 +41,7 @@ class TestRender(TestServiceResource):
     def test_render_ok(self, render_mock, log_err_mock):
         render_mock.return_value = {'status': 'ok'}
         result = self.resource.render(self.request)
-        obj = json.loads(result)
+        obj = json.loads(result.decode("utf8"))
         self.assertIn('status', obj)
         self.assertEqual(obj['status'], 'ok')
         self.assertFalse(log_err_mock.called)
@@ -50,7 +50,7 @@ class TestRender(TestServiceResource):
         exc = Exception('boom')
         render_mock.side_effect = exc
         result = self.resource.render(self.request)
-        obj = json.loads(result)
+        obj = json.loads(result.decode("utf8"))
         self.assertTrue(log_err_mock.called)
         self.assertEqual(obj['status'], 'error')
         self.assertEqual(obj['message'], str(exc))
@@ -63,7 +63,7 @@ class TestRender(TestServiceResource):
         self.assertTrue(self.request.write.called)
         self.assertTrue(self.request.finish.called)
         self.assertEqual(len(self.request_write_values), 1)
-        obj = json.loads(self.request_write_values[0])
+        obj = json.loads(self.request_write_values[0].decode("utf8"))
         self.assertIn('status', obj)
         self.assertEqual(obj['status'], 'ok')
         self.assertFalse(log_err_mock.called)
@@ -76,7 +76,7 @@ class TestRender(TestServiceResource):
         self.assertTrue(self.request.write.called)
         self.assertTrue(self.request.finish.called)
         self.assertEqual(len(self.request_write_values), 1)
-        obj = json.loads(self.request_write_values[0])
+        obj = json.loads(self.request_write_values[0].decode("utf8"))
         self.assertEqual(obj['status'], 'error')
         self.assertEqual(obj['message'], str(exc))
         self.assertEqual(obj['code'], 500)
@@ -179,8 +179,8 @@ class TestRenderObject(TestServiceResource):
         self.assertIn('Access-Control-Allow-Methods', headers)
         self.assertEqual(headers['Access-Control-Allow-Methods'], '')
         for key, value in self.obj.items():
-            self.assertIn(key, result)
-            self.assertIn(value, result)
+            self.assertIn(key.encode("utf8"), result)
+            self.assertIn(value.encode("utf8"), result)
 
     def _test_access_control_allow_methods_header(self):
         headers = dict(self.headers)

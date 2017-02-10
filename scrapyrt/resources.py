@@ -93,7 +93,7 @@ class ServiceResource(resource.Resource, object):
                           ', '.join(getattr(self, 'allowedMethods', [])))
         request.setHeader('Access-Control-Allow-Headers', 'X-Requested-With')
         request.setHeader('Content-Length', len(r))
-        return r
+        return r.encode("utf8")
 
 
 class RealtimeApi(ServiceResource):
@@ -161,7 +161,7 @@ class CrawlResource(ServiceResource):
                 _request, raise_error=True
             )
         except ValueError as e:
-            raise Error(400, e.message)
+            raise Error(400, str(e)) #.message)
 
         self.validate_options(scrapy_request_args, api_params)
         return self.prepare_crawl(api_params, scrapy_request_args, **kwargs)
