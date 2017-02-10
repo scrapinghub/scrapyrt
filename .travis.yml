@@ -7,5 +7,7 @@ matrix:
        env: TOXENV=py27
      - python: 3.5
        env: TOXENV=py35
+     - python: 2.7
+       env: TOXENV=scrapy10
 
 script: tox

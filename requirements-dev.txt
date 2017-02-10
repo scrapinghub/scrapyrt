@@ -1,4 +1,3 @@
--r requirements.txt
 
 fabric
 requests==2.9.1
