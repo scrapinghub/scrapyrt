@@ -11,3 +11,5 @@ matrix:
        env: TOXENV=scrapy10
 
 script: tox
+after_success:
+    - codecov
