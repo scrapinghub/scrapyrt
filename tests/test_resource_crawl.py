@@ -255,3 +255,16 @@ class TestCrawlResourceIntegration(object):
         assert res_json['items']
         assert len(res_json['items']) == len(expected_items)
         assert res_json["items"] == expected_items
+
+    def test_invalid_json_in_post(self, server):
+        res = requests.post(server.url("crawl.json"), data="ads")
+        assert res.status_code == 400
+        res_json = res.json()
+        expected_result = {
+            u'status': u'error',
+            u'code': 400
+        }
+        for k, v in expected_result.items():
+            assert res_json[k] == v
+        msg = "Invalid JSON in POST body"
+        assert msg in res_json['message']

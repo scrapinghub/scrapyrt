@@ -146,9 +146,9 @@ class CrawlResource(ServiceResource):
         request_body = request.content.getvalue()
         try:
             api_params = demjson.decode(request_body)
-        except ValueError as e:
+        except (ValueError, demjson.JSONDecodeError) as e:
             message = "Invalid JSON in POST body. {}"
-            message.format(e.pretty_description())
+            message = message.format(e.pretty_description())
             raise Error('400', message=message)
 
         log.msg("{}".format(api_params))
