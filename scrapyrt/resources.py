@@ -9,7 +9,7 @@ from twisted.web.error import Error, UnsupportedMethod
 
 from . import log
 from .conf import settings
-from .utils import extract_scrapy_request_args
+from .utils import extract_scrapy_request_args, to_bytes
 
 
 # XXX super() calls won't work wihout object mixin in Python 2
@@ -102,8 +102,7 @@ class RealtimeApi(ServiceResource):
         super(RealtimeApi, self).__init__(self)
         for route, resource_path in settings.RESOURCES.items():
             resource_cls = load_object(resource_path)
-            if not isinstance(route, bytes):
-                route = route.encode('utf8')
+            route = to_bytes(route)
             self.putChild(route, resource_cls(self, **kwargs))
 
 
