@@ -162,7 +162,7 @@ class CrawlResource(ServiceResource):
                 _request, raise_error=True
             )
         except ValueError as e:
-            raise Error(400, str(e))
+            raise Error('400', str(e))
 
         self.validate_options(scrapy_request_args, api_params)
         return self.prepare_crawl(api_params, scrapy_request_args, **kwargs)
@@ -171,7 +171,7 @@ class CrawlResource(ServiceResource):
         url = scrapy_request_args.get("url")
         start_requests = api_params.get("start_requests")
         if not url and not start_requests:
-            raise Error(400,
+            raise Error('400',
                         "'url' is required if start_requests are disabled")
 
     def get_required_argument(self, api_params, name, error_msg=None):
