@@ -1,8 +1,13 @@
 # -*- coding: utf-8 -*-
+import json
+
 import pytest
+import re
+from mock import MagicMock, patch, Mock
 from twisted.trial import unittest
 from twisted.web.error import Error
 import requests
+from twisted.web.server import Request
 
 from scrapyrt.resources import CrawlResource
 
@@ -25,10 +30,115 @@ def server(request):
     return server
 
 
-class TestCrawlResource(unittest.TestCase):
+@pytest.fixture()
+def t_req():
+    return MagicMock(spec=Request)
+
+
+@pytest.fixture()
+def resource():
+    return CrawlResource()
+
+
+class TestCrawlResource(object):
 
     def test_is_leaf(self):
-        self.assertTrue(CrawlResource.isLeaf)
+        assert CrawlResource.isLeaf
+
+    def test_render_GET(self, t_req, resource):
+        t_req.args = {
+            b'url': [b'http://foo'],
+            b'spider_name': [b'test']
+        }
+        resource.validate_options = Mock()
+
+        with patch('scrapyrt.core.CrawlManager', spec=True) as manager:
+            instance = manager.return_value
+            resource.render_GET(t_req)
+        scrapy_params = {'url': 'http://foo'}
+        api_params = {'spider_name': 'test', 'url': 'http://foo'}
+        resource.validate_options.assert_called_once_with(
+            scrapy_params, api_params
+        )
+        assert instance.crawl.called
+
+    def test_render_POST(self, t_req, resource):
+        t_req.content.getvalue.return_value = json.dumps({
+                'spider_name': 'test',
+                'request': {
+                    'url': 'http://foo.com'
+                }
+        })
+        resource.validate_options = Mock()
+        with patch('scrapyrt.core.CrawlManager', spec=True) as manager:
+            instance = manager.return_value
+            resource.render_POST(t_req)
+
+        scrapy_params = {'url': 'http://foo.com'}
+        api_params = {
+            'request': {'url': 'http://foo.com'},
+            'spider_name': 'test'
+        }
+        assert instance.crawl.called
+        resource.validate_options.assert_called_once_with(
+            scrapy_params, api_params
+        )
+
+    def test_render_POST_invalid_json(self, t_req, resource):
+        t_req.content.getvalue.return_value = b'{{{{{'
+        with patch('scrapyrt.core.CrawlManager', spec=True) as manager:
+            with pytest.raises(Error) as e:
+                resource.render_POST(t_req)
+        assert e.value.status == '400'
+        assert re.search('Invalid JSON in POST', e.value.message)
+        assert not manager.return_value.crawl.called
+
+    def test_render_POST_invalid_options(self, t_req, resource):
+        t_req.content.getvalue.return_value = json.dumps({
+            'spider_name': 'tests',
+            'request': {
+                'foo': 'bar'
+            }
+        })
+        resource.validate_options = Mock()
+        with patch('scrapyrt.core.CrawlManager', spec=True):
+            with pytest.raises(Error) as e:
+                resource.render_POST(t_req)
+        assert e.value.status == '400'
+        msg = "'foo' is not a valid argument"
+        assert re.search(msg, e.value.message)
+
+    @pytest.mark.parametrize('scrapy_args,api_args,has_error', [
+        ({'url': 'aa'}, {}, False),
+        ({}, {}, True)
+    ])
+    def test_validate_options(self, resource,
+                              scrapy_args, api_args, has_error):
+        if has_error:
+            with pytest.raises(Error) as e:
+                resource.validate_options(scrapy_args, api_args)
+            assert e.value.status == '400'
+            assert re.search("\'url\' is required", e.value.message)
+        else:
+            result = resource.validate_options(scrapy_args, api_args)
+            assert result is None
+
+    def test_prepare_response(self, resource):
+        result = {
+            'items': [1, 2],
+            'stats': [99],
+            'spider_name': 'test'
+        }
+        prepared_res = resource.prepare_response(result)
+        expected = [
+            ('status', 'ok'),
+            ('items', [1, 2]),
+            ('items_dropped', []),
+            ('stats', [99]),
+            ('spider_name', 'test')
+        ]
+        for key, value in expected:
+            assert prepared_res[key] == value
 
 
 class TestCrawlResourceGetRequiredArgument(unittest.TestCase):

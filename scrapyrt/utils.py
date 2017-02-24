@@ -1,6 +1,8 @@
 import inspect
 
 import sys
+
+import six
 from scrapy import Request
 
 
