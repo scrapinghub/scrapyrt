@@ -25,6 +25,8 @@ setup(
     classifiers=[
         'Programming Language :: Python',
         'Programming Language :: Python :: 2.7',
+        'Programming Language :: Python :: 3',
+        'Programming Language :: Python :: 3.5',
         'Operating System :: OS Independent',
         'Environment :: Console',
         'Environment :: No Input/Output (Daemon)',
@@ -34,7 +36,8 @@ setup(
     install_requires=[
         'Twisted>=14.0.0',
         'Scrapy>=1.0.0',
-        'demjson'
+        'demjson',
+        'six'
     ],
     package_data={
         'scrapyrt': [
