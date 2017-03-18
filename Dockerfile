@@ -19,9 +19,12 @@ RUN apt-get update && \
 RUN mkdir -p /scrapyrt/src /scrapyrt/project
 RUN mkdir -p /var/log/scrapyrt
 
-RUN wget "https://bootstrap.pypa.io/get-pip.py"
-RUN python get-pip.py
-RUN pip install scrapyrt
+RUN wget -O /tmp/get-pip.py "https://bootstrap.pypa.io/get-pip.py" && \
+    python /tmp/get-pip.py "pip==9.0.1" && \
+    rm /tmp/get-pip.py 
+
+ADD . /scrapyrt/src
+RUN pip install /scrapyrt/src
 
 WORKDIR /scrapyrt/project
 

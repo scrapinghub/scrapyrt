@@ -28,6 +28,7 @@ testing_scripts*
 # tests
 .coverage
 /.tox/
+/.cache/
 
 
 # sphinx
