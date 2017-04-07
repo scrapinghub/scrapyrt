@@ -1,19 +1,17 @@
 # -*- coding: utf-8 -*-
-import six
-from logging.config import dictConfig
 import logging
 import os
 import sys
+from logging.config import dictConfig
 
-
+from scrapy.settings import Settings
+from scrapy.utils.log import DEFAULT_LOGGING, TopLevelFormatter
 from twisted.python import log
 from twisted.python.log import startLoggingWithObserver
 from twisted.python.logfile import DailyLogFile
-from scrapy.settings import Settings
-from scrapy.utils.log import DEFAULT_LOGGING, TopLevelFormatter
 
-from scrapyrt.utils import to_bytes
 from .conf import settings as scrapyrt_settings
+from .utils import to_bytes
 
 DEBUG = logging.DEBUG
 INFO = logging.INFO

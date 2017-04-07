@@ -37,7 +37,7 @@ setup(
         'Twisted>=14.0.0',
         'Scrapy>=1.0.0',
         'demjson',
-        'six'
+        'six>=1.5.2'
     ],
     package_data={
         'scrapyrt': [

@@ -188,7 +188,7 @@ class TestRenderObject(TestServiceResource):
         access_control_allow_methods = headers['Access-Control-Allow-Methods']
         self.assertEqual(
             self.resource.allowedMethods,
-            list(map(lambda s: s.strip(), access_control_allow_methods.split(',')))
+            [s.strip() for s in access_control_allow_methods.split(',')]
         )
 
     def test_access_control_allow_methods_header_get(self):
