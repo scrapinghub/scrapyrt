@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
+import six
 from subprocess import Popen, PIPE
-from urlparse import urljoin
+from six.moves.urllib.parse import urljoin
 import fcntl
 import os
 import shutil
@@ -11,11 +12,10 @@ import time
 
 import port_for
 
-from . import TESTS_PATH
-from .utils import get_testenv
+from . import SAMPLE_DATA
+from .utils import get_testenv, generate_project
 
 DEVNULL = open(os.devnull, 'wb')
-SAMPLE_DATA = os.path.join(TESTS_PATH, 'sample_data')
 
 
 class BaseTestServer(object):
@@ -30,8 +30,12 @@ class BaseTestServer(object):
         self.stdin = stdin
         self.stdout = stdout
         self.stderr = stderr
+        if six.PY2:
+            command = 'SimpleHTTPServer'
+        else:
+            command = 'http.server'
         self.arguments = [
-            sys.executable, '-u', '-m', 'SimpleHTTPServer', str(self.port)
+            sys.executable, '-u', '-m', command, str(self.port)
         ]
 
     def start(self):
@@ -111,20 +115,7 @@ class ScrapyrtTestServer(BaseTestServer):
         self.stderr = PIPE
         self.tmp_dir = tempfile.mkdtemp()
         self.cwd = os.path.join(self.tmp_dir, 'testproject')
-
-        source = os.path.join(SAMPLE_DATA, 'testproject')
-        shutil.copytree(
-            source, self.cwd, ignore=shutil.ignore_patterns('*.pyc'))
-        # Pass site url to spider doing start requests
-        spider_name = "testspider_startrequests.py"
-        spider_filename = os.path.join(self.cwd, "testproject", "spider_templates", spider_name)
-        spider_target_place = os.path.join(self.cwd, "testproject", "spiders", spider_name)
-        if not site:
-            return
-        with open(spider_filename) as spider_file:
-            spider_string = spider_file.read().format(site.url("page1.html"), site.url("page2.html"))
-            with open(spider_target_place, "wb") as file_target:
-                file_target.write(spider_string)
+        generate_project(self.cwd, site=site)
 
     def stop(self):
         super(ScrapyrtTestServer, self).stop()

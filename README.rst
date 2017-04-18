@@ -5,6 +5,15 @@ Scrapyrt (Scrapy realtime)
 .. image:: https://travis-ci.org/scrapinghub/scrapyrt.svg?branch=master
     :target: https://travis-ci.org/scrapinghub/scrapyrt
 
+.. image:: https://img.shields.io/pypi/pyversions/scrapyrt.svg
+    :target: https://pypi.python.org/pypi/scrapyrt
+
+.. image:: https://img.shields.io/pypi/v/scrapyrt.svg
+    :target: https://pypi.python.org/pypi/scrapyrt
+
+.. image:: https://img.shields.io/pypi/l/scrapyrt.svg
+    :target: https://pypi.python.org/pypi/scrapyrt
+
 HTTP server which provides API for scheduling Scrapy spiders and
 making requests with spiders.
 

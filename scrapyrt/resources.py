@@ -9,11 +9,12 @@ from twisted.web.error import Error, UnsupportedMethod
 
 from . import log
 from .conf import settings
-from .utils import extract_scrapy_request_args
+from .utils import extract_scrapy_request_args, to_bytes
 
 
+# XXX super() calls won't work wihout object mixin in Python 2
+# maybe this can be removed at some point?
 class ServiceResource(resource.Resource, object):
-    """Taken from scrapyd and changed."""
     json_encoder = ScrapyJSONEncoder()
 
     def __init__(self, root=None):
@@ -74,9 +75,13 @@ class ServiceResource(resource.Resource, object):
         return self.format_error_response(exception, request)
 
     def format_error_response(self, exception, request):
+        # Python exceptions don't have message attribute in Python 3+ anymore.
+        # Twisted HTTP Error objects still have 'message' attribute even in 3+
+        # and they fail on str(exception) call.
+        msg = exception.message if hasattr(exception, 'message') else str(exception)
         return {
             "status": "error",
-            "message": str(exception.message),
+            "message": msg,
             "code": request.code
         }
 
@@ -88,15 +93,16 @@ class ServiceResource(resource.Resource, object):
                           ', '.join(getattr(self, 'allowedMethods', [])))
         request.setHeader('Access-Control-Allow-Headers', 'X-Requested-With')
         request.setHeader('Content-Length', len(r))
-        return r
+        return r.encode("utf8")
 
 
 class RealtimeApi(ServiceResource):
 
     def __init__(self, **kwargs):
         super(RealtimeApi, self).__init__(self)
-        for route, resource_path in settings.RESOURCES.iteritems():
+        for route, resource_path in settings.RESOURCES.items():
             resource_cls = load_object(resource_path)
+            route = to_bytes(route)
             self.putChild(route, resource_cls(self, **kwargs))
 
 
@@ -139,9 +145,9 @@ class CrawlResource(ServiceResource):
         request_body = request.content.getvalue()
         try:
             api_params = demjson.decode(request_body)
-        except ValueError as e:
+        except demjson.JSONDecodeError as e:
             message = "Invalid JSON in POST body. {}"
-            message.format(e.pretty_description())
+            message = message.format(e.pretty_description())
             raise Error('400', message=message)
 
         log.msg("{}".format(api_params))
@@ -156,7 +162,7 @@ class CrawlResource(ServiceResource):
                 _request, raise_error=True
             )
         except ValueError as e:
-            raise Error(400, e.message)
+            raise Error('400', str(e))
 
         self.validate_options(scrapy_request_args, api_params)
         return self.prepare_crawl(api_params, scrapy_request_args, **kwargs)
@@ -165,7 +171,7 @@ class CrawlResource(ServiceResource):
         url = scrapy_request_args.get("url")
         start_requests = api_params.get("start_requests")
         if not url and not start_requests:
-            raise Error(400,
+            raise Error('400',
                         "'url' is required if start_requests are disabled")
 
     def get_required_argument(self, api_params, name, error_msg=None):

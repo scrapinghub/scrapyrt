@@ -60,7 +60,7 @@ class ScrapyrtCrawlerProcess(CrawlerRunner):
 
     def crawl(self, spidercls, *args, **kwargs):
         if isinstance(spidercls, six.string_types):
-            spidercls = self.spiders.load(spidercls)
+            spidercls = self.spider_loader.load(spidercls)
         # creating our own crawler that will allow us to disable start requests easily
         crawler = ScrapyrtCrawler(
             spidercls, self.settings, self.scrapyrt_manager.start_requests)
@@ -159,7 +159,7 @@ class CrawlManager(object):
             dfd = self.crawler_process.crawl(self.spider_name, *args, **kwargs)
         except KeyError as e:
             # Spider not found.
-            raise Error('404', message=e.message)
+            raise Error('404', message=str(e))
         dfd.addCallback(self.return_items)
         return dfd
 
@@ -245,7 +245,7 @@ class CrawlManager(object):
         if spider is self.crawler.spider:
             self.items_dropped.append({
                 "item": item,
-                "exception": exception.message,
+                "exception": str(exception),
                 "response": response
             })
 
@@ -267,7 +267,8 @@ class CrawlManager(object):
         try:
             req = Request(url, **kwargs)
         except (TypeError, ValueError) as e:
-            message = "Error while creating Scrapy Request, {}".format(e.message)
+            msg = "Error while creating Scrapy Request, {}"
+            message = msg.format(str(e))
             raise Error('400', message=message)
 
         req.dont_filter = True

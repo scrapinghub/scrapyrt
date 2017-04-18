@@ -1,17 +1,17 @@
 # -*- coding: utf-8 -*-
-from logging.config import dictConfig
 import logging
 import os
 import sys
+from logging.config import dictConfig
 
-from scrapy.utils.python import unicode_to_str
+from scrapy.settings import Settings
+from scrapy.utils.log import DEFAULT_LOGGING, TopLevelFormatter
 from twisted.python import log
 from twisted.python.log import startLoggingWithObserver
 from twisted.python.logfile import DailyLogFile
-from scrapy.settings import Settings
-from scrapy.utils.log import DEFAULT_LOGGING, TopLevelFormatter
 
 from .conf import settings as scrapyrt_settings
+from .utils import to_bytes
 
 DEBUG = logging.DEBUG
 INFO = logging.INFO
@@ -64,7 +64,7 @@ class ScrapyrtFileLogObserver(log.FileLogObserver):
         message = eventDict.get('message')
         if message:
             eventDict['message'] = tuple(
-                unicode_to_str(x, self.encoding) for x in message)
+                to_bytes(x, self.encoding) for x in message)
         return eventDict
 
     def emit(self, eventDict):

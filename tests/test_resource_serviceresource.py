@@ -41,7 +41,7 @@ class TestRender(TestServiceResource):
     def test_render_ok(self, render_mock, log_err_mock):
         render_mock.return_value = {'status': 'ok'}
         result = self.resource.render(self.request)
-        obj = json.loads(result)
+        obj = json.loads(result.decode("utf8"))
         self.assertIn('status', obj)
         self.assertEqual(obj['status'], 'ok')
         self.assertFalse(log_err_mock.called)
@@ -50,10 +50,10 @@ class TestRender(TestServiceResource):
         exc = Exception('boom')
         render_mock.side_effect = exc
         result = self.resource.render(self.request)
-        obj = json.loads(result)
+        obj = json.loads(result.decode("utf8"))
         self.assertTrue(log_err_mock.called)
         self.assertEqual(obj['status'], 'error')
-        self.assertEqual(obj['message'], exc.message)
+        self.assertEqual(obj['message'], str(exc))
         self.assertEqual(obj['code'], 500)
 
     def test_render_deferred_succeed(self, render_mock, log_err_mock):
@@ -63,7 +63,7 @@ class TestRender(TestServiceResource):
         self.assertTrue(self.request.write.called)
         self.assertTrue(self.request.finish.called)
         self.assertEqual(len(self.request_write_values), 1)
-        obj = json.loads(self.request_write_values[0])
+        obj = json.loads(self.request_write_values[0].decode("utf8"))
         self.assertIn('status', obj)
         self.assertEqual(obj['status'], 'ok')
         self.assertFalse(log_err_mock.called)
@@ -76,9 +76,9 @@ class TestRender(TestServiceResource):
         self.assertTrue(self.request.write.called)
         self.assertTrue(self.request.finish.called)
         self.assertEqual(len(self.request_write_values), 1)
-        obj = json.loads(self.request_write_values[0])
+        obj = json.loads(self.request_write_values[0].decode("utf8"))
         self.assertEqual(obj['status'], 'error')
-        self.assertEqual(obj['message'], exc.message)
+        self.assertEqual(obj['message'], str(exc))
         self.assertEqual(obj['code'], 500)
         self.assertTrue(log_err_mock.called)
 
@@ -102,10 +102,11 @@ class TestHandleErrors(TestServiceResource):
     def test_exception(self, log_msg_mock):
         try:
             raise Exception('blah')
-        except Exception as exc:
-            result = self.resource.handle_error(exc, self.request)
+        except Exception as e:
+            result = self.resource.handle_error(e, self.request)
+            exc = e
         self.assertEqual(self.request.code, 500)
-        self.assertEqual(result['message'], exc.message)
+        self.assertEqual(result['message'], str(exc))
         self._assert_log_err_called(log_msg_mock, exc)
 
     def test_failure(self, log_msg_mock):
@@ -113,7 +114,7 @@ class TestHandleErrors(TestServiceResource):
         failure = Failure(exc)
         result = self.resource.handle_error(failure, self.request)
         self.assertEqual(self.request.code, 500)
-        self.assertEqual(result['message'], exc.message)
+        self.assertEqual(result['message'], str(exc))
         self._assert_log_err_called(log_msg_mock, failure)
 
     def test_error_400(self, log_msg_mock):
@@ -177,9 +178,9 @@ class TestRenderObject(TestServiceResource):
         headers = dict(self.headers)
         self.assertIn('Access-Control-Allow-Methods', headers)
         self.assertEqual(headers['Access-Control-Allow-Methods'], '')
-        for key, value in self.obj.iteritems():
-            self.assertIn(key, result)
-            self.assertIn(value, result)
+        for key, value in self.obj.items():
+            self.assertIn(key.encode("utf8"), result)
+            self.assertIn(value.encode("utf8"), result)
 
     def _test_access_control_allow_methods_header(self):
         headers = dict(self.headers)
@@ -187,7 +188,7 @@ class TestRenderObject(TestServiceResource):
         access_control_allow_methods = headers['Access-Control-Allow-Methods']
         self.assertEqual(
             self.resource.allowedMethods,
-            map(lambda s: s.strip(), access_control_allow_methods.split(','))
+            [s.strip() for s in access_control_allow_methods.split(',')]
         )
 
     def test_access_control_allow_methods_header_get(self):
