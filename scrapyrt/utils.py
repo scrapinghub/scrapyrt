@@ -25,10 +25,6 @@ def extract_scrapy_request_args(dictionary, raise_error=False):
     return result
 
 
-def is_python2():
-    return sys.version_info < (3,0)
-
-
 try:
     from scrapy.utils.python import to_bytes
 except ImportError:

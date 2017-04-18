@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import six
 from subprocess import Popen, PIPE
 from six.moves.urllib.parse import urljoin
 import fcntl
@@ -11,7 +12,6 @@ import time
 
 import port_for
 
-from scrapyrt.utils import is_python2
 from . import SAMPLE_DATA
 from .utils import get_testenv, generate_project
 
@@ -30,7 +30,7 @@ class BaseTestServer(object):
         self.stdin = stdin
         self.stdout = stdout
         self.stderr = stderr
-        if is_python2():
+        if six.PY2:
             command = 'SimpleHTTPServer'
         else:
             command = 'http.server'
