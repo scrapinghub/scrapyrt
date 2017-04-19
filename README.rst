@@ -19,7 +19,7 @@ making requests with spiders.
 
 Allows you to easily add HTTP API to your existing Scrapy project. All Scrapy project
 components (e.g. middleware, pipelines, extensions) are supported out of the box. You
-simply run Scrapyrt in Scrapy project directory and it starts HTTP server allowing you 
+simply run Scrapyrt in Scrapy project directory and it starts HTTP server allowing you
 to schedule your spiders and get spider output in JSON format.
 
 
@@ -39,3 +39,17 @@ Commercial support is also available by `Scrapinghub`_.
 
 .. _create a question issue: https://github.com/scrapinghub/scrapyrt/issues/new?labels=question
 .. _Scrapinghub: http://scrapinghub.com
+
+Development
+===========
+
+Release
+-------
+
+Use `bumpversion`_ tool, e.g. to release minor version do::
+
+    bumpversion minor --verbose
+    git push origin master
+    git push origin <new_version_tag>
+
+.. _bumpversion: https://pypi.python.org/pypi/bumpversion
