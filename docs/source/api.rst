@@ -33,6 +33,28 @@ to the project, you can install Scrapyrt in 'dev' mode::
 with this mode of installation changes you made to Scrapyrt source will be
 reflected when you run ``scrapyrt`` command.
 
+In production you can run Scrapyrt from docker image provided by Scrapinghub. You only
+need to do following things::
+
+    docker pull scrapinghub/scrapyrt
+
+This will download Scrapyrt Docker image for you. Next step you need to run this image. Remember
+about providing proper port and project directory. Project directory from host machine must be mounted in
+directory /scrapyrt/project on guest. Following command will launch Scrapyrt forwarding port 9080 from 
+guest to host, in demonized mode, with project directory in directory /home/user/quotesbot::
+
+    docker run -p 9080:9080 -tid -v /home/user/quotesbot:/scrapyrt/project scrapinghub/scrapyrt
+
+If you'd like to test if your virtual container is running just run::
+
+    docker ps
+
+this command should return container_id, image etc. Testing with curl::
+
+    curl -v "http://localhost:9080/crawl.json?url=http://example.com&spider_name=toscrape-css" | jq
+
+should return expected response.
+
 Scrapyrt HTTP API
 =================
 
