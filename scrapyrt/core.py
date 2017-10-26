@@ -145,10 +145,15 @@ class CrawlManager(object):
         # callback will be added after instantiation of crawler object
         # because we need to know if spider has method available
         self.callback_name = request_kwargs.pop('callback', None) or 'parse'
+
         if request_kwargs.get("url"):
-            self.request = self.create_spider_request(deepcopy(request_kwargs))
+            urls = request_kwargs.pop('url').split('|')
+            self.requests = []
+            for url in urls:
+                self.requests.append(self.create_spider_request(url, request_kwargs))
         else:
-            self.request = None
+            self.requests = None
+
         self.start_requests = start_requests
         self._request_scheduled = False
 
@@ -193,15 +198,16 @@ class CrawlManager(object):
         which is totally wrong.
 
         """
-        if spider is self.crawler.spider and self.request and not self._request_scheduled:
+        if spider is self.crawler.spider and self.requests and not self._request_scheduled:
             callback = getattr(self.crawler.spider, self.callback_name)
             assert callable(callback), 'Invalid callback'
-            self.request = self.request.replace(callback=callback)
-            modify_request = getattr(
-                self.crawler.spider, "modify_realtime_request", None)
-            if callable(modify_request):
-                self.request = modify_request(self.request)
-            spider.crawler.engine.crawl(self.request, spider)
+            for i in range(len(self.requests)):
+                self.requests[i] = self.requests[i].replace(callback=callback)
+                modify_request = getattr(
+                    self.crawler.spider, "modify_realtime_request", None)
+                if callable(modify_request):
+                    self.requests[i] = modify_request(self.requests[i])
+                spider.crawler.engine.crawl(self.requests[i], spider)
             self._request_scheduled = True
             raise DontCloseSpider
 
@@ -262,8 +268,8 @@ class CrawlManager(object):
             results["errors"] = self.errors
         return results
 
-    def create_spider_request(self, kwargs):
-        url = kwargs.pop('url')
+    def create_spider_request(self, url, kwargs):
+
         try:
             req = Request(url, **kwargs)
         except (TypeError, ValueError) as e:
