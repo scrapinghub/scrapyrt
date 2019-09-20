@@ -20,7 +20,6 @@ from scrapyrt.conf import settings
 
 from .spiders import MetaSpider
 
-
 class TestCrawlManager(unittest.TestCase):
 
     def setUp(self):
@@ -90,7 +89,7 @@ class TestSpiderIdle(TestCrawlManager):
         # test callback
         self.spider.parse_something = lambda: None
         self.crawl_manager.callback_name = 'parse_something'
-        self.request = self.crawl_manager.request
+        self.request = self.crawl_manager.requests[0]
 
     def _call_spider_idle(self):
         try:
@@ -99,13 +98,13 @@ class TestSpiderIdle(TestCrawlManager):
             pass
 
     def test_spider_opened(self):
-        self.assertIsNone(self.crawl_manager.request.callback)
+        self.assertIsNone(self.crawl_manager.requests[0].callback)
         self._call_spider_idle()
         self.crawler.engine.crawl.assert_called_once_with(
-            self.crawl_manager.request, self.spider)
-        self.assertNotEqual(self.request, self.crawl_manager.request)
+            self.crawl_manager.requests[0], self.spider)
+        self.assertNotEqual(self.request, self.crawl_manager.requests[0])
         self.assertEquals(
-            self.crawl_manager.request.callback, self.spider.parse_something)
+            self.crawl_manager.requests[0].callback, self.spider.parse_something)
 
     def test_raise_error_if_not_callable(self):
         self.spider.parse_something = None
@@ -114,8 +113,9 @@ class TestSpiderIdle(TestCrawlManager):
         self.assertFalse(self.crawler.engine.crawl.called)
 
     def test_modify_realtime_request(self):
-        self.assertDictEqual(self.crawl_manager.request.meta, {})
-        self.assertEqual(self.crawl_manager.request.method, 'GET')
+        for request in self.crawl_manager.requests:
+            self.assertDictEqual(request.meta, {})
+            self.assertEqual(request.method, 'GET')
 
         def modify_realtime_request(request):
             request = request.replace(method='POST')
@@ -125,16 +125,16 @@ class TestSpiderIdle(TestCrawlManager):
         self.spider.modify_realtime_request = modify_realtime_request
         self._call_spider_idle()
         self.crawler.engine.crawl.assert_called_once_with(
-            self.crawl_manager.request, self.spider)
-        self.assertEqual(self.crawl_manager.request.method, 'POST')
-        self.assertEqual(self.crawl_manager.request.meta['foo'], 'bar')
+            self.crawl_manager.requests[0], self.spider)
+        self.assertEqual(self.crawl_manager.requests[0].method, 'POST')
+        self.assertEqual(self.crawl_manager.requests[0].meta['foo'], 'bar')
 
     def test_modify_realtime_request_is_not_callable(self):
         self.spider.modify_realtime_request = None
         self._call_spider_idle()
         self.crawler.engine.crawl.assert_called_once_with(
-            self.crawl_manager.request, self.spider)
-        self.assertNotEqual(self.request, self.crawl_manager.request)
+            self.crawl_manager.requests[0], self.spider)
+        self.assertNotEqual(self.request, self.crawl_manager.requests[0])
 
 
 class TestHandleScheduling(TestCrawlManager):
@@ -146,13 +146,13 @@ class TestHandleScheduling(TestCrawlManager):
 
     def test_handle_scheduling(self):
         self.crawl_manager.handle_scheduling(
-            self.crawl_manager.request, self.spider)
+            self.crawl_manager.requests[0], self.spider)
         self.crawl_manager.limit_requests.assert_called_once_with(self.spider)
         self.crawl_manager.limit_runtime.assert_called_once_with(self.spider)
 
     def test_handle_scheduling_another_spider(self):
         self.crawl_manager.handle_scheduling(
-            self.crawl_manager.request, self.another_spider)
+            self.crawl_manager.requests[0], self.another_spider)
         self.assertFalse(self.crawl_manager.limit_requests.called)
         self.assertFalse(self.crawl_manager.limit_runtime.called)
 
@@ -321,24 +321,24 @@ class TestReturnItems(TestCrawlManager):
 class TestCreateSpiderRequest(TestCrawlManager):
 
     def test_valid_arguments(self):
-        req = self.crawl_manager.create_spider_request(self.kwargs)
+        req = self.crawl_manager.create_spider_request(self.kwargs.pop('url'), self.kwargs)
         self.assertTrue(req.dont_filter)
         self.assertEqual(req.url, self.url)
 
     def test_invalid_arguments(self):
         self.kwargs['url1'] = 'http://localhost/foo'
         exception = self.assertRaises(
-            Error, self.crawl_manager.create_spider_request, self.kwargs)
+            Error, self.crawl_manager.create_spider_request, self.kwargs.pop('url1'), self.kwargs)
         self.assertEqual(exception.status, '400')
 
     def test_invalid_url(self):
         self.kwargs['url'] = '//localhost/foo'
         exception = self.assertRaises(
-            Error, self.crawl_manager.create_spider_request, self.kwargs)
+            Error, self.crawl_manager.create_spider_request, self.kwargs.pop('url'), self.kwargs)
         self.assertEqual(exception.status, '400')
         self.kwargs['url'] = 'localhost/foo'
         exception = self.assertRaises(
-            Error, self.crawl_manager.create_spider_request, self.kwargs)
+            Error, self.crawl_manager.create_spider_request, self.kwargs.pop('url'), self.kwargs)
         self.assertEqual(exception.status, '400')
 
 
