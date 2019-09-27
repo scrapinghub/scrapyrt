@@ -11,3 +11,7 @@ class TestSpider(scrapy.Spider):
     def parse(self, response):
         name = response.xpath('//h1/text()').extract()
         return TestprojectItem(name=name)
+
+    def some_errback(self, err):
+        self.logger.error("Logging some error {}".format(err))
+        return

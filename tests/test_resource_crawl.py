@@ -378,3 +378,16 @@ class TestCrawlResourceIntegration(object):
             assert res_json[k] == v
         msg = "Invalid JSON in POST body"
         assert msg in res_json['message']
+
+    @pytest.mark.parametrize("method", [
+        perform_get, perform_post
+    ])
+    def test_passing_errback(self, server, method):
+        url = server.url("crawl.json")
+        res = method(url,
+                     {"spider_name": "test"},
+                     {"url": server.target_site.url("page1.html"),
+                      'errback': 'some_errback',
+                      'callback': 'raise_some_error'})
+
+        res_json = res.json()
