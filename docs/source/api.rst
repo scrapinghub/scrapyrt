@@ -96,8 +96,15 @@ callback
     - type: string
     - optional
 
-    Should exist as method of scheduled spider, does not need to contain self.
+    Must exist as method of scheduled spider, does not need to contain string "self".
     If not passed or not found on spider default callback `parse`_ will be used.
+
+errback
+    - type: string
+    - optional
+
+    Scrapy errback for request made from spider. It must exist as method of
+    scheduled spider, otherwise exception will be raised. String does not need to contain 'self'.
 
 max_requests
     - type: integer
