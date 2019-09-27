@@ -1,4 +1,4 @@
-from flask import Flask
+from flask import Flask, abort
 
 
 app = Flask(__name__)
@@ -32,3 +32,8 @@ def page2():
 @app.route('/page3.html')
 def page3():
     return read_file('page3.html')
+
+
+@app.route('/err/<int:code>')
+def return_code(code):
+    abort(code)

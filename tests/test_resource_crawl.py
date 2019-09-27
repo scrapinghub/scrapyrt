@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import json
+import os
 
 import pytest
 import re
@@ -386,8 +387,16 @@ class TestCrawlResourceIntegration(object):
         url = server.url("crawl.json")
         res = method(url,
                      {"spider_name": "test"},
-                     {"url": server.target_site.url("page1.html"),
-                      'errback': 'some_errback',
-                      'callback': 'raise_some_error'})
+                     {"url": server.target_site.url("err/503"),
+                      'errback': 'some_errback'})
 
         res_json = res.json()
+        assert res_json.get('stats').get('log_count/ERROR') == 1
+        assert res_json['status'] == 'ok'
+        logs_path = os.path.join(server.cwd, 'logs', 'test')
+        logs_files = os.listdir(logs_path)
+        with open(os.path.join(logs_path, logs_files[0])) as f:
+            log_file = f.read()
+
+        msg = 'ERROR: Logging some error'
+        assert re.search(msg, log_file)
