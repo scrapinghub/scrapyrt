@@ -92,7 +92,7 @@ class ServiceResource(resource.Resource, object):
         request.setHeader('Access-Control-Allow-Methods',
                           ', '.join(getattr(self, 'allowedMethods', [])))
         request.setHeader('Access-Control-Allow-Headers', 'X-Requested-With')
-        request.setHeader('Content-Length', len(r))
+        request.setHeader('Content-Length', str(len(r)))
         return r.encode("utf8")
 
 

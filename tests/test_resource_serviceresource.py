@@ -172,7 +172,7 @@ class TestRenderObject(TestServiceResource):
         set_header_mock.assert_any_call('Access-Control-Allow-Origin', '*')
         set_header_mock.assert_any_call('Access-Control-Allow-Headers',
                                         'X-Requested-With')
-        set_header_mock.assert_any_call('Content-Length', len(result))
+        set_header_mock.assert_any_call('Content-Length', str(len(result)))
         # request.setHeader('Access-Control-Allow-Methods',
         #                   ', '.join(getattr(self, 'allowedMethods', [])))
         headers = dict(self.headers)
