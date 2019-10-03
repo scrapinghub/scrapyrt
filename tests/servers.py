@@ -1,7 +1,4 @@
 # -*- coding: utf-8 -*-
-import six
-from subprocess import Popen, PIPE
-from six.moves.urllib.parse import urljoin
 import fcntl
 import os
 import shutil
@@ -9,10 +6,12 @@ import socket
 import sys
 import tempfile
 import time
+from subprocess import Popen, PIPE
 
 import port_for
+from six.moves.urllib.parse import urljoin
 
-from . import SAMPLE_DATA
+from . import TESTS_PATH
 from .utils import get_testenv, generate_project
 
 DEVNULL = open(os.devnull, 'wb')
@@ -30,12 +29,9 @@ class BaseTestServer(object):
         self.stdin = stdin
         self.stdout = stdout
         self.stderr = stderr
-        if six.PY2:
-            command = 'SimpleHTTPServer'
-        else:
-            command = 'http.server'
+
         self.arguments = [
-            sys.executable, '-u', '-m', command, str(self.port)
+            'flask', 'run', '-p', str(self.port)
         ]
 
     def start(self):
@@ -126,4 +122,4 @@ class MockServer(BaseTestServer):
 
     def __init__(self, *args, **kwargs):
         super(MockServer, self).__init__(*args, **kwargs)
-        self.cwd = os.path.join(SAMPLE_DATA, 'testsite')
+        self.cwd = os.path.join(TESTS_PATH, 'testsite')

@@ -4,9 +4,8 @@ from copy import deepcopy
 import datetime
 import os
 import six
-import types
 
-from scrapy import signals, log as scrapy_log
+from scrapy import signals
 from scrapy.crawler import CrawlerRunner, Crawler
 from scrapy.exceptions import DontCloseSpider
 from scrapy.http import Request
@@ -85,45 +84,6 @@ class ScrapyrtCrawlerProcess(CrawlerRunner):
 
         return dfd.addBoth(cleanup_logging)
 
-    def _setup_crawler_logging(self, crawler):
-        log_observer = scrapy_log.start_from_crawler(crawler)
-        if log_observer:
-            monkey_patch_and_connect_log_observer(crawler, log_observer)
-        if self.log_observer:
-            monkey_patch_and_connect_log_observer(crawler, self.log_observer)
-
-    def _stop_logging(self):
-        if self.log_observer:
-            try:
-                self.log_observer.stop()
-            except ValueError:
-                # exception on kill
-                # exceptions.ValueError: list.remove(x): x not in list
-                # looks like it's safe to ignore it
-                pass
-
-
-def monkey_patch_and_connect_log_observer(crawler, log_observer):
-    """Ugly hack to close log file.
-
-    Monkey patch log_observer.stop method to close file each time
-    log observer is closed.
-    I prefer this to be fixed in Scrapy itself, but as
-    Scrapy is going to switch to standart python logging soon
-    https://github.com/scrapy/scrapy/pull/1060
-    this change wouldn't be accepted in preference of merging
-    new logging sooner.
-
-    """
-    def stop_and_close_log_file(self):
-        self.__stop()
-        self.write.__self__.close()
-
-    log_observer.__stop = log_observer.stop
-    log_observer.stop = types.MethodType(
-        stop_and_close_log_file, log_observer)
-    crawler.signals.connect(log_observer.stop, signals.engine_stopped)
-
 
 class CrawlManager(object):
     """
@@ -145,6 +105,9 @@ class CrawlManager(object):
         # callback will be added after instantiation of crawler object
         # because we need to know if spider has method available
         self.callback_name = request_kwargs.pop('callback', None) or 'parse'
+        # do the same for errback
+        self.errback_name = request_kwargs.pop('errback', None) or 'parse'
+
         if request_kwargs.get("url"):
             self.request = self.create_spider_request(deepcopy(request_kwargs))
         else:
@@ -185,7 +148,7 @@ class CrawlManager(object):
         """Handler of spider_idle signal.
 
         Schedule request for url given to api, with optional callback
-        that can be passed as GET parameter.
+        and errback that can be passed as GET parameter.
 
         spider_idle signal is used because we want to optionally enable
         start_requests for the spider and if request is scheduled in
@@ -197,6 +160,10 @@ class CrawlManager(object):
             callback = getattr(self.crawler.spider, self.callback_name)
             assert callable(callback), 'Invalid callback'
             self.request = self.request.replace(callback=callback)
+
+            errback = getattr(self.crawler.spider, self.errback_name)
+            assert callable(errback), 'Invalid errback'
+            self.request = self.request.replace(errback=errback)
             modify_request = getattr(
                 self.crawler.spider, "modify_realtime_request", None)
             if callable(modify_request):
