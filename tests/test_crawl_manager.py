@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import os
+import re
 from time import sleep
 import datetime
 
@@ -29,14 +30,15 @@ class TestCrawlManager(unittest.TestCase):
         self.crawler = MagicMock()
         self.spider = MetaSpider.from_crawler(self.crawler)
         self.crawler.spider = self.spider
-        self.crawl_manager = self._create_crawl_manager()
+        self.crawl_manager = self.create_crawl_manager()
         self.crawl_manager.crawler = self.crawler
         self.item = Item()
         self.response = Response('http://localhost')
         self.another_spider = MetaSpider.from_crawler(self.crawler)
 
-    def _create_crawl_manager(self):
-        crawl_manager = CrawlManager(self.spider.name, self.kwargs.copy())
+    def create_crawl_manager(self, kwargs=None):
+        kwargs = kwargs if kwargs else self.kwargs.copy()
+        crawl_manager = CrawlManager(self.spider.name, kwargs)
         crawl_manager.crawler = self.crawler
         return crawl_manager
 
@@ -136,6 +138,33 @@ class TestSpiderIdle(TestCrawlManager):
             self.crawl_manager.request, self.spider)
         self.assertNotEqual(self.request, self.crawl_manager.request)
 
+    def test_pass_wrong_spider_errback(self):
+        mng = self.create_crawl_manager(
+            {'url': 'http://localhost', 'errback': 'handle_error'}
+        )
+        try:
+            with pytest.raises(AttributeError) as err:
+                mng.spider_idle(self.spider)
+        except DontCloseSpider:
+            pass
+
+        assert mng.request.errback is None
+        msg = "AttributeError: 'MetaSpider' object has no attribute 'handle_error'"
+        assert re.search(msg, str(err))
+
+    def test_pass_good_spider_errback(self):
+        mng = self.create_crawl_manager(
+            {'url': 'http://localhost', 'errback': 'handle_error'}
+        )
+        self.crawler.spider.handle_error = lambda x: x
+        try:
+            mng.spider_idle(self.spider)
+        except DontCloseSpider:
+            pass
+
+        assert callable(mng.request.errback)
+        assert mng.request.errback('something') == 'something'
+
 
 class TestHandleScheduling(TestCrawlManager):
 
@@ -178,7 +207,7 @@ class TestLimitRuntime(TestCrawlManager):
         _timeout = settings.TIMEOUT_LIMIT
         try:
             settings.TIMEOUT_LIMIT = '1'
-            self.crawl_manager = self._create_crawl_manager()
+            self.crawl_manager = self.create_crawl_manager()
             self._test_limit_runtime()
         finally:
             settings.TIMEOUT_LIMIT = _timeout

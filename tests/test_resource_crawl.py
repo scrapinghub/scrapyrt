@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import json
+import os
 
 import pytest
 import re
@@ -378,3 +379,24 @@ class TestCrawlResourceIntegration(object):
             assert res_json[k] == v
         msg = "Invalid JSON in POST body"
         assert msg in res_json['message']
+
+    @pytest.mark.parametrize("method", [
+        perform_get, perform_post
+    ])
+    def test_passing_errback(self, server, method):
+        url = server.url("crawl.json")
+        res = method(url,
+                     {"spider_name": "test"},
+                     {"url": server.target_site.url("err/503"),
+                      'errback': 'some_errback'})
+
+        res_json = res.json()
+        assert res_json.get('stats').get('log_count/ERROR') == 1
+        assert res_json['status'] == 'ok'
+        logs_path = os.path.join(server.cwd, 'logs', 'test')
+        logs_files = os.listdir(logs_path)
+        with open(os.path.join(logs_path, logs_files[0])) as f:
+            log_file = f.read()
+
+        msg = 'ERROR: Logging some error'
+        assert re.search(msg, log_file)
