@@ -40,7 +40,7 @@ need to do following things::
 
 This will download Scrapyrt Docker image for you. Next step you need to run this image. Remember
 about providing proper port and project directory. Project directory from host machine must be mounted in
-directory /scrapyrt/project on guest. Following command will launch Scrapyrt forwarding port 9080 from
+directory /scrapyrt/project on guest. Following command will launch Scrapyrt forwarding port 9080 from 
 guest to host, in demonized mode, with project directory in directory /home/user/quotesbot::
 
     docker run -p 9080:9080 -tid -v /home/user/quotesbot:/scrapyrt/project scrapinghub/scrapyrt
