@@ -109,6 +109,24 @@ class TestCrawlResource(object):
         msg = "'foo' is not a valid argument"
         assert re.search(msg, e.value.message)
 
+    def test_prepare_crawl_extra_attr(self, resource):
+        api_params = {
+            'spider_name': 'test',
+            'request': {'url': 'http://foo.com'},
+            'extra': 'extra_value',
+        }
+        scrapy_request_args = api_params['request'].copy()
+        resource.run_crawl = Mock()
+        with patch('scrapyrt.core.CrawlManager', spec=True) as manager:
+            resource.prepare_crawl(api_params, scrapy_request_args)
+        expected = {'extra': 'extra_value'}
+        spider_name = api_params['spider_name']
+        max_requests = None
+        resource.run_crawl.assert_called_once_with(
+            spider_name, scrapy_request_args, max_requests,
+            start_requests=False, **expected
+        )
+
     @pytest.mark.parametrize('scrapy_args,api_args,has_error', [
         ({'url': 'aa'}, {}, False),
         ({}, {}, True)

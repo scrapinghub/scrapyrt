@@ -111,6 +111,13 @@ class CrawlResource(ServiceResource):
     isLeaf = True
     allowedMethods = ['GET', 'POST']
 
+    # Documented API parameters
+    # NOTE: update this list if an API parameter is added
+    API_PARAMS = [
+        'spider_name', 'url', 'callback', 'errback',
+        'max_requests', 'request', 'start_requests',
+    ]
+
     def render_GET(self, request, **kwargs):
         """Request querysting must contain following keys: url, spider_name.
 
@@ -212,6 +219,12 @@ class CrawlResource(ServiceResource):
             max_requests = api_params['max_requests']
         except (KeyError, IndexError):
             max_requests = None
+
+        crawler_params = api_params.copy()
+        for api_param in self.API_PARAMS:
+            crawler_params.pop(api_param, None)
+        kwargs.update(crawler_params)
+
         dfd = self.run_crawl(
             spider_name, scrapy_request_args, max_requests,
             start_requests=start_requests, *args, **kwargs)
