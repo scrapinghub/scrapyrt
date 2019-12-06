@@ -136,16 +136,16 @@ with hopefully helpful error message.
 Examples
 ~~~~~~~~
 
-To run sample `dmoz spider`_ from `Scrapy educational dirbot project`_
-parsing page about Ada programming language::
+To run sample `toscrape-css spider`_ from `Scrapy educational quotesbot project`_
+parsing page about famous quotes::
 
-    curl "http://localhost:9080/crawl.json?spider_name=dmoz&url=http://www.dmoz.org/Computers/Programming/Languages/Ada/"
+    curl "http://localhost:9080/crawl.json?spider_name=toscrape-css&url=http://quotes.toscrape.com/"
 
 
 To run same spider only allowing one request and parsing url
 with callback ``parse_foo``::
 
-    curl "http://localhost:9080/crawl.json?spider_name=dmoz&url=http://www.dmoz.org/Computers/Programming/Languages/Ada/&callback=parse_foo&max_requests=1"
+    curl "http://localhost:9080/crawl.json?spider_name=toscrape-css&url=http://quotes.toscrape.com/&callback=parse_foo&max_requests=1"
 
 POST
 ----
@@ -222,16 +222,16 @@ hopefully helpful error message.
 Examples
 ~~~~~~~~
 
-To schedule spider dmoz with sample url using POST handler::
+To schedule spider toscrape-css with sample url using POST handler::
 
     curl localhost:9080/crawl.json \
-        -d '{"request":{"url":"http://www.dmoz.org/Computers/Programming/Languages/Awk/"}, "spider_name": "dmoz"}'
+        -d '{"request":{"url":"http://quotes.toscrape.com/"}, "spider_name": "toscrape-css"}'
 
 
 to schedule same spider with some meta that will be passed to spider request::
 
     curl localhost:9080/crawl.json \
-        -d '{"request":{"url":"http://www.dmoz.org/Computers/Programming/Languages/Awk/", "meta": {"alfa":"omega"}}, "spider_name": "dmoz"}'
+        -d '{"request":{"url":"http://quotes.toscrape.com/", "meta": {"alfa":"omega"}}, "spider_name": "toscrape-css"}'
 
 Response
 --------
@@ -265,34 +265,34 @@ errors (optional)
 
 Example::
 
-    $ curl "http://localhost:9080/crawl.json?spider_name=dmoz&url=http://www.dmoz.org/Computers/Programming/Languages/Ada/"
+    $ curl "http://localhost:9080/crawl.json?spider_name=toscrape-css&url=http://quotes.toscrape.com/"
     {
         "status": "ok"
-        "spider_name": "dmoz",
+        "spider_name": "toscrape-css",
         "stats": {
-            "start_time": "2014-12-29 16:04:15",
-            "finish_time": "2014-12-29 16:04:16",
+            "start_time": "2019-12-06 13:01:31",
+            "finish_time": "2019-12-06 13:01:35",
             "finish_reason": "finished",
-            "downloader/response_status_count/200": 1,
-            "downloader/response_count": 1,
-            "downloader/response_bytes": 8494,
-            "downloader/request_method_count/GET": 1,
-            "downloader/request_count": 1,
-            "downloader/request_bytes": 247,
-            "item_scraped_count": 16,
-            "log_count/DEBUG": 17,
-            "log_count/INFO": 4,
-            "response_received_count": 1,
-            "scheduler/dequeued": 1,
-            "scheduler/dequeued/memory": 1,
-            "scheduler/enqueued": 1,
-            "scheduler/enqueued/memory": 1
+            "downloader/response_status_count/200": 10,
+            "downloader/response_count": 11,
+            "downloader/response_bytes": 24812,
+            "downloader/request_method_count/GET": 11,
+            "downloader/request_count": 11,
+            "downloader/request_bytes": 2870,
+            "item_scraped_count": 100,
+            "log_count/DEBUG": 111,
+            "log_count/INFO": 9,
+            "response_received_count": 11,
+            "scheduler/dequeued": 10,
+            "scheduler/dequeued/memory": 10,
+            "scheduler/enqueued": 10,
+            "scheduler/enqueued/memory": 10,
         },
         "items": [
             {
-                "description": ...,
-                "name": ...,
-                "url": ...
+                "text": ...,
+                "author": ...,
+                "tags": ...
             },
             ...
         ],
@@ -315,7 +315,7 @@ message
 
 Example::
 
-    $ curl "http://localhost:9080/crawl.json?spider_name=foo&url=http://www.dmoz.org/Computers/Programming/Languages/Ada/"
+    $ curl "http://localhost:9080/crawl.json?spider_name=foo&url=http://quotes.toscrape.com/"
     {
         "status": "error"
         "code": 404,
@@ -456,22 +456,22 @@ in response, for example::
 
     {
         "status": "ok"
-        "spider_name": "dmoz",
+        "spider_name": "toscrape-css",
         "stats": {
-            "start_time": "2014-12-29 17:26:11",
+            "start_time": "2019-12-06 13:11:30"
             "spider_exceptions/Exception": 1,
-            "finish_time": "2014-12-29 17:26:11",
+            "finish_time": "2019-12-06 13:11:31",
             "finish_reason": "finished",
             "downloader/response_status_count/200": 1,
-            "downloader/response_count": 1,
-            "downloader/response_bytes": 8494,
-            "downloader/request_method_count/GET": 1,
-            "downloader/request_count": 1,
-            "downloader/request_bytes": 247,
-            "log_count/DEBUG": 1,
+            "downloader/response_count": 2,
+            "downloader/response_bytes": 2701,
+            "downloader/request_method_count/GET": 2,
+            "downloader/request_count": 2,
+            "downloader/request_bytes": 446,
+            "log_count/DEBUG": 2,
             "log_count/ERROR": 1,
-            "log_count/INFO": 4,
-            "response_received_count": 1,
+            "log_count/INFO": 9,
+            "response_received_count": 2,
             "scheduler/dequeued": 1,
             "scheduler/dequeued/memory": 1,
             "scheduler/enqueued": 1,
@@ -559,8 +559,8 @@ approach described in `Python Logging HOWTO`_ or redirect stdout to a file using
 `bash redirection syntax`_, `supervisord logging`_ etc.
 
 
-.. _dmoz spider: https://github.com/scrapy/dirbot/blob/master/dirbot/spiders/dmoz.py
-.. _Scrapy educational dirbot project: https://github.com/scrapy/dirbot
+.. _toscrape-css spider: https://github.com/scrapy/quotesbot/blob/master/quotesbot/spiders/toscrape-css.py
+.. _Scrapy educational quotesbot project: https://github.com/scrapy/quotesbot
 .. _Scrapy Request: http://doc.scrapy.org/en/latest/topics/request-response.html#scrapy.http.Request
 .. _Scrapy Crawler: http://doc.scrapy.org/en/latest/topics/api.html#scrapy.crawler.Crawler
 .. _parse: http://doc.scrapy.org/en/latest/topics/spiders.html#scrapy.spider.Spider.parse
