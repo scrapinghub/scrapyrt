@@ -130,9 +130,8 @@ start_requests
     behavior. If this argument is present API will execute start_requests
     Spider method.
 
-If required parameters are missing api will return 400 Bad Request
-with hopefully helpful error message.
-Any extra argument is going to be passed to the spider's constructor as kwarg.
+| If required parameters are missing api will return 400 Bad Request with hopefully helpful error message.
+| Any extra argument is going to be passed to the spider's constructor as kwarg.
 
 Examples
 ~~~~~~~~
@@ -217,9 +216,8 @@ url
 
 It can contain all keyword arguments supported by `Scrapy Request`_ class.
 
-If required parameters are missing api will return 400 Bad Request with
-hopefully helpful error message.
-Any extra argument is going to be passed to the spider's constructor as kwarg.
+| If required parameters are missing api will return 400 Bad Request with hopefully helpful error message.
+| Any extra argument is going to be passed to the spider's constructor as kwarg.
 
 Examples
 ~~~~~~~~
