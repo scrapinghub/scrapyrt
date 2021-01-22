@@ -149,7 +149,7 @@ class TestSpiderIdle(TestCrawlManager):
             pass
 
         assert mng.request.errback is None
-        msg = "AttributeError: 'MetaSpider' object has no attribute 'handle_error'"
+        msg = "has no attribute 'handle_error'"
         assert re.search(msg, str(err))
 
     def test_pass_good_spider_errback(self):
