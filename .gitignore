@@ -33,3 +33,4 @@ testing_scripts*
 
 # sphinx
 docs/build/*
+.python-version

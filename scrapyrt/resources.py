@@ -12,10 +12,18 @@ from .conf import settings
 from .utils import extract_scrapy_request_args, to_bytes
 
 
+class AdaptedScrapyJSONEncoder(ScrapyJSONEncoder):
+    def default(self, o):
+        if isinstance(o, bytes):
+            return o.decode('utf8')
+        else:
+            return super().default(o)
+
+
 # XXX super() calls won't work wihout object mixin in Python 2
 # maybe this can be removed at some point?
 class ServiceResource(resource.Resource, object):
-    json_encoder = ScrapyJSONEncoder()
+    json_encoder = AdaptedScrapyJSONEncoder()
 
     def __init__(self, root=None):
         resource.Resource.__init__(self)
@@ -71,7 +79,7 @@ class ServiceResource(resource.Resource, object):
             else:
                 request.setResponseCode(500)
             if request.code == 500:
-                log.err(failure)
+                log.err(f'Error when rendering response: "{exception}"')
         return self.format_error_response(exception, request)
 
     def format_error_response(self, exception, request):
@@ -79,14 +87,19 @@ class ServiceResource(resource.Resource, object):
         # Twisted HTTP Error objects still have 'message' attribute even in 3+
         # and they fail on str(exception) call.
         msg = exception.message if hasattr(exception, 'message') else str(exception)
-        return {
+        encoded_error_response = self.json_encoder.encode({
             "status": "error",
             "message": msg,
             "code": request.code
-        }
+        }) + "\n"
+        return encoded_error_response.encode('utf8')
 
     def render_object(self, obj, request):
-        r = self.json_encoder.encode(obj) + "\n"
+        try:
+            r = self.json_encoder.encode(obj) + "\n"
+        except TypeError as exc:
+            return self.handle_error(exc, request)
+
         request.setHeader('Content-Type', 'application/json')
         request.setHeader('Access-Control-Allow-Origin', '*')
         request.setHeader('Access-Control-Allow-Methods',
