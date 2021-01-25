@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
-from six.moves.configparser import (
-    SafeConfigParser, NoOptionError, NoSectionError
+from configparser import (
+    ConfigParser, NoOptionError, NoSectionError
 )
 import argparse
 import os
@@ -64,7 +64,7 @@ def find_scrapy_project(project):
     project_config_path = closest_scrapy_cfg()
     if not project_config_path:
         raise RuntimeError('Cannot find scrapy.cfg file')
-    project_config = SafeConfigParser()
+    project_config = ConfigParser()
     project_config.read(project_config_path)
     try:
         project_settings = project_config.get('settings', project)

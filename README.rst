@@ -2,8 +2,8 @@
 Scrapyrt (Scrapy realtime)
 ==========================
 
-.. image:: https://travis-ci.org/scrapinghub/scrapyrt.svg?branch=master
-    :target: https://travis-ci.org/scrapinghub/scrapyrt
+.. image:: https://github.com/scrapinghub/scrapyrt/workflows/CI/badge.svg
+   :target: https://github.com/scrapinghub/scrapyrt/actions
 
 .. image:: https://img.shields.io/pypi/pyversions/scrapyrt.svg
     :target: https://pypi.python.org/pypi/scrapyrt

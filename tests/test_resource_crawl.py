@@ -391,7 +391,7 @@ class TestCrawlResourceIntegration(object):
                       'errback': 'some_errback'})
 
         res_json = res.json()
-        assert res_json.get('stats').get('log_count/ERROR') == 1
+        assert res_json.get('stats').get('log_count/ERROR') == 2
         assert res_json['status'] == 'ok'
         logs_path = os.path.join(server.cwd, 'logs', 'test')
         logs_files = os.listdir(logs_path)
