@@ -57,10 +57,12 @@ class ServiceResource(resource.Resource, object):
         :return: dict which will be converted to JSON error response
 
         """
+        failure = None
         if isinstance(exception_or_failure, Exception):
             exception = exception_or_failure
         elif isinstance(exception_or_failure, Failure):
             exception = exception_or_failure.value
+            failure = exception_or_failure
         else:
             raise TypeError(
                 'Expected Exception or {} instances, got {}'.format(
@@ -77,7 +79,7 @@ class ServiceResource(resource.Resource, object):
             else:
                 request.setResponseCode(500)
             if request.code == 500:
-                log.err(f'Error when rendering response: "{exception}"')
+                log.err(failure)
         return self.format_error_response(exception, request)
 
     def format_error_response(self, exception, request):
@@ -86,18 +88,14 @@ class ServiceResource(resource.Resource, object):
         # and they fail on str(exception) call.
         msg = exception.message if hasattr(exception, 'message') else str(exception)
 
-        encoded_error_response = self.json_encoder.encode({
+        return {
             "status": "error",
             "message": msg,
             "code": request.code
-        }) + "\n"
-        return encoded_error_response.encode('utf8')
+        }
 
     def render_object(self, obj, request):
-        try:
-            r = self.json_encoder.encode(obj) + "\n"
-        except Exception as exc:
-            return self.handle_error(exc, request)
+        r = self.json_encoder.encode(obj) + "\n"
 
         request.setHeader('Content-Type', 'application/json')
         request.setHeader('Access-Control-Allow-Origin', '*')
