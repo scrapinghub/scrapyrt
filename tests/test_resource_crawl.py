@@ -400,3 +400,15 @@ class TestCrawlResourceIntegration(object):
 
         msg = 'ERROR: Logging some error'
         assert re.search(msg, log_file)
+
+    @pytest.mark.parametrize("method", [
+        perform_get, perform_post
+    ])
+    def test_bytes_in_item(self, server, method):
+        url = server.url("crawl.json")
+        res = method(url,
+                     {"spider_name": "test"},
+                     {"url": server.target_site.url("page1.html"),
+                      'callback': 'return_bytes'})
+        assert res.status_code == 200
+        assert res.json()["items"] == [{'name': 'Some bytes here'}]

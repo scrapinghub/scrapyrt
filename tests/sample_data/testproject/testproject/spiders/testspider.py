@@ -12,6 +12,9 @@ class TestSpider(scrapy.Spider):
         name = response.xpath('//h1/text()').extract()
         return TestprojectItem(name=name)
 
+    def return_bytes(self, response):
+        return TestprojectItem(name=b'Some bytes here')
+
     def some_errback(self, err):
         self.logger.error("Logging some error {}".format(err))
         return
