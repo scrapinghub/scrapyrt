@@ -401,7 +401,6 @@ class TestCrawlResourceIntegration(object):
         msg = 'ERROR: Logging some error'
         assert re.search(msg, log_file)
 
-
     @pytest.mark.parametrize("method", [
         perform_get, perform_post
     ])
@@ -412,3 +411,4 @@ class TestCrawlResourceIntegration(object):
                      {"url": server.target_site.url("page1.html"),
                       'callback': 'return_bytes'})
         assert res.status_code == 200
+        assert res.json()["items"] == [{'name': 'Some bytes here'}]
