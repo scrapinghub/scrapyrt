@@ -1,4 +1,7 @@
 # -*- coding: utf-8 -*-
+import json
+from urllib.parse import unquote
+
 import demjson
 from scrapy.utils.misc import load_object
 from scrapy.utils.serialize import ScrapyJSONEncoder
@@ -134,6 +137,7 @@ class CrawlResource(ServiceResource):
         scrapy_request_args = extract_scrapy_request_args(api_params,
                                                           raise_error=False)
         self.validate_options(scrapy_request_args, api_params)
+
         return self.prepare_crawl(api_params, scrapy_request_args, **kwargs)
 
     def render_POST(self, request, **kwargs):
@@ -171,7 +175,7 @@ class CrawlResource(ServiceResource):
             _request = self.get_required_argument(api_params, "request")
         try:
             scrapy_request_args = extract_scrapy_request_args(
-                _request, raise_error=False
+                _request, raise_error=True
             )
         except ValueError as e:
             raise Error('400', str(e))
@@ -224,17 +228,33 @@ class CrawlResource(ServiceResource):
             max_requests = api_params['max_requests']
         except (KeyError, IndexError):
             max_requests = None
+
+        crawl_args = api_params.get("crawl_args")
+        if isinstance(crawl_args, str):
+            try:
+                crawl_args = json.loads(unquote(crawl_args))
+            except Exception as e:
+                msg = "crawl_args must be valid url encoded JSON"
+                msg += " this string cannot be decoded with JSON"
+                msg += f' {str(e)}'
+                raise Error('400', message=msg)
+
         dfd = self.run_crawl(
             spider_name, scrapy_request_args, max_requests,
-            start_requests=start_requests, *args, **kwargs)
+            start_requests=start_requests,
+            crawl_args=crawl_args,
+            *args,
+            **kwargs)
         dfd.addCallback(
             self.prepare_response, request_data=api_params, *args, **kwargs)
         return dfd
 
     def run_crawl(self, spider_name, scrapy_request_args,
-                  max_requests=None, start_requests=False, *args, **kwargs):
+                  max_requests=None, crawl_args=None, start_requests=False, *args, **kwargs):
         crawl_manager_cls = load_object(settings.CRAWL_MANAGER)
         manager = crawl_manager_cls(spider_name, scrapy_request_args, max_requests, start_requests=start_requests)
+        if crawl_args:
+            kwargs.update(crawl_args)
         dfd = manager.crawl(*args, **kwargs)
         return dfd
 

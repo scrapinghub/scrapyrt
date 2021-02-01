@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import json
 import os
+from urllib.parse import quote
 
 import pytest
 import re
@@ -413,15 +414,14 @@ class TestCrawlResourceIntegration(object):
         assert res.status_code == 200
         assert res.json()["items"] == [{'name': 'Some bytes here'}]
 
-    @pytest.mark.parametrize("method", [
-        perform_get, perform_post
-    ])
-    def test_crawl_with_argument(self, server, method):
+    def test_crawl_with_argument_get(self, server):
         url = server.url("crawl.json")
         postcode = "43-300"
-        res = method(url, {"spider_name": "test"}, {
+        argument = json.dumps({"postcode": postcode})
+        argument = quote(argument)
+        res = perform_get(url, {"spider_name": "test"}, {
             "url": server.target_site.url("page1.html"),
-            "postcode": postcode,
+            "crawl_args": argument,
             "callback": 'return_argument'
         })
         expected_items = [{
@@ -430,7 +430,28 @@ class TestCrawlResourceIntegration(object):
         res_json = res.json()
         assert res_json["status"] == "ok"
         assert res_json["items_dropped"] == []
+        assert res_json['items']
+        assert len(res_json['items']) == len(expected_items)
+        assert res_json["items"] == expected_items
 
+    def test_crawl_with_argument_post(self, server):
+        url = server.url("crawl.json")
+        postcode = "43-300"
+        argument = {"postcode": postcode}
+        res = perform_post(url, {
+            "spider_name": "test",
+            "crawl_args": argument
+        }, {
+            "url": server.target_site.url("page1.html"),
+            "callback": 'return_argument'
+        })
+        expected_items = [{
+            u'name': postcode,
+        }]
+        res_json = res.json()
+        assert res_json["status"] == "ok"
+        assert not res_json.get("errors")
+        assert res_json["items_dropped"] == []
         assert res_json['items']
         assert len(res_json['items']) == len(expected_items)
         assert res_json["items"] == expected_items
