@@ -18,3 +18,6 @@ class TestSpider(scrapy.Spider):
     def some_errback(self, err):
         self.logger.error("Logging some error {}".format(err))
         return
+
+    def return_argument(self, response):
+        return TestprojectItem(name=self.postcode)

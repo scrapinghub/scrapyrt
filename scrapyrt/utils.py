@@ -15,7 +15,7 @@ def extract_scrapy_request_args(dictionary, raise_error=False):
             arguments.
     """
     result = dictionary.copy()
-    args = inspect.getargspec(Request.__init__).args
+    args = inspect.getfullargspec(Request.__init__).args
     for key in dictionary.keys():
         if key not in args:
             result.pop(key)

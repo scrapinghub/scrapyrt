@@ -412,3 +412,25 @@ class TestCrawlResourceIntegration(object):
                       'callback': 'return_bytes'})
         assert res.status_code == 200
         assert res.json()["items"] == [{'name': 'Some bytes here'}]
+
+    @pytest.mark.parametrize("method", [
+        perform_get, perform_post
+    ])
+    def test_crawl_with_argument(self, server, method):
+        url = server.url("crawl.json")
+        postcode = "43-300"
+        res = method(url, {"spider_name": "test"}, {
+            "url": server.target_site.url("page1.html"),
+            "postcode": postcode,
+            "callback": 'return_argument'
+        })
+        expected_items = [{
+            u'name': postcode,
+        }]
+        res_json = res.json()
+        assert res_json["status"] == "ok"
+        assert res_json["items_dropped"] == []
+
+        assert res_json['items']
+        assert len(res_json['items']) == len(expected_items)
+        assert res_json["items"] == expected_items

@@ -154,10 +154,12 @@ class CrawlResource(ServiceResource):
         """
         request_body = request.content.getvalue()
         try:
+            # TODO replace demjson with json.loads
             api_params = demjson.decode(request_body)
         except demjson.JSONDecodeError as e:
             message = "Invalid JSON in POST body. {}"
             message = message.format(e.pretty_description())
+            # TODO should be integer not string
             raise Error('400', message=message)
 
         log.msg("{}".format(api_params))
@@ -169,7 +171,7 @@ class CrawlResource(ServiceResource):
             _request = self.get_required_argument(api_params, "request")
         try:
             scrapy_request_args = extract_scrapy_request_args(
-                _request, raise_error=True
+                _request, raise_error=False
             )
         except ValueError as e:
             raise Error('400', str(e))
