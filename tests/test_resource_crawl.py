@@ -455,3 +455,22 @@ class TestCrawlResourceIntegration(object):
         assert res_json['items']
         assert len(res_json['items']) == len(expected_items)
         assert res_json["items"] == expected_items
+
+    def test_crawl_with_argument_invalid_json(self, server):
+        url = server.url("crawl.json")
+        postcode = "43-300"
+        argument = '"this is not valid json'
+        argument = quote(argument)
+        res = perform_get(url, {"spider_name": "test"}, {
+            "url": server.target_site.url("page1.html"),
+            "crawl_args": argument,
+            "callback": 'return_argument'
+        })
+        expected_items = [{
+            u'name': postcode,
+        }]
+        res_json = res.json()
+        assert res_json["status"] == "error"
+        assert res_json.get('items') is None
+        assert res_json['code'] == 400
+        assert re.search(' must be valid url encoded JSON', res_json['message'])
