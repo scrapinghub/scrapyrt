@@ -449,6 +449,7 @@ class TestCrawlResourceIntegration(object):
             u'name': postcode,
         }]
         res_json = res.json()
+        assert res.status_code == 200
         assert res_json["status"] == "ok"
         assert not res_json.get("errors")
         assert res_json["items_dropped"] == []
@@ -458,7 +459,6 @@ class TestCrawlResourceIntegration(object):
 
     def test_crawl_with_argument_invalid_json(self, server):
         url = server.url("crawl.json")
-        postcode = "43-300"
         argument = '"this is not valid json'
         argument = quote(argument)
         res = perform_get(url, {"spider_name": "test"}, {
@@ -466,11 +466,60 @@ class TestCrawlResourceIntegration(object):
             "crawl_args": argument,
             "callback": 'return_argument'
         })
-        expected_items = [{
-            u'name': postcode,
-        }]
+        assert res.status_code == 400
         res_json = res.json()
         assert res_json["status"] == "error"
         assert res_json.get('items') is None
         assert res_json['code'] == 400
         assert re.search(' must be valid url encoded JSON', res_json['message'])
+
+    def test_crawl_with_argument_invalid_name(self, server):
+        url = server.url("crawl.json")
+        argument = quote(json.dumps({"parse": "string"}))
+        res = perform_get(url, {"spider_name": "test"}, {
+            "url": server.target_site.url("page1.html"),
+            "crawl_args": argument,
+        })
+
+        def check_res(res):
+            res_json = res.json()
+            assert res.status_code == 400
+            assert res_json["status"] == "error"
+            assert res_json.get('items') is None
+            assert res_json['code'] == 400
+
+            msg = 'Crawl argument cannot override spider method'
+            assert re.search(msg, res_json['message'])
+
+        check_res(res)
+
+        res = perform_post(url, {
+            "spider_name": "test",
+            "crawl_args": argument
+        }, {
+            "url": server.target_site.url("page1.html"),
+            "callback": 'return_argument'
+        })
+
+        check_res(res)
+
+    def test_crawl_with_argument_attribute_collision(self, server):
+        """If there is attribute collision and some argument to spider
+         passed via API, and this argument collides with spider attribute,
+         argument from request overrides spider attribute.
+        """
+        url = server.url("crawl.json")
+        argument = quote(json.dumps({"some_attribute": "string"}))
+        res = perform_get(url, {"spider_name": "test"}, {
+            "url": server.target_site.url("page1.html"),
+            "crawl_args": argument,
+        })
+
+        def check_res(res):
+            res_json = res.json()
+            assert res_json["status"] == "ok"
+            assert res.status_code == 200
+            assert res_json['items']
+            assert len(res_json['items']) == 1
+
+        check_res(res)

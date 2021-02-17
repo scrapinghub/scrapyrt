@@ -7,6 +7,7 @@ from ..items import TestprojectItem
 class TestSpider(scrapy.Spider):
 
     name = 'test'
+    some_attribute = "Yes|No"
 
     def parse(self, response):
         name = response.xpath('//h1/text()').extract()
