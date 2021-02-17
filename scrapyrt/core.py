@@ -60,6 +60,13 @@ class ScrapyrtCrawlerProcess(CrawlerRunner):
     def crawl(self, spidercls, *args, **kwargs):
         if isinstance(spidercls, six.string_types):
             spidercls = self.spider_loader.load(spidercls)
+
+        for kw in kwargs:
+            attr_or_m = getattr(spidercls, kw, None)
+            if attr_or_m and callable(attr_or_m):
+                msg = 'Crawl argument cannot override spider method.'
+                msg += ' Got argument {} that overrides spider method {}'
+                raise Error('400', message=msg.format(kw, getattr(spidercls, kw)))
         # creating our own crawler that will allow us to disable start requests easily
         crawler = ScrapyrtCrawler(
             spidercls, self.settings, self.scrapyrt_manager.start_requests)

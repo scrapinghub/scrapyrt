@@ -7,6 +7,7 @@ from ..items import TestprojectItem
 class TestSpider(scrapy.Spider):
 
     name = 'test'
+    some_attribute = "Yes|No"
 
     def parse(self, response):
         name = response.xpath('//h1/text()').extract()
@@ -18,3 +19,6 @@ class TestSpider(scrapy.Spider):
     def some_errback(self, err):
         self.logger.error("Logging some error {}".format(err))
         return
+
+    def return_argument(self, response):
+        return TestprojectItem(name=self.postcode)
