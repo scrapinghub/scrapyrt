@@ -20,7 +20,9 @@ Scrapyrt (Scrapy realtime)
 
 .. image:: https://readthedocs.org/projects/scrapyrt/badge/?version=latest
    :target: https://scrapyrt.readthedocs.io/en/latest/api.html
-   :alt: Latest Read The Docs
+
+Introduction
+============
 
 HTTP server which provides API for scheduling Scrapy spiders and
 making requests with spiders.
@@ -72,7 +74,7 @@ with callback ``parse_foo``::
 Documentation
 =============
 
-`Documentation is available on readthedocs <http://scrapyrt.readthedocs.org/en/latest/index.html>`_
+`Documentation is available on readthedocs <http://scrapyrt.readthedocs.org/en/latest/index.html>`_.
 
 Support
 =======
