@@ -25,10 +25,16 @@ Scrapyrt (Scrapy realtime)
 HTTP server which provides API for scheduling Scrapy spiders and
 making requests with spiders.
 
-Allows you to easily add HTTP API to your existing Scrapy project. All Scrapy project
-components (e.g. middleware, pipelines, extensions) are supported out of the box. You
-simply run Scrapyrt in Scrapy project directory and it starts HTTP server allowing you
-to schedule your spiders and get spider output in JSON format.
+Features
+========
+* Allows you to easily add HTTP API to your existing Scrapy project
+* All Scrapy project components (e.g. middleware, pipelines, extensions) are supported out of the box. 
+* You simply run Scrapyrt in Scrapy project directory and it starts HTTP server allowing you to schedule your spiders and get spider output in JSON format.
+
+Note
+====
+* Project is not a replacement for `Scrapyd <https://scrapyd.readthedocs.io/en/stable/>`_ or `Scrapy Cloud <https://www.zyte.com/scrapy-cloud/>`_ or other infrastructure to run long running crawls
+* Not suitable for long running spiders, good for spiders that will fetch one response from some website and return response
 
 Getting started
 ===============
@@ -66,7 +72,7 @@ with callback ``parse_foo``::
 Documentation
 =============
 
-Documentation is available here: http://scrapyrt.readthedocs.org/en/latest/index.html
+`Documentation is available on readthedocs <http://scrapyrt.readthedocs.org/en/latest/index.html>`_
 
 Support
 =======
@@ -81,9 +87,9 @@ Commercial support is also available by `Scrapinghub`_.
 
 License
 =======
-ScrapyRT is offered under [BSD 3 Clause license](https://en.wikipedia.org/wiki/BSD_licenses).
+ScrapyRT is offered under `BSD 3-Clause license <https://en.wikipedia.org/wiki/BSD_licenses#3-clause_license_(%22BSD_License_2.0%22,_%22Revised_BSD_License%22,_%22New_BSD_License%22,_or_%22Modified_BSD_License%22)>`_.
 
 
 Development
 ===========
-Development taking place on github: https://github.com/scrapinghub/scrapyrt
+Development taking place on `Github <https://github.com/scrapinghub/scrapyrt>`_.
