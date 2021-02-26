@@ -9,7 +9,7 @@ from scrapyrt.conf import settings
 from scrapyrt.resources import RealtimeApi, ServiceResource, CrawlResource
 
 
-class TestResource(ServiceResource):
+class SampleResource(ServiceResource):
     isLeaf = True
     allowedMethods = ['GET', 'POST']
 
@@ -35,10 +35,10 @@ class TestRealtimeApi(unittest.TestCase):
     @patch('scrapyrt.resources.settings', deepcopy(settings))
     def test_realtimeapi_with_custom_settings(self):
         from scrapyrt.resources import settings
-        settings.RESOURCES[b'test.json'] = self._get_class_path('TestResource')
+        settings.RESOURCES[b'test.json'] = self._get_class_path('SampleResource')
         expected_entities = {
             b'crawl.json': CrawlResource,
-            b'test.json': TestResource
+            b'test.json': SampleResource
         }
         service_root = RealtimeApi()
         self._check_entities(service_root, expected_entities)

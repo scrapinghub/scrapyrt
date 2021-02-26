@@ -334,7 +334,7 @@ class TestReturnItems(TestCrawlManager):
 
     def test_return_items(self):
         result = self.crawl_manager.return_items(None)
-        self.assertDictContainsSubset(self.expected_result, result)
+        self.assertEqual(dict(result, **self.expected_result), result)
         self.assertEqual(list(sorted(self.stats.keys())), list(result['stats'].keys()))
         # debug = True by default
         self.assertIn('errors', result)
