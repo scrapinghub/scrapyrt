@@ -3,7 +3,6 @@ from collections import OrderedDict
 from copy import deepcopy
 import datetime
 import os
-import six
 
 from scrapy import signals
 from scrapy.crawler import CrawlerRunner, Crawler
@@ -58,7 +57,7 @@ class ScrapyrtCrawlerProcess(CrawlerRunner):
         self.scrapyrt_manager = scrapyrt_manager
 
     def crawl(self, spidercls, *args, **kwargs):
-        if isinstance(spidercls, six.string_types):
+        if isinstance(spidercls, str):
             spidercls = self.spider_loader.load(spidercls)
 
         for kw in kwargs:

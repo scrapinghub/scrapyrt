@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-import six
 from copy import deepcopy
 from importlib import import_module
 
@@ -12,7 +11,7 @@ class Settings(object):
         self.setmodule(default_settings)
 
     def setmodule(self, module):
-        if isinstance(module, six.string_types):
+        if isinstance(module, str):
             module = import_module(module)
         for setting in dir(module):
             self.set(setting, getattr(module, setting))

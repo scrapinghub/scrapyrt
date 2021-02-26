@@ -7,9 +7,9 @@ import sys
 import tempfile
 import time
 from subprocess import Popen, PIPE
+from urllib.parse import urljoin
 
 import port_for
-from six.moves.urllib.parse import urljoin
 
 from . import TESTS_PATH
 from .utils import get_testenv, generate_project
