@@ -1,6 +1,1 @@
 Scrapy>=1.0.0
-service-identity>=1.0.0
-demjson>=2.2.4
-six>=1.12.0
-jmespath==0.10.0
-pyasn1>=0.4.8

@@ -2,7 +2,6 @@
 import json
 from urllib.parse import unquote
 
-import demjson
 from scrapy.utils.misc import load_object
 from scrapy.utils.serialize import ScrapyJSONEncoder
 from twisted.internet.defer import Deferred
@@ -158,12 +157,11 @@ class CrawlResource(ServiceResource):
         """
         request_body = request.content.getvalue()
         try:
-            # TODO replace demjson with json.loads
-            api_params = demjson.decode(request_body)
-        except demjson.JSONDecodeError as e:
+            api_params = json.loads(request_body)
+        except Exception as e:
             message = "Invalid JSON in POST body. {}"
-            message = message.format(e.pretty_description())
-            # TODO should be integer not string
+            message = message.format(e)
+            # TODO should be integer not string?
             raise Error('400', message=message)
 
         log.msg("{}".format(api_params))

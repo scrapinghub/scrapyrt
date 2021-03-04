@@ -1,8 +1,5 @@
 import inspect
 
-import sys
-
-import six
 from scrapy import Request
 
 
@@ -33,7 +30,7 @@ except ImportError:
         is already a bytes object, return it as-is."""
         if isinstance(text, bytes):
             return text
-        if not isinstance(text, six.string_types):
+        if not isinstance(text, str):
             raise TypeError('to_bytes must receive a unicode, str or bytes '
                             'object, got %s' % type(text).__name__)
         if encoding is None:
