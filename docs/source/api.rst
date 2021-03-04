@@ -130,6 +130,16 @@ start_requests
     behavior. If this argument is present API will execute start_requests
     Spider method.
 
+crawl_args
+    - type: urlencoded JSON string
+    - optional
+
+    Optional arguments for spider. This is same as you use when running
+    spider from command line with -a argument, for example if you run
+    spider like this: "scrapy crawl spider -a zipcode=14100" you can
+    send crawl_args={"zipcode":"14100"} (urlencoded: crawl_args=%7B%22zipcode%22%3A%2014100%7D)
+    and spider will get zipcode argument.
+
 If required parameters are missing api will return 400 Bad Request
 with hopefully helpful error message.
 
@@ -558,6 +568,18 @@ But if you still want to save all stdout to some file - you can create custom
 approach described in `Python Logging HOWTO`_ or redirect stdout to a file using
 `bash redirection syntax`_, `supervisord logging`_ etc.
 
+Releases
+========
+ScrapyRT 0.12 (2021-03-08)
+--------------------------
+- added crawl arguments for API
+- removed Python 2 support
+- added Python 3.9 support
+- docs clean up
+- removed superfluous requirements (demjson, six)
+- fixed API crash when spider returns bytes in items output
+- updated unit tests
+- development improvements, moved from Travis to Github Workflows
 
 .. _toscrape-css spider: https://github.com/scrapy/quotesbot/blob/master/quotesbot/spiders/toscrape-css.py
 .. _Scrapy educational quotesbot project: https://github.com/scrapy/quotesbot
