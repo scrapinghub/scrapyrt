@@ -82,10 +82,10 @@ Support
 Open source support is provided here in Github. Please `create a question
 issue`_ (ie. issue with "question" label).
 
-Commercial support is also available by `Scrapinghub`_.
+Commercial support is also available by `Zyte`_.
 
 .. _create a question issue: https://github.com/scrapinghub/scrapyrt/issues/new?labels=question
-.. _Scrapinghub: http://scrapinghub.com
+.. _Zyte: http://zyte.com
 
 License
 =======
