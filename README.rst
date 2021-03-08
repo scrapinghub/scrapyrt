@@ -24,7 +24,7 @@ Scrapyrt (Scrapy realtime)
 Introduction
 ============
 
-HTTP server which provides API for scheduling Scrapy spiders and
+HTTP server which provides API for scheduling `Scrapy <https://scrapy.org/>`_ spiders and
 making requests with spiders.
 
 Features
@@ -56,9 +56,9 @@ and will raise error if it won't find one.  Note that you need to have all
 your project requirements installed.
 
 Scrapyrt supports endpoint ``/crawl.json`` that can be requested
-with two methods.
+with two methods: GET and POST.
 
-To run sample `toscrape-css spider`_ from `Scrapy educational quotesbot project`_
+To run sample toscrape-css spider from `Quotesbot <https://github.com/scrapy/quotesbot>`_
 parsing page about famous quotes::
 
     curl "http://localhost:9080/crawl.json?spider_name=toscrape-css&url=http://quotes.toscrape.com/"
