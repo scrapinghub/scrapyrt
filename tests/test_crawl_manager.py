@@ -74,7 +74,7 @@ class TestCrawl(TestCrawlManager):
         call_args, call_kwargs = crawler_process_mock.call_args
         for arg in spider_args:
             self.assertIn(arg, call_args)
-        self.assertDictContainsSubset(spider_kwargs, call_kwargs)
+        self.assertEqual(spider_kwargs, call_kwargs)
 
 
 class TestGetProjectSettings(TestCrawlManager):
