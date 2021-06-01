@@ -96,14 +96,16 @@ class CrawlManager(object):
     Runs crawls
     """
 
-    def __init__(self, spider_name, request_kwargs, max_requests=None, start_requests=False):
+    def __init__(self, spider_name, request_kwargs, max_items=None, max_requests=None, start_requests=False):
         self.spider_name = spider_name
         self.log_dir = settings.LOG_DIR
         self.items = []
         self.items_dropped = []
         self.errors = []
+        self.max_items = int(max_items) if max_items else None
         self.max_requests = int(max_requests) if max_requests else None
         self.timeout_limit = int(settings.TIMEOUT_LIMIT)
+        self.items_count = 0
         self.request_count = 0
         self.debug = settings.DEBUG
         self.crawler_process = None
@@ -195,6 +197,15 @@ class CrawlManager(object):
         time_now = datetime.datetime.utcnow()
         if (time_now - start_time).seconds >= self.timeout_limit:
             spider.crawler.engine.close_spider(spider, reason="timeout")
+
+    def limit_items(self, spider):
+        """Stop crawl after reaching max_items."""
+        if self.max_items and self.max_items <= self.items_count:
+            reason = "stop generating items, only {} items allowed".format(
+                self.max_items)
+            spider.crawler.engine.close_spider(spider, reason=reason)
+        else:
+            self.items_count += 1
 
     def limit_requests(self, spider):
         """Stop crawl after reaching max_requests."""

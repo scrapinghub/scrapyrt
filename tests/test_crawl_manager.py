@@ -252,6 +252,22 @@ class TestHandleSpiderError(TestCrawlManager):
         self.assertEqual(len(self.crawl_manager.errors), 0)
 
 
+class TestLimitItems(TestCrawlManager):
+
+    def test_max_items_not_set(self):
+        for i in range(100):
+            self.crawl_manager.limit_items(self.spider)
+        self.assertFalse(self.crawler.engine.close_spider.called)
+
+    def test_max_items_set(self):
+        self.crawl_manager.max_items = 10
+        for i in range(self.crawl_manager.max_items):
+            self.crawl_manager.limit_items(self.spider)
+        self.assertFalse(self.crawler.engine.close_spider.called)
+        self.crawl_manager.limit_items(self.spider)
+        self.assertTrue(self.crawler.engine.close_spider.called)
+
+
 class TestLimitRequests(TestCrawlManager):
 
     def test_max_requests_not_set(self):
