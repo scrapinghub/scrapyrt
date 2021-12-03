@@ -8,10 +8,13 @@ import sys
 
 from scrapy.utils.conf import closest_scrapy_cfg
 from scrapy.utils.misc import load_object
+from twisted.python import log
+
+import scrapyrt
+from scrapyrt.utils import install_reactor
 from twisted.application import app
 from twisted.application.internet import TCPServer
 from twisted.application.service import Application
-from twisted.internet import reactor
 from twisted.web.server import Site
 
 from .log import setup_logging
@@ -79,17 +82,24 @@ def find_scrapy_project(project):
 
 def execute():
     sys.path.insert(0, os.getcwd())
+
     arguments = parse_arguments()
     if arguments.settings:
         settings.setmodule(arguments.settings)
     if arguments.set:
         for name, value in arguments.set:
             settings.set(name.upper(), value)
+
     settings.set('PROJECT_SETTINGS', find_scrapy_project(arguments.project))
+    if settings.TWISTED_REACTOR is not None:
+        install_reactor(settings.TWISTED_REACTOR)
     settings.freeze()
     setup_logging()
     application = get_application(arguments)
     app.startApplication(application, save=False)
+    from twisted.internet import reactor
+    msg = f"Running with reactor: {reactor.__class__.__name__}. "
+    log.msg(msg)
     reactor.run()
 
 
