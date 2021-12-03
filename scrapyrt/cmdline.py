@@ -1,24 +1,21 @@
 # -*- coding: utf-8 -*-
-from configparser import (
-    ConfigParser, NoOptionError, NoSectionError
-)
 import argparse
 import os
 import sys
+from configparser import ConfigParser, NoOptionError, NoSectionError
 
 from scrapy.utils.conf import closest_scrapy_cfg
 from scrapy.utils.misc import load_object
-from twisted.python import log
-
-import scrapyrt
-from scrapyrt.utils import install_reactor
 from twisted.application import app
 from twisted.application.internet import TCPServer
 from twisted.application.service import Application
+from twisted.python import log
 from twisted.web.server import Site
 
-from .log import setup_logging
+from scrapyrt.utils import install_reactor
+
 from .conf import settings
+from .log import setup_logging
 
 
 def parse_arguments():
