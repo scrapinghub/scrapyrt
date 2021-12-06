@@ -21,9 +21,12 @@ _trial_temp
 /dist/
 /test_urls*
 testing_scripts*
+coverage.xml
+.python-version
 
 # IDE
 /.idea/
+.vscode
 
 # tests
 .coverage
@@ -33,4 +36,3 @@ testing_scripts*
 
 # sphinx
 docs/build/*
-.python-version

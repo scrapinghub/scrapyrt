@@ -11,10 +11,11 @@ from twisted.application.internet import TCPServer
 from twisted.application.service import Application
 from twisted.python import log
 from twisted.web.server import Site
+from scrapyrt.conf.spider_settings import get_project_settings
 
 from scrapyrt.utils import install_reactor
 
-from .conf import settings
+from .conf import app_settings
 from .log import setup_logging
 
 
@@ -52,7 +53,7 @@ def parse_arguments():
 
 
 def get_application(arguments):
-    ServiceRoot = load_object(settings.SERVICE_ROOT)
+    ServiceRoot = load_object(app_settings.SERVICE_ROOT)
     site = Site(ServiceRoot())
     application = Application('scrapyrt')
     server = TCPServer(arguments.port, site, interface=arguments.ip)
@@ -77,27 +78,37 @@ def find_scrapy_project(project):
     return project_settings
 
 
-def execute():
-    sys.path.insert(0, os.getcwd())
+def run_application(reactor_type, arguments, app_settings):
+    if reactor_type is not None:
+        install_reactor(reactor_type)
 
-    arguments = parse_arguments()
-    if arguments.settings:
-        settings.setmodule(arguments.settings)
-    if arguments.set:
-        for name, value in arguments.set:
-            settings.set(name.upper(), value)
-
-    settings.set('PROJECT_SETTINGS', find_scrapy_project(arguments.project))
-    if settings.TWISTED_REACTOR is not None:
-        install_reactor(settings.TWISTED_REACTOR)
-    settings.freeze()
     setup_logging()
+
     application = get_application(arguments)
+    app_settings.freeze()
     app.startApplication(application, save=False)
     from twisted.internet import reactor
     msg = f"Running with reactor: {reactor.__class__.__name__}. "
     log.msg(msg)
     reactor.run()
+
+
+def execute():
+    sys.path.insert(0, os.getcwd())
+
+    arguments = parse_arguments()
+    if arguments.settings:
+        app_settings.setmodule(arguments.settings)
+    if arguments.set:
+        for name, value in arguments.set:
+            app_settings.set(name.upper(), value)
+
+    app_settings.set('PROJECT_SETTINGS',
+                     find_scrapy_project(arguments.project))
+    project_settings = get_project_settings()
+    reactor_type = app_settings.TWISTED_REACTOR or project_settings.get(
+        'TWISTED_REACTOR')
+    run_application(reactor_type, arguments, app_settings)
 
 
 if __name__ == '__main__':

@@ -36,4 +36,4 @@ class Settings(object):
         return bool(getattr(self, '_frozen', False))
 
 
-settings = Settings()
+app_settings = Settings()

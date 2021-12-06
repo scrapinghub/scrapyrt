@@ -10,7 +10,7 @@ from twisted.python import log
 from twisted.python.log import startLoggingWithObserver
 from twisted.python.logfile import DailyLogFile
 
-from .conf import settings as scrapyrt_settings
+from .conf import app_settings
 from .utils import to_bytes
 
 DEBUG = logging.DEBUG
@@ -91,16 +91,16 @@ class SpiderFilter(logging.Filter):
 
 
 def setup_logging():
-    if not os.path.exists(scrapyrt_settings.LOG_DIR):
-        os.makedirs(scrapyrt_settings.LOG_DIR)
-    if scrapyrt_settings.LOG_FILE:
+    if not os.path.exists(app_settings.LOG_DIR):
+        os.makedirs(app_settings.LOG_DIR)
+    if app_settings.LOG_FILE:
         logfile = DailyLogFile.fromFullPath(
-            os.path.join(scrapyrt_settings.LOG_DIR,
-                         scrapyrt_settings.LOG_FILE)
+            os.path.join(app_settings.LOG_DIR,
+                         app_settings.LOG_FILE)
         )
     else:
         logfile = sys.stderr
-    observer = ScrapyrtFileLogObserver(logfile, scrapyrt_settings.LOG_ENCODING)
+    observer = ScrapyrtFileLogObserver(logfile, app_settings.LOG_ENCODING)
     startLoggingWithObserver(observer.emit, setStdout=False)
 
     # setup general logging for Scrapy

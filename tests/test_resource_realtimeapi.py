@@ -5,7 +5,7 @@ import os
 from mock import patch
 from twisted.trial import unittest
 
-from scrapyrt.conf import settings
+from scrapyrt.conf import app_settings
 from scrapyrt.resources import RealtimeApi, ServiceResource, CrawlResource
 
 
@@ -32,10 +32,12 @@ class TestRealtimeApi(unittest.TestCase):
     # XXX: one inconvenience of singleton settings - complexities during tests,
     # e.g. settings are mutable, when you change them in one test -
     # changes will be kept unless you cleanup those changes or use mock.
-    @patch('scrapyrt.resources.settings', deepcopy(settings))
+    @patch('scrapyrt.resources.app_settings', deepcopy(app_settings))
     def test_realtimeapi_with_custom_settings(self):
-        from scrapyrt.resources import settings
-        settings.RESOURCES[b'test.json'] = self._get_class_path('SampleResource')
+        from scrapyrt.resources import app_settings
+        app_settings.RESOURCES[b'test.json'] = self._get_class_path(
+            'SampleResource'
+        )
         expected_entities = {
             b'crawl.json': CrawlResource,
             b'test.json': SampleResource
