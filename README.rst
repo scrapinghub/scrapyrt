@@ -1,5 +1,9 @@
+.. image:: artwork/logo.gif
+   :width: 400px
+   :align: center
+
 ==========================
-Scrapyrt (Scrapy realtime)
+ScrapyRT (Scrapy realtime)
 ==========================
 
 .. image:: https://github.com/scrapinghub/scrapyrt/workflows/CI/badge.svg
@@ -21,28 +25,40 @@ Scrapyrt (Scrapy realtime)
 .. image:: https://readthedocs.org/projects/scrapyrt/badge/?version=latest
    :target: https://scrapyrt.readthedocs.io/en/latest/api.html
 
-HTTP API for scheduling `Scrapy <https://scrapy.org/>`_ spiders and receiving their items in response.
+Schedule your Scrapy spiders and receive data immediately.
+
+ScrapyRT is a HTTP API for scheduling `Scrapy <https://scrapy.org/>`_ spiders and receiving collected items in response.
 
 Quickstart
 ===============
 
 **1. install**
 
+.. code-block:: shell
+
     > pip install scrapyrt
 
 **2. switch to Scrapy project (e.g. quotesbot project)**
 
-    > cd ../quotesbot
+.. code-block:: shell
+
+    > cd my/project_path/is/quotesbot
 
 **3. launch ScrapyRT**
+
+.. code-block:: shell
 
     > scrapyrt
 
 **4. run your spiders**
 
+.. code-block:: shell
+
     > curl "localhost:9080/crawl.json?spider_name=toscrape-css&url=http://quotes.toscrape.com/"
 
 **5. run more complex query, e.g. specify callback**
+
+.. code-block:: shell
 
     >  curl --data '{"request": {"url": "http://quotes.toscrape.com/page/2/"}, "spider_name": "toscrape-css", "crawl_args": {"callback":"other"}}' http://localhost:9080/crawl.json -v
 
