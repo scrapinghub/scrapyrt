@@ -1,5 +1,9 @@
+.. image:: artwork/logo.gif
+   :width: 400px
+   :align: center
+
 ==========================
-Scrapyrt (Scrapy realtime)
+ScrapyRT (Scrapy realtime)
 ==========================
 
 .. image:: https://github.com/scrapinghub/scrapyrt/workflows/CI/badge.svg
@@ -21,15 +25,50 @@ Scrapyrt (Scrapy realtime)
 .. image:: https://readthedocs.org/projects/scrapyrt/badge/?version=latest
    :target: https://scrapyrt.readthedocs.io/en/latest/api.html
 
-Introduction
-============
+Schedule your Scrapy spiders and receive data immediately.
 
-HTTP server which provides API for scheduling `Scrapy <https://scrapy.org/>`_ spiders and
-making requests with spiders.
+ScrapyRT is a HTTP API for scheduling `Scrapy <https://scrapy.org/>`_ spiders and receiving collected items in response.
+
+Quickstart
+===============
+
+**1. install**
+
+.. code-block:: shell
+
+    > pip install scrapyrt
+
+**2. switch to Scrapy project (e.g. quotesbot project)**
+
+.. code-block:: shell
+
+    > cd my/project_path/is/quotesbot
+
+**3. launch ScrapyRT**
+
+.. code-block:: shell
+
+    > scrapyrt
+
+**4. run your spiders**
+
+.. code-block:: shell
+
+    > curl "localhost:9080/crawl.json?spider_name=toscrape-css&url=http://quotes.toscrape.com/"
+
+**5. run more complex query, e.g. specify callback**
+
+.. code-block:: shell
+
+    >  curl --data '{"request": {"url": "http://quotes.toscrape.com/page/2/"}, "spider_name": "toscrape-css", "crawl_args": {"callback":"other"}}' http://localhost:9080/crawl.json -v
+
+Scrapyrt will look for ``scrapy.cfg`` file to determine your project settings,
+and will raise error if it won't find one.  Note that you need to have all
+your project requirements installed.
 
 Features
 ========
-* Allows you to easily add HTTP API to your existing Scrapy project
+* Allows you to easily add HTTP API to existing Scrapy project
 * All Scrapy project components (e.g. middleware, pipelines, extensions) are supported out of the box. 
 * You simply run Scrapyrt in Scrapy project directory and it starts HTTP server allowing you to schedule your spiders and get spider output in JSON format.
 
@@ -37,38 +76,6 @@ Note
 ====
 * Project is not a replacement for `Scrapyd <https://scrapyd.readthedocs.io/en/stable/>`_ or `Scrapy Cloud <https://www.zyte.com/scrapy-cloud/>`_ or other infrastructure to run long running crawls
 * Not suitable for long running spiders, good for spiders that will fetch one response from some website and return response
-
-Getting started
-===============
-
-To install Scrapyrt::
-
-    pip install scrapyrt
-
-Now you can run Scrapyrt from within Scrapy project by just typing::
-
-    scrapyrt
-
-in Scrapy project directory.
-
-Scrapyrt will look for ``scrapy.cfg`` file to determine your project settings,
-and will raise error if it won't find one.  Note that you need to have all
-your project requirements installed.
-
-Scrapyrt supports endpoint ``/crawl.json`` that can be requested
-with two methods: GET and POST.
-
-To run sample toscrape-css spider from `Quotesbot <https://github.com/scrapy/quotesbot>`_
-parsing page about famous quotes::
-
-    curl "http://localhost:9080/crawl.json?spider_name=toscrape-css&url=http://quotes.toscrape.com/"
-
-
-To run same spider only allowing one request and parsing url
-with callback ``parse_foo``::
-
-    curl "http://localhost:9080/crawl.json?spider_name=toscrape-css&url=http://quotes.toscrape.com/&callback=parse_foo&max_requests=1"
-
 
 
 Documentation
