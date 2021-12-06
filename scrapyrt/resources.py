@@ -10,7 +10,7 @@ from twisted.web import resource, server
 from twisted.web.error import Error, UnsupportedMethod
 
 from . import log
-from .conf import settings
+from .conf import app_settings
 from .utils import extract_scrapy_request_args, to_bytes
 
 
@@ -88,7 +88,8 @@ class ServiceResource(resource.Resource, object):
         # Python exceptions don't have message attribute in Python 3+ anymore.
         # Twisted HTTP Error objects still have 'message' attribute even in 3+
         # and they fail on str(exception) call.
-        msg = exception.message if hasattr(exception, 'message') else str(exception)
+        msg = exception.message if hasattr(
+            exception, 'message') else str(exception)
 
         return {
             "status": "error",
@@ -112,7 +113,7 @@ class RealtimeApi(ServiceResource):
 
     def __init__(self, **kwargs):
         super(RealtimeApi, self).__init__(self)
-        for route, resource_path in settings.RESOURCES.items():
+        for route, resource_path in app_settings.RESOURCES.items():
             resource_cls = load_object(resource_path)
             route = to_bytes(route)
             self.putChild(route, resource_cls(self, **kwargs))
@@ -248,9 +249,11 @@ class CrawlResource(ServiceResource):
         return dfd
 
     def run_crawl(self, spider_name, scrapy_request_args,
-                  max_requests=None, crawl_args=None, start_requests=False, *args, **kwargs):
-        crawl_manager_cls = load_object(settings.CRAWL_MANAGER)
-        manager = crawl_manager_cls(spider_name, scrapy_request_args, max_requests, start_requests=start_requests)
+                  max_requests=None, crawl_args=None,
+                  start_requests=False, *args, **kwargs):
+        crawl_manager_cls = load_object(app_settings.CRAWL_MANAGER)
+        manager = crawl_manager_cls(
+            spider_name, scrapy_request_args, max_requests, start_requests=start_requests)
         if crawl_args:
             kwargs.update(crawl_args)
         dfd = manager.crawl(*args, **kwargs)

@@ -12,7 +12,7 @@ from twisted.web.error import Error
 from twisted.internet import defer
 
 from . import log
-from .conf import settings
+from .conf import app_settings
 from .conf.spider_settings import get_scrapyrt_settings, get_project_settings
 from .decorators import deprecated
 from .log import setup_spider_logging
@@ -28,6 +28,7 @@ class ScrapyrtCrawler(Crawler):
     TODO: PR to scrapy - ability to set start_requests here.
 
     """
+
     def __init__(self, spidercls, crawler_settings, start_requests=False):
         super(ScrapyrtCrawler, self).__init__(spidercls, crawler_settings)
         self.start_requests = start_requests
@@ -65,7 +66,8 @@ class ScrapyrtCrawlerProcess(CrawlerRunner):
             if attr_or_m and callable(attr_or_m):
                 msg = 'Crawl argument cannot override spider method.'
                 msg += ' Got argument {} that overrides spider method {}'
-                raise Error('400', message=msg.format(kw, getattr(spidercls, kw)))
+                raise Error('400', message=msg.format(
+                    kw, getattr(spidercls, kw)))
         # creating our own crawler that will allow us to disable start requests easily
         crawler = ScrapyrtCrawler(
             spidercls, self.settings, self.scrapyrt_manager.start_requests)
@@ -81,7 +83,8 @@ class ScrapyrtCrawlerProcess(CrawlerRunner):
                                 signals.spider_error)
         crawler.signals.connect(self.scrapyrt_manager.handle_scheduling,
                                 signals.request_scheduled)
-        dfd = super(ScrapyrtCrawlerProcess, self).crawl(crawler, *args, **kwargs)
+        dfd = super(ScrapyrtCrawlerProcess, self).crawl(
+            crawler, *args, **kwargs)
         _cleanup_handler = setup_spider_logging(crawler.spider, self.settings)
 
         def cleanup_logging(result):
@@ -96,16 +99,17 @@ class CrawlManager(object):
     Runs crawls
     """
 
-    def __init__(self, spider_name, request_kwargs, max_requests=None, start_requests=False):
+    def __init__(self, spider_name, request_kwargs,
+                 max_requests=None, start_requests=False):
         self.spider_name = spider_name
-        self.log_dir = settings.LOG_DIR
+        self.log_dir = app_settings.LOG_DIR
         self.items = []
         self.items_dropped = []
         self.errors = []
         self.max_requests = int(max_requests) if max_requests else None
-        self.timeout_limit = int(settings.TIMEOUT_LIMIT)
+        self.timeout_limit = int(app_settings.TIMEOUT_LIMIT)
         self.request_count = 0
-        self.debug = settings.DEBUG
+        self.debug = app_settings.DEBUG
         self.crawler_process = None
         self.crawler = None
         # callback will be added after instantiation of crawler object
@@ -136,7 +140,7 @@ class CrawlManager(object):
         log_dir = os.path.join(self.log_dir, self.spider_name)
         if not os.path.exists(log_dir):
             os.makedirs(log_dir)
-        time_format = settings.SPIDER_LOG_FILE_TIMEFORMAT
+        time_format = app_settings.SPIDER_LOG_FILE_TIMEFORMAT
         filename = datetime.datetime.now().strftime(time_format) + '.log'
         return os.path.join(log_dir, filename)
 

@@ -30,3 +30,5 @@ CRAWL_MANAGER = 'scrapyrt.core.CrawlManager'
 TIMEOUT_LIMIT = 1000
 # disable in production
 DEBUG = True
+
+TWISTED_REACTOR = None

@@ -17,7 +17,7 @@ from twisted.trial import unittest
 from twisted.web.error import Error
 
 from scrapyrt.core import CrawlManager
-from scrapyrt.conf import settings
+from scrapyrt.conf import app_settings
 
 from .spiders import MetaSpider
 
@@ -204,22 +204,22 @@ class TestLimitRuntime(TestCrawlManager):
         self._test_limit_runtime()
 
     def test_string_number_timeout_value(self):
-        _timeout = settings.TIMEOUT_LIMIT
+        _timeout = app_settings.TIMEOUT_LIMIT
         try:
-            settings.TIMEOUT_LIMIT = '1'
+            app_settings.TIMEOUT_LIMIT = '1'
             self.crawl_manager = self.create_crawl_manager()
             self._test_limit_runtime()
         finally:
-            settings.TIMEOUT_LIMIT = _timeout
+            app_settings.TIMEOUT_LIMIT = _timeout
 
     def test_wrong_timeout_value(self):
-        _timeout = settings.TIMEOUT_LIMIT
+        _timeout = app_settings.TIMEOUT_LIMIT
         try:
-            settings.TIMEOUT_LIMIT = 'foo'
+            app_settings.TIMEOUT_LIMIT = 'foo'
             self.assertRaises(
                 ValueError, CrawlManager, self.spider.name, self.kwargs.copy())
         finally:
-            settings.TIMEOUT_LIMIT = _timeout
+            app_settings.TIMEOUT_LIMIT = _timeout
 
 
 class TestHandleSpiderError(TestCrawlManager):
@@ -335,7 +335,8 @@ class TestReturnItems(TestCrawlManager):
     def test_return_items(self):
         result = self.crawl_manager.return_items(None)
         self.assertEqual(dict(result, **self.expected_result), result)
-        self.assertEqual(list(sorted(self.stats.keys())), list(result['stats'].keys()))
+        self.assertEqual(list(sorted(self.stats.keys())),
+                         list(result['stats'].keys()))
         # debug = True by default
         self.assertIn('errors', result)
         self.assertEquals(result['errors'], self.crawl_manager.errors)

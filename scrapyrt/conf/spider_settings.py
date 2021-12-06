@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from scrapy.settings import Settings
 
-from . import settings
+from . import app_settings
 
 
 def get_scrapyrt_settings(log_file=None):
@@ -23,7 +23,7 @@ def get_scrapyrt_settings(log_file=None):
 def get_project_settings(module=None, custom_settings=None):
     crawler_settings = Settings()
     if module is None:
-        module = settings.PROJECT_SETTINGS
+        module = app_settings.PROJECT_SETTINGS
     crawler_settings.setmodule(module, priority='project')
     if custom_settings:
         assert isinstance(custom_settings, dict)

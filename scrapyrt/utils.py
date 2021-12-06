@@ -1,6 +1,10 @@
+import asyncio
 import inspect
+from contextlib import suppress
 
 from scrapy import Request
+from scrapy.utils.misc import load_object
+from twisted.internet import asyncioreactor, error
 
 
 def extract_scrapy_request_args(dictionary, raise_error=False):
@@ -36,3 +40,29 @@ except ImportError:
         if encoding is None:
             encoding = 'utf-8'
         return text.encode(encoding, errors)
+
+
+try:
+    from scrapy.utils.reactor import install_reactor
+except ImportError:
+    def install_reactor(reactor_path, event_loop_path=None):
+        """Installs the :mod:`~twisted.internet.reactor` with the specified
+        import path. Also installs the asyncio event loop with the specified import
+        path if the asyncio reactor is enabled"""
+        reactor_class = load_object(reactor_path)
+        if reactor_class is asyncioreactor.AsyncioSelectorReactor:
+            with suppress(error.ReactorAlreadyInstalledError):
+                if event_loop_path is not None:
+                    event_loop_class = load_object(event_loop_path)
+                    event_loop = event_loop_class()
+                    asyncio.set_event_loop(event_loop)
+                else:
+                    event_loop = asyncio.get_event_loop()
+                asyncioreactor.install(eventloop=event_loop)
+        else:
+            *module, _ = reactor_path.split(".")
+            installer_path = module + ["install"]
+            installer = load_object(".".join(installer_path))
+            with suppress(error.ReactorAlreadyInstalledError):
+                installer()
+
