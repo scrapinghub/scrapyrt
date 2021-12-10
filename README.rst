@@ -70,10 +70,11 @@ Quickstart
 Scrapyrt will look for ``scrapy.cfg`` file to determine your project settings,
 and will raise error if it won't find one.  Note that you need to have all
 your project requirements installed.
+
 Note
 ====
 * Project is not a replacement for `Scrapyd <https://scrapyd.readthedocs.io/en/stable/>`_ or `Scrapy Cloud <https://www.zyte.com/scrapy-cloud/>`_ or other infrastructure to run long running crawls
-* Not suitable for long running spiders, good for spiders that will fetch one response from some website and return response
+* Not suitable for long running spiders, good for spiders that will fetch one response from some website and return items quickly
 
 
 Documentation
