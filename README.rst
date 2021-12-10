@@ -1,4 +1,4 @@
-.. image:: artwork/logo.gif
+.. image:: https://raw.githubusercontent.com/scrapinghub/scrapyrt/master/artwork/logo.gif
    :width: 400px
    :align: center
 
