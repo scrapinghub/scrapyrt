@@ -61,11 +61,11 @@ Quickstart
 
     > curl "localhost:9080/crawl.json?spider_name=toscrape-css&url=http://quotes.toscrape.com/"
 
-**5. run more complex query, e.g. specify callback**
+**5. run more complex query, e.g. specify callback for Scrapy request and zipcode argument for spider**
 
 .. code-block:: shell
 
-    >  curl --data '{"request": {"url": "http://quotes.toscrape.com/page/2/"}, "spider_name": "toscrape-css", "crawl_args": {"callback":"other"}}' http://localhost:9080/crawl.json -v
+    >  curl --data '{"request": {"url": "http://quotes.toscrape.com/page/2/", "callback":"some_callback"}, "spider_name": "toscrape-css", "crawl_args": {"zipcode":"14000"}}' http://localhost:9080/crawl.json -v
 
 Scrapyrt will look for ``scrapy.cfg`` file to determine your project settings,
 and will raise error if it won't find one.  Note that you need to have all
