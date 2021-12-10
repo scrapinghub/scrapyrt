@@ -1,4 +1,4 @@
-.. image:: artwork/logo.gif
+.. image:: https://raw.githubusercontent.com/scrapinghub/scrapyrt/master/artwork/logo.gif
    :width: 400px
    :align: center
 
@@ -25,9 +25,14 @@ ScrapyRT (Scrapy realtime)
 .. image:: https://readthedocs.org/projects/scrapyrt/badge/?version=latest
    :target: https://scrapyrt.readthedocs.io/en/latest/api.html
 
-Schedule your Scrapy spiders and receive data immediately.
+Add HTTP API for your `Scrapy <https://scrapy.org/>`_ project in minutes.
 
-ScrapyRT is a HTTP API for scheduling `Scrapy <https://scrapy.org/>`_ spiders and receiving collected items in response.
+You send a request to ScrapyRT with spider name and URL, and in response, you get items collected by a spider
+visiting this URL. 
+
+* All Scrapy project components (e.g. middleware, pipelines, extensions) are supported
+* You run Scrapyrt in Scrapy project directory. It starts HTTP server allowing you to schedule spiders and get spider output in JSON.
+
 
 Quickstart
 ===============
@@ -66,16 +71,10 @@ Scrapyrt will look for ``scrapy.cfg`` file to determine your project settings,
 and will raise error if it won't find one.  Note that you need to have all
 your project requirements installed.
 
-Features
-========
-* Allows you to easily add HTTP API to existing Scrapy project
-* All Scrapy project components (e.g. middleware, pipelines, extensions) are supported out of the box. 
-* You simply run Scrapyrt in Scrapy project directory and it starts HTTP server allowing you to schedule your spiders and get spider output in JSON format.
-
 Note
 ====
 * Project is not a replacement for `Scrapyd <https://scrapyd.readthedocs.io/en/stable/>`_ or `Scrapy Cloud <https://www.zyte.com/scrapy-cloud/>`_ or other infrastructure to run long running crawls
-* Not suitable for long running spiders, good for spiders that will fetch one response from some website and return response
+* Not suitable for long running spiders, good for spiders that will fetch one response from some website and return items quickly
 
 
 Documentation

@@ -36,6 +36,11 @@ setup(
         'Topic :: Internet :: WWW/HTTP',
         'License :: OSI Approved :: BSD License',
     ],
+    project_urls={
+        "Documentation": "https://scrapyrt.readthedocs.io/en/latest/index.html",
+        "Source": "https://github.com/scrapinghub/scrapyrt",
+        "Tracker": "https://github.com/scrapinghub/scrapyrt/issues"
+    },
     install_requires=[
         'Scrapy>=1.0.0'
     ],
@@ -44,4 +49,5 @@ setup(
             'VERSION',
         ]
     },
+    python_requires='>=3.6',
 )
