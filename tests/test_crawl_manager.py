@@ -104,7 +104,7 @@ class TestSpiderIdle(TestCrawlManager):
         self.assertIsNone(self.crawl_manager.request.callback)
         self._call_spider_idle()
         self.crawler.engine.crawl.assert_called_once_with(
-            self.crawl_manager.request, self.spider)
+            self.crawl_manager.request)
         self.assertNotEqual(self.request, self.crawl_manager.request)
         self.assertEquals(
             self.crawl_manager.request.callback, self.spider.parse_something)
@@ -127,7 +127,7 @@ class TestSpiderIdle(TestCrawlManager):
         self.spider.modify_realtime_request = modify_realtime_request
         self._call_spider_idle()
         self.crawler.engine.crawl.assert_called_once_with(
-            self.crawl_manager.request, self.spider)
+            self.crawl_manager.request)
         self.assertEqual(self.crawl_manager.request.method, 'POST')
         self.assertEqual(self.crawl_manager.request.meta['foo'], 'bar')
 
@@ -135,7 +135,7 @@ class TestSpiderIdle(TestCrawlManager):
         self.spider.modify_realtime_request = None
         self._call_spider_idle()
         self.crawler.engine.crawl.assert_called_once_with(
-            self.crawl_manager.request, self.spider)
+            self.crawl_manager.request)
         self.assertNotEqual(self.request, self.crawl_manager.request)
 
     def test_pass_wrong_spider_errback(self):

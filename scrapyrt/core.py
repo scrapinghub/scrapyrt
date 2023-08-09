@@ -178,7 +178,7 @@ class CrawlManager(object):
                 self.crawler.spider, "modify_realtime_request", None)
             if callable(modify_request):
                 self.request = modify_request(self.request)
-            spider.crawler.engine.crawl(self.request, spider)
+            spider.crawler.engine.crawl(self.request)
             self._request_scheduled = True
             raise DontCloseSpider
 
