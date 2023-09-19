@@ -41,7 +41,7 @@ setup(
         "Tracker": "https://github.com/scrapinghub/scrapyrt/issues"
     },
     install_requires=[
-        'Scrapy>=1.0.0'
+        'Scrapy>=2.11'
     ],
     package_data={
         'scrapyrt': [
