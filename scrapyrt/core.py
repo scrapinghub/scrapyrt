@@ -39,6 +39,8 @@ class ScrapyrtCrawler(Crawler):
         self.crawling = True
         try:
             self.spider = self._create_spider(*args, **kwargs)
+            self._apply_settings()
+            self._update_root_log_handler()
             self.engine = self._create_engine()
             if self.start_requests:
                 start_requests = iter(self.spider.start_requests())
@@ -112,6 +114,7 @@ class CrawlManager(object):
         self.debug = app_settings.DEBUG
         self.crawler_process = None
         self.crawler = None
+        self.crawl_start_time = datetime.datetime.utcnow()
         # callback will be added after instantiation of crawler object
         # because we need to know if spider has method available
         self.callback_name = request_kwargs.pop('callback', None) or 'parse'
@@ -195,9 +198,8 @@ class CrawlManager(object):
 
     def limit_runtime(self, spider):
         """Stop crawl if it takes too long."""
-        start_time = self.crawler.stats.get_value("start_time")
         time_now = datetime.datetime.utcnow()
-        if (time_now - start_time).seconds >= self.timeout_limit:
+        if (time_now - self.crawl_start_time).seconds >= self.timeout_limit:
             spider.crawler.engine.close_spider(spider, reason="timeout")
 
     def limit_requests(self, spider):
