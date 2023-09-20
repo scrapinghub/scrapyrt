@@ -39,8 +39,9 @@ class ScrapyrtCrawler(Crawler):
         self.crawling = True
         try:
             self.spider = self._create_spider(*args, **kwargs)
-            self._apply_settings()
-            self._update_root_log_handler()
+            if hasattr(self, "_apply_settings"):
+                self._apply_settings()
+                self._update_root_log_handler()
             self.engine = self._create_engine()
             if self.start_requests:
                 start_requests = iter(self.spider.start_requests())
