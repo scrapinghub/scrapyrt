@@ -120,7 +120,7 @@ class CrawlManager(object):
         # because we need to know if spider has method available
         self.callback_name = request_kwargs.pop('callback', None) or 'parse'
         # do the same for errback
-        self.errback_name = request_kwargs.pop('errback', None) or 'parse'
+        self.errback_name = request_kwargs.pop('errback', None)
 
         if request_kwargs.get("url"):
             self.request = self.create_spider_request(deepcopy(request_kwargs))
@@ -175,9 +175,11 @@ class CrawlManager(object):
             assert callable(callback), 'Invalid callback'
             self.request = self.request.replace(callback=callback)
 
-            errback = getattr(self.crawler.spider, self.errback_name)
-            assert callable(errback), 'Invalid errback'
-            self.request = self.request.replace(errback=errback)
+
+            if self.errback_name:
+                errback = getattr(self.crawler.spider, self.errback_name)
+                assert callable(errback), 'Invalid errback'
+                self.request = self.request.replace(errback=errback)
             modify_request = getattr(
                 self.crawler.spider, "modify_realtime_request", None)
             if callable(modify_request):
