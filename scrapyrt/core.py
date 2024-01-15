@@ -120,7 +120,7 @@ class CrawlManager(object):
         # because we need to know if spider has method available
         self.callback_name = request_kwargs.pop('callback', None) or 'parse'
         # do the same for errback
-        self.errback_name = request_kwargs.pop('errback', None)
+        self.errback_name = request_kwargs.pop('errback', None) or app_settings.DEFAULT_ERRBACK_NAME
 
         if request_kwargs.get("url"):
             self.request = self.create_spider_request(deepcopy(request_kwargs))
