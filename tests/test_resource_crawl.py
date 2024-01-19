@@ -142,6 +142,17 @@ class TestCrawlResource(object):
         for key, value in expected:
             assert prepared_res[key] == value
 
+    def test_prepare_response_user_error_raised(self, resource):
+        result = {
+            'items': [1, 2],
+            'stats': [99],
+            'spider_name': 'test'
+        }
+        result['user_error'] = Exception("my exception")
+        with pytest.raises(Exception) as e_info:
+            resource.prepare_response(result)
+            assert e_info.message == "my exception"
+            
 
 class TestCrawlResourceGetRequiredArgument(unittest.TestCase):
 

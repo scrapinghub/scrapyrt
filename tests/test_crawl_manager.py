@@ -111,8 +111,10 @@ class TestSpiderIdle(TestCrawlManager):
 
     def test_raise_error_if_not_callable(self):
         self.spider.parse_something = None
-        self.assertRaises(
-            AssertionError, self.crawl_manager.spider_idle, self.spider)
+        self._call_spider_idle()
+        self.assertIsNotNone(self.crawl_manager.user_error)
+        msg = "Invalid callback"
+        assert re.search(msg, self.crawl_manager.user_error.message)
         self.assertFalse(self.crawler.engine.crawl.called)
 
     def test_modify_realtime_request(self):
@@ -142,15 +144,17 @@ class TestSpiderIdle(TestCrawlManager):
         mng = self.create_crawl_manager(
             {'url': 'http://localhost', 'errback': 'handle_error'}
         )
+
         try:
-            with pytest.raises(AttributeError) as err:
-                mng.spider_idle(self.spider)
+            mng.spider_idle(self.spider)
         except DontCloseSpider:
             pass
 
         assert mng.request.errback is None
+
+        self.assertIsNotNone(mng.user_error)
         msg = "has no attribute 'handle_error'"
-        assert re.search(msg, str(err))
+        assert re.search(msg, mng.user_error.message)
 
     def test_pass_good_spider_errback(self):
         mng = self.create_crawl_manager(
@@ -330,6 +334,7 @@ class TestReturnItems(TestCrawlManager):
             'items_dropped': self.crawl_manager.items_dropped,
             'stats': self.stats.copy(),
             'spider_name': self.spider.name,
+            'user_error': None,
         }
 
     def test_return_items(self):

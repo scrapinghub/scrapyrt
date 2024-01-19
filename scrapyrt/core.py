@@ -3,6 +3,7 @@ from collections import OrderedDict
 from copy import deepcopy
 import datetime
 import os
+import traceback
 
 from scrapy import signals
 from scrapy.crawler import CrawlerRunner, Crawler
@@ -109,6 +110,7 @@ class CrawlManager(object):
         self.items = []
         self.items_dropped = []
         self.errors = []
+        self.user_error = None
         self.max_requests = int(max_requests) if max_requests else None
         self.timeout_limit = int(app_settings.TIMEOUT_LIMIT)
         self.request_count = 0
@@ -171,22 +173,26 @@ class CrawlManager(object):
 
         """
         if spider is self.crawler.spider and self.request and not self._request_scheduled:
-            callback = getattr(self.crawler.spider, self.callback_name)
-            assert callable(callback), 'Invalid callback'
-            self.request = self.request.replace(callback=callback)
+            try:
+                callback = getattr(self.crawler.spider, self.callback_name)
+                assert callable(callback), 'Invalid callback'
+                self.request = self.request.replace(callback=callback)
 
 
-            if self.errback_name:
-                errback = getattr(self.crawler.spider, self.errback_name)
-                assert callable(errback), 'Invalid errback'
-                self.request = self.request.replace(errback=errback)
-            modify_request = getattr(
-                self.crawler.spider, "modify_realtime_request", None)
-            if callable(modify_request):
-                self.request = modify_request(self.request)
-            spider.crawler.engine.crawl(self.request)
-            self._request_scheduled = True
-            raise DontCloseSpider
+                if self.errback_name:
+                    errback = getattr(self.crawler.spider, self.errback_name)
+                    assert callable(errback), 'Invalid errback'
+                    self.request = self.request.replace(errback=errback)
+                modify_request = getattr(
+                    self.crawler.spider, "modify_realtime_request", None)
+                if callable(modify_request):
+                    self.request = modify_request(self.request)
+                spider.crawler.engine.crawl(self.request)
+                self._request_scheduled = True
+            except Exception as e:
+                self.user_error = Error(400, message=traceback.format_exc())
+            else:
+                raise DontCloseSpider
 
     def handle_scheduling(self, request, spider):
         """Handler of request_scheduled signal.
@@ -240,6 +246,9 @@ class CrawlManager(object):
             "stats": stats,
             "spider_name": self.spider_name,
         }
+
+        results["user_error"] = self.user_error
+
         if self.debug:
             results["errors"] = self.errors
         return results
