@@ -520,9 +520,13 @@ Default: ``utf-8``.
 DEFAULT_ERRBACK_NAME
 ~~~~~~~~~~~~~~~~~~~~
 
-The name of the default errback method to call on the spider in case of an exception. The default errback method is ``parse`` to maintain backwards compatibility but it is not standard to scrapy and may interfere with the use of middlewares which implement the ``process_spider_exception`` method. Use a setting of ``None`` if you don't want to use the default scrapy exception handling.
+Default: ``"parse"``
 
-Default: ``parse``. Use the ``parse`` method on scrapy spider to handle exceptions. Be aware that this is non-standard to typical scrapy spiders.
+The name of the default errback_.
+
+Use an empty string or ``None`` to unset the errback altogether. 
+
+.. _errback: https://docs.scrapy.org/en/latest/topics/request-response.htm#using-errbacks-to-catch-exceptions-in-request-processing
 
 
 Spider settings
