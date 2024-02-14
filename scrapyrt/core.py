@@ -177,22 +177,29 @@ class CrawlManager(object):
                 callback = getattr(self.crawler.spider, self.callback_name)
                 assert callable(callback), 'Invalid callback'
                 self.request = self.request.replace(callback=callback)
-
-
+            except (AssertionError, AttributeError):
+                msg = f"Invalid spider callback {self.callback_name}, callback not callable or not a method of a spider {self.spider_name}"
+                self.user_error = Error(400, message=msg)
+            try:
                 if self.errback_name:
                     errback = getattr(self.crawler.spider, self.errback_name)
                     assert callable(errback), 'Invalid errback'
                     self.request = self.request.replace(errback=errback)
-                modify_request = getattr(
-                    self.crawler.spider, "modify_realtime_request", None)
-                if callable(modify_request):
-                    self.request = modify_request(self.request)
-                spider.crawler.engine.crawl(self.request)
-                self._request_scheduled = True
-            except Exception as e:
-                self.user_error = Error(400, message=traceback.format_exc())
-            else:
-                raise DontCloseSpider
+            except (AssertionError, AttributeError):
+                msg = f"Invalid spider errback {self.errback_name}, errback not callable or not a method of a spider {self.spider_name}"
+                self.user_error = Error(400, message=msg)
+            if self.user_error:
+                log.msg(self.user_error.message, level=log.ERROR)
+                return
+
+            modify_request = getattr(
+                self.crawler.spider, "modify_realtime_request", None)
+            if callable(modify_request):
+                self.request = modify_request(self.request)
+
+            spider.crawler.engine.crawl(self.request)
+            self._request_scheduled = True
+            raise DontCloseSpider
 
     def handle_scheduling(self, request, spider):
         """Handler of request_scheduled signal.

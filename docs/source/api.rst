@@ -97,14 +97,20 @@ callback
     - optional
 
     Must exist as method of scheduled spider, does not need to contain string "self".
-    If not passed or not found on spider default callback `parse`_ will be used.
+    If not passed default Scrapy callback `parse`_ will be used. If there is no spider method
+    with name specified by callback argument or callback is not callable API will return 400 HTTP error.
+
+    Example request with callback: ``/crawl.json?url=https://quotes.toscrape.com/&spider_name=toscrape-css&callback=parse_page``
 
 errback
     - type: string
     - optional
 
     Scrapy errback for request made from spider. It must exist as method of
-    scheduled spider, otherwise exception will be raised. String does not need to contain 'self'.
+    scheduled spider, otherwise API will return 400 HTTP error. String does not need to contain 'self'.
+    Defaults to None, can be adjusted with `DEFAULT_ERRBACK_NAME`_ setting.
+
+    Example request with errback: ``/crawl.json?url=https://quotes.toscrape.com/&spider_name=toscrape-css&errback=my_errback``
 
 max_requests
     - type: integer
@@ -520,11 +526,12 @@ Default: ``utf-8``.
 DEFAULT_ERRBACK_NAME
 ~~~~~~~~~~~~~~~~~~~~
 
-Default: ``"parse"``
+Default: ``None``
 
-The name of the default errback_.
+String with the name of the default errback_.
 
-Use an empty string or ``None`` to unset the errback altogether. 
+Use this setting to set default errback for scrapy spider requests made from ScrapyRT.
+Errback must exist as method of spider and must be callable, otherwise 400 HTTP error will be raised.
 
 .. _errback: https://docs.scrapy.org/en/latest/topics/request-response.htm#using-errbacks-to-catch-exceptions-in-request-processing
 

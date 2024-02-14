@@ -113,7 +113,7 @@ class TestSpiderIdle(TestCrawlManager):
         self.spider.parse_something = None
         self._call_spider_idle()
         self.assertIsNotNone(self.crawl_manager.user_error)
-        msg = "Invalid callback"
+        msg = "Invalid spider callback parse_something"
         assert re.search(msg, self.crawl_manager.user_error.message)
         self.assertFalse(self.crawler.engine.crawl.called)
 
@@ -153,7 +153,7 @@ class TestSpiderIdle(TestCrawlManager):
         assert mng.request.errback is None
 
         self.assertIsNotNone(mng.user_error)
-        msg = "has no attribute 'handle_error'"
+        msg = "Invalid spider errback"
         assert re.search(msg, mng.user_error.message)
 
     def test_pass_good_spider_errback(self):
