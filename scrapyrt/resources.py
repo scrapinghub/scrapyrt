@@ -261,6 +261,9 @@ class CrawlResource(ServiceResource):
 
     def prepare_response(self, result, *args, **kwargs):
         items = result.get("items")
+        user_error = result.get("user_error", None)
+        if user_error:
+            raise user_error
         response = {
             "status": "ok",
             "items": items,

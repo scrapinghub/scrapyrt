@@ -3,6 +3,7 @@ from collections import OrderedDict
 from copy import deepcopy
 import datetime
 import os
+import traceback
 
 from scrapy import signals
 from scrapy.crawler import CrawlerRunner, Crawler
@@ -109,6 +110,7 @@ class CrawlManager(object):
         self.items = []
         self.items_dropped = []
         self.errors = []
+        self.user_error = None
         self.max_requests = int(max_requests) if max_requests else None
         self.timeout_limit = int(app_settings.TIMEOUT_LIMIT)
         self.request_count = 0
@@ -120,7 +122,7 @@ class CrawlManager(object):
         # because we need to know if spider has method available
         self.callback_name = request_kwargs.pop('callback', None) or 'parse'
         # do the same for errback
-        self.errback_name = request_kwargs.pop('errback', None) or 'parse'
+        self.errback_name = request_kwargs.pop('errback', None) or app_settings.DEFAULT_ERRBACK_NAME
 
         if request_kwargs.get("url"):
             self.request = self.create_spider_request(deepcopy(request_kwargs))
@@ -171,17 +173,30 @@ class CrawlManager(object):
 
         """
         if spider is self.crawler.spider and self.request and not self._request_scheduled:
-            callback = getattr(self.crawler.spider, self.callback_name)
-            assert callable(callback), 'Invalid callback'
-            self.request = self.request.replace(callback=callback)
+            try:
+                callback = getattr(self.crawler.spider, self.callback_name)
+                assert callable(callback), 'Invalid callback'
+                self.request = self.request.replace(callback=callback)
+            except (AssertionError, AttributeError):
+                msg = f"Invalid spider callback {self.callback_name}, callback not callable or not a method of a spider {self.spider_name}"
+                self.user_error = Error(400, message=msg)
+            try:
+                if self.errback_name:
+                    errback = getattr(self.crawler.spider, self.errback_name)
+                    assert callable(errback), 'Invalid errback'
+                    self.request = self.request.replace(errback=errback)
+            except (AssertionError, AttributeError):
+                msg = f"Invalid spider errback {self.errback_name}, errback not callable or not a method of a spider {self.spider_name}"
+                self.user_error = Error(400, message=msg)
+            if self.user_error:
+                log.msg(self.user_error.message, level=log.ERROR)
+                return
 
-            errback = getattr(self.crawler.spider, self.errback_name)
-            assert callable(errback), 'Invalid errback'
-            self.request = self.request.replace(errback=errback)
             modify_request = getattr(
                 self.crawler.spider, "modify_realtime_request", None)
             if callable(modify_request):
                 self.request = modify_request(self.request)
+
             spider.crawler.engine.crawl(self.request)
             self._request_scheduled = True
             raise DontCloseSpider
@@ -238,6 +253,9 @@ class CrawlManager(object):
             "stats": stats,
             "spider_name": self.spider_name,
         }
+
+        results["user_error"] = self.user_error
+
         if self.debug:
             results["errors"] = self.errors
         return results
