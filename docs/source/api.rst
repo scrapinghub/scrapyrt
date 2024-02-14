@@ -588,6 +588,10 @@ approach described in `Python Logging HOWTO`_ or redirect stdout to a file using
 
 Releases
 ========
+ScrapyRT 0.16 (2023-02-14)
+--------------------------
+- errback method for spider made configurable, errback for spiders will default to None instead of parse
+
 ScrapyRT 0.12 (2021-03-08)
 --------------------------
 - added crawl arguments for API
