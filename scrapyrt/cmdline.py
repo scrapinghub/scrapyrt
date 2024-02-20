@@ -13,7 +13,7 @@ from twisted.python import log
 from twisted.web.server import Site
 from scrapyrt.conf.spider_settings import get_project_settings
 
-from scrapyrt.utils import install_reactor
+from scrapyrt.utils import install_reactor, find_module_filepath
 
 from .conf import app_settings
 from .log import setup_logging
@@ -32,14 +32,17 @@ def parse_arguments():
         description='HTTP API server for Scrapy project.')
     parser.add_argument('-p', '--port', dest='port',
                         type=int,
-                        default=9080,
+                        default=os.environ.get("PORT", 9080),
                         help='port number to listen on')
     parser.add_argument('-i', '--ip', dest='ip',
-                        default='localhost',
+                        default=os.environ.get("HOSTNAME", 'localhost'),
                         help='IP address the server will listen on')
     parser.add_argument('--project', dest='project',
-                        default='default',
+                        default=os.environ.get("PROJECT_NAME", 'default'),
                         help='project name from scrapy.cfg')
+    parser.add_argument('--package',
+                        default=os.environ.get("PACKAGE_LOCATION"),
+                        help='package location where scrapy.cfg is contained')
     parser.add_argument('-s', '--set', dest='set',
                         type=valid_setting,
                         action='append',
@@ -61,8 +64,13 @@ def get_application(arguments):
     return application
 
 
-def find_scrapy_project(project):
-    project_config_path = closest_scrapy_cfg()
+def find_scrapy_project(project, package=None):
+    working_dir = "."
+    if package is not None:
+        mod_filepath = find_module_filepath(*package.rsplit(".", 1), none_when_no_spec=True)
+        if mod_filepath is not None:
+            working_dir = os.path.dirname(mod_filepath)
+    project_config_path = closest_scrapy_cfg(path=working_dir)
     if not project_config_path:
         raise RuntimeError('Cannot find scrapy.cfg file')
     project_config = ConfigParser()
@@ -104,7 +112,7 @@ def execute():
             app_settings.set(name.upper(), value)
 
     app_settings.set('PROJECT_SETTINGS',
-                     find_scrapy_project(arguments.project))
+                     find_scrapy_project(arguments.project, package=arguments.package))
     project_settings = get_project_settings()
     reactor_type = app_settings.TWISTED_REACTOR or project_settings.get(
         'TWISTED_REACTOR')

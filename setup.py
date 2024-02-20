@@ -3,7 +3,7 @@
 from setuptools import setup, find_packages
 from os.path import join, dirname
 
-with open(join(dirname(__file__), 'scrapyrt/VERSION'), 'rb') as f:
+with open(join(dirname(__file__), 'scrapyrt', 'VERSION'), 'rb') as f:
     version = f.read().decode('ascii').strip()
 
 setup(
@@ -29,6 +29,7 @@ setup(
         'Programming Language :: Python :: 3.9',
         'Programming Language :: Python :: 3.10',
         'Programming Language :: Python :: 3.11',
+        'Programming Language :: Python :: 3.12',
         'Operating System :: OS Independent',
         'Environment :: Console',
         'Environment :: No Input/Output (Daemon)',

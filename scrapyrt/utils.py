@@ -1,6 +1,8 @@
 import asyncio
 import inspect
 from contextlib import suppress
+from importlib.util import find_spec
+from os import path
 
 from scrapy import Request
 from scrapy.utils.misc import load_object
@@ -66,3 +68,53 @@ except ImportError:
             with suppress(error.ReactorAlreadyInstalledError):
                 installer()
 
+
+def find_module_filepath(module_name, submodule_name, none_when_no_spec=False):
+    """
+    Find module's file location without first importing it
+
+    :param module_name: Module name, e.g., "cdd.tests"
+    :type: ```str```
+
+    :param submodule_name: Submodule name, e.g., "test_pure_utils"
+    :type: ```str```
+
+    :param none_when_no_spec: When `find_spec` returns `None` return that. If `False` raises `AssertionError` then.
+    :type none_when_no_spec: ```bool```
+
+    :return: Module location
+    :rpath: ```str```
+    """
+    assert module_name is not None
+    assert submodule_name is not None
+    module_spec = find_spec(module_name)
+    if module_spec is None:
+        if none_when_no_spec:
+            return module_spec
+        raise AssertionError("spec not found for {}".format(module_name))
+    module_origin = module_spec.origin
+    module_parent = path.dirname(module_origin)
+
+    return next(
+        filter(
+            path.exists,
+            (
+                path.join(
+                    module_parent, submodule_name, "__init__{}py".format(path.extsep)
+                ),
+                path.join(module_parent, "{}{}py".format(submodule_name, path.extsep)),
+                path.join(
+                    module_parent, submodule_name, "__init__{}py".format(path.extsep)
+                ),
+            ),
+        ),
+        module_origin,
+    )
+
+
+__all__ = [
+    "extract_scrapy_request_args",
+    "find_module_filepath",
+    "install_reactor",
+    "to_bytes",
+]
