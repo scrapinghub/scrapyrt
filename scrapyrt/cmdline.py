@@ -106,6 +106,9 @@ def execute():
     app_settings.set('PROJECT_SETTINGS',
                      find_scrapy_project(arguments.project))
     project_settings = get_project_settings()
+    for name, value in project_settings._to_dict().items():
+        app_settings.set(name.upper(), value)
+
     reactor_type = app_settings.TWISTED_REACTOR or project_settings.get(
         'TWISTED_REACTOR')
     run_application(reactor_type, arguments, app_settings)
