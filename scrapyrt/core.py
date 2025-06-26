@@ -1,11 +1,13 @@
-# -*- coding: utf-8 -*-
+from __future__ import annotations
+
 from collections import OrderedDict
 from copy import deepcopy
 import datetime
 import os
 import traceback
 
-from scrapy import signals
+from packaging.version import Version
+from scrapy import signals, Spider
 from scrapy.crawler import CrawlerRunner, Crawler
 from scrapy.exceptions import DontCloseSpider
 from scrapy.http import Request
@@ -19,64 +21,17 @@ from .decorators import deprecated
 from .log import setup_spider_logging
 
 
-class ScrapyrtCrawler(Crawler):
-    """Main and only difference from base class -
-    ScrapyrtCrawler allows us to call or not call
-    start_requests.
-
-    https://github.com/scrapy/scrapy/blob/master/scrapy/crawler.py#L52
-
-    TODO: PR to scrapy - ability to set start_requests here.
-
-    """
-
-    def __init__(self, spidercls, crawler_settings, start_requests=False):
-        super(ScrapyrtCrawler, self).__init__(spidercls, crawler_settings)
-        self.start_requests = start_requests
-
-    @defer.inlineCallbacks
-    def crawl(self, *args, **kwargs):
-        assert not self.crawling, "Crawling already taking place"
-        self.crawling = True
-        try:
-            self.spider = self._create_spider(*args, **kwargs)
-            if hasattr(self, "_apply_settings"):
-                self._apply_settings()
-                self._update_root_log_handler()
-            self.engine = self._create_engine()
-            if self.start_requests:
-                start_requests = iter(self.spider.start_requests())
-            else:
-                start_requests = ()
-            yield self.engine.open_spider(self.spider, start_requests)
-            yield defer.maybeDeferred(self.engine.start)
-        except Exception:
-            self.crawling = False
-            raise
-
-
-class ScrapyrtCrawlerProcess(CrawlerRunner):
+class ScrapyrtCrawlerRunner(CrawlerRunner):
 
     def __init__(self, settings, scrapyrt_manager):
-        super(ScrapyrtCrawlerProcess, self).__init__(settings)
+        super(ScrapyrtCrawlerRunner, self).__init__(settings)
         self.scrapyrt_manager = scrapyrt_manager
 
-    def crawl(self, spidercls, *args, **kwargs):
-        if isinstance(spidercls, str):
-            spidercls = self.spider_loader.load(spidercls)
-
-        for kw in kwargs:
-            attr_or_m = getattr(spidercls, kw, None)
-            if attr_or_m and callable(attr_or_m):
-                msg = 'Crawl argument cannot override spider method.'
-                msg += ' Got argument {} that overrides spider method {}'
-                raise Error('400', message=msg.format(
-                    kw, getattr(spidercls, kw)))
-        # creating our own crawler that will allow us to disable start requests easily
-        crawler = ScrapyrtCrawler(
-            spidercls, self.settings, self.scrapyrt_manager.start_requests)
+    def create_crawler(
+        self, crawler_or_spidercls: type[Spider] | str | Crawler
+    ) -> Crawler:
+        crawler = super().create_crawler(crawler_or_spidercls)
         self.scrapyrt_manager.crawler = crawler
-        # Connecting signals to handlers that control crawl process
         crawler.signals.connect(self.scrapyrt_manager.get_item,
                                 signals.item_scraped)
         crawler.signals.connect(self.scrapyrt_manager.collect_dropped,
@@ -87,15 +42,9 @@ class ScrapyrtCrawlerProcess(CrawlerRunner):
                                 signals.spider_error)
         crawler.signals.connect(self.scrapyrt_manager.handle_scheduling,
                                 signals.request_scheduled)
-        dfd = super(ScrapyrtCrawlerProcess, self).crawl(
-            crawler, *args, **kwargs)
-        _cleanup_handler = setup_spider_logging(crawler.spider, self.settings)
-
-        def cleanup_logging(result):
-            _cleanup_handler()
-            return result
-
-        return dfd.addBoth(cleanup_logging)
+        crawler.signals.connect(self.scrapyrt_manager.read_spider,
+                                signals.spider_opened)
+        return crawler
 
 
 class CrawlManager(object):
@@ -115,7 +64,7 @@ class CrawlManager(object):
         self.timeout_limit = int(app_settings.TIMEOUT_LIMIT)
         self.request_count = 0
         self.debug = app_settings.DEBUG
-        self.crawler_process = None
+        self.crawler_runner = None
         self.crawler = None
         self.crawl_start_time = datetime.datetime.utcnow()
         # callback will be added after instantiation of crawler object
@@ -130,17 +79,52 @@ class CrawlManager(object):
             self.request = None
         self.start_requests = start_requests
         self._request_scheduled = False
+        self.original_start_methods = {}
 
     def crawl(self, *args, **kwargs):
-        self.crawler_process = ScrapyrtCrawlerProcess(
-            self.get_project_settings(), self)
-        try:
-            dfd = self.crawler_process.crawl(self.spider_name, *args, **kwargs)
-        except KeyError as e:
-            # Spider not found.
-            raise Error('404', message=str(e))
+        settings = self.get_project_settings()
+        self.crawler_runner = ScrapyrtCrawlerRunner(settings, self)
+        spidercls = self.crawler_runner.spider_loader.load(self.spider_name)
+        for kw in kwargs:
+            attr_or_m = getattr(spidercls, kw, None)
+            if attr_or_m and callable(attr_or_m):
+                msg = 'Crawl argument cannot override spider method.'
+                msg += ' Got argument {} that overrides spider method {}'
+                raise Error('400', message=msg.format(kw, getattr(spidercls, kw)))
+        if not self.start_requests:
+            self.set_dummy_start_methods(spidercls)
+        dfd = self.crawler_runner.crawl(spidercls, *args, **kwargs)
+        def cleanup_logging(result):
+            if hasattr(self, '_cleanup_handler'):
+                self._cleanup_handler()
+            return result
+        dfd.addBoth(self.restore_start_methods)
+        dfd.addBoth(cleanup_logging)
         dfd.addCallback(self.return_items)
         return dfd
+
+    def set_dummy_start_methods(self, spidercls):
+        if hasattr(spidercls, "start"):
+            async def dummy_start(*args, **kwargs):
+                return
+                yield
+            self.original_start_methods['start'] = spidercls.start
+            spidercls.start = dummy_start
+        if hasattr(spidercls, "start_requests"):
+            def dummy_start_requests(*args, **kwargs):
+                return
+                yield
+            self.original_start_methods['start_requests'] = spidercls.start_requests
+            spidercls.start_requests = dummy_start_requests
+
+    def restore_start_methods(self, result):
+        for method_name in list(self.original_start_methods):
+            original_method = self.original_start_methods.pop(method_name)
+            setattr(self.crawler.spider.__class__, method_name, original_method)
+        return result
+
+    def read_spider(self, spider):
+        self._cleanup_handler = setup_spider_logging(spider, spider.settings)
 
     def _get_log_file_path(self):
         log_dir = os.path.join(self.log_dir, self.spider_name)

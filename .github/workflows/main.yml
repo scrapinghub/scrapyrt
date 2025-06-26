@@ -1,4 +1,7 @@
+# TODO: Switch to tox.
 name: CI
+
+# TODO: Get rid of warnings when running tox with the latest version of Python.
 
 on:
   # Triggers the workflow on push or pull request events but only for the master branch
@@ -13,7 +16,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ["3.8", "3.9", "3.10", "3.11"]
+        python-version: ["3.9", "3.10", "3.11"]
         scrapy-version: ["2.11", "2.10"]
 
     steps:

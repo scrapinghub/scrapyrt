@@ -1,7 +1,4 @@
-mock
-port-for
-Flask
-pytest
+# TODO: Remove this file
 requests
 bumpversion
 flake8

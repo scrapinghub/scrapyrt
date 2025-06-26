@@ -2,10 +2,14 @@
 import os
 
 import shutil
-from scrapy.settings import Settings
+from scrapy.settings import Settings, default_settings
 
 from . import TESTS_PATH, SAMPLE_DATA
 
+ASYNCIO_REACTOR_IS_DEFAULT = (
+    default_settings.TWISTED_REACTOR
+    == "twisted.internet.asyncioreactor.AsyncioSelectorReactor"
+)
 LOCALHOST = 'localhost'
 
 

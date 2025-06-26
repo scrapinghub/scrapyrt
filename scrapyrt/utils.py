@@ -65,4 +65,3 @@ except ImportError:
             installer = load_object(".".join(installer_path))
             with suppress(error.ReactorAlreadyInstalledError):
                 installer()
-

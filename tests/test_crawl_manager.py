@@ -1,3 +1,9 @@
+# TODO: Check all removed tests and make sure we are still testing the same
+# things, even if differently (hopefully with less mocking).
+#
+# TODO: Use ruff with at least the upgrade plugin to get rid of those utf-8
+# comments.
+
 # -*- coding: utf-8 -*-
 import os
 import re
@@ -10,7 +16,9 @@ from scrapy import Item
 from scrapy.exceptions import DontCloseSpider
 from scrapy.http import Response
 from scrapy.settings import Settings
+from scrapy.utils.reactor import install_reactor
 from scrapy.utils.test import get_crawler
+from twisted.internet import defer
 from twisted.internet.defer import Deferred
 from twisted.python.failure import Failure
 from twisted.trial import unittest
@@ -42,39 +50,7 @@ class TestCrawlManager(unittest.TestCase):
         crawl_manager.crawler = self.crawler
         return crawl_manager
 
-
-@patch('scrapyrt.core.ScrapyrtCrawlerProcess.crawl', return_value=Deferred())
-class TestCrawl(TestCrawlManager):
-
-    def test_crawl(self, crawler_process_mock):
-        result = self.crawl_manager.crawl()
-        self.assertIsInstance(result, Deferred)
-        self.assertGreater(len(result.callbacks), 0)
-        self.assertEqual(
-            result.callbacks[0][0][0], self.crawl_manager.return_items)
-
-    def test_no_spider(self, crawler_process_mock):
-        # spider wasn't found
-        crawler_process_mock.side_effect = KeyError
-        exception = self.assertRaises(
-            Error, self.crawl_manager.crawl)
-        self.assertTrue(crawler_process_mock.called)
-        self.assertEqual(exception.status, '404')
-
-    def test_spider_exists(self, crawler_process_mock):
-        result = self.crawl_manager.crawl()
-        self.assertTrue(crawler_process_mock.called)
-        self.assertIs(result, crawler_process_mock.return_value)
-
-    def test_spider_arguments_are_passed(self, crawler_process_mock):
-        spider_args = ['a', 'b']
-        spider_kwargs = {'a': 1, 'b': 2}
-        self.crawl_manager.crawl(*spider_args, **spider_kwargs)
-        self.assertTrue(crawler_process_mock.called)
-        call_args, call_kwargs = crawler_process_mock.call_args
-        for arg in spider_args:
-            self.assertIn(arg, call_args)
-        self.assertEqual(spider_kwargs, call_kwargs)
+# TODO: Check branch coverage, make sure all of code.py is tested.
 
 
 class TestGetProjectSettings(TestCrawlManager):
@@ -385,6 +361,9 @@ class TestStartRequests(unittest.TestCase):
         self.start_requests_mock = MagicMock()
         self.spidercls = MetaSpider
         self._start_requests = self.spidercls.start_requests
+        # TODO: Test with start() by default, but test with start_requests as
+        # well while silencing the warning, and test that when using both
+        # things also work as expected.
         self.spidercls.start_requests = self.start_requests_mock
         self.crawler = get_crawler(self.spidercls)
 
@@ -404,10 +383,11 @@ class TestStartRequests(unittest.TestCase):
     def tearDown(self):
         self.spidercls.start_requests = self._start_requests
 
+    @defer.inlineCallbacks
     @patch('scrapy.crawler.ExecutionEngine')
     def test_start_requests_true(self, _):
         self.crawl_manager.start_requests = True
-        self.crawl_manager.crawl()
+        yield self.crawl_manager.crawl()
         self.assertEqual(self.start_requests_mock.call_count, 1)
 
     @patch('scrapy.crawler.ExecutionEngine')

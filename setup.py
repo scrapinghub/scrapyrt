@@ -25,10 +25,11 @@ setup(
     classifiers=[
         'Programming Language :: Python',
         'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.8',
         'Programming Language :: Python :: 3.9',
         'Programming Language :: Python :: 3.10',
         'Programming Language :: Python :: 3.11',
+        'Programming Language :: Python :: 3.12',
+        'Programming Language :: Python :: 3.13',
         'Operating System :: OS Independent',
         'Environment :: Console',
         'Environment :: No Input/Output (Daemon)',
@@ -41,7 +42,7 @@ setup(
         "Tracker": "https://github.com/scrapinghub/scrapyrt/issues"
     },
     install_requires=[
-        'Scrapy>=2.10'
+        'Scrapy>=2.10',
     ],
     package_data={
         'scrapyrt': [

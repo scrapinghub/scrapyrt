@@ -4,7 +4,7 @@ from scrapy import signals
 from twisted.internet.defer import Deferred
 from twisted.trial import unittest
 
-from scrapyrt.core import CrawlManager, ScrapyrtCrawlerProcess
+from scrapyrt.core import CrawlManager, ScrapyrtCrawlerRunner
 
 from .spiders import MetaSpider
 from .utils import get_settings
@@ -35,7 +35,7 @@ class CralwerProcessTestCase(unittest.TestCase):
         for _, handler in signals_and_handlers:
             self._mock_method(crawl_manager, handler)
         settings = get_settings()
-        crawler_process = ScrapyrtCrawlerProcess(settings, crawl_manager)
+        crawler_process = ScrapyrtCrawlerRunner(settings, crawl_manager)
         dfd = crawler_process.crawl(MetaSpider)
         self.assertIsInstance(dfd, Deferred)
         crawler = crawl_manager.crawler

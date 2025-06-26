@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 """Default scrapyrt settings."""
 
+from scrapy.settings import default_settings as scrapy_default_settings
+
 # Project settings module - found at server initialization
 PROJECT_SETTINGS = None
 
@@ -31,6 +33,6 @@ TIMEOUT_LIMIT = 1000
 # disable in production
 DEBUG = True
 
-TWISTED_REACTOR = None
+TWISTED_REACTOR = scrapy_default_settings.TWISTED_REACTOR  # TODO: Document this change at least in the release notes.
 
 DEFAULT_ERRBACK_NAME = None
