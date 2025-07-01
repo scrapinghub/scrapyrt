@@ -1,3 +1,4 @@
+# TODO: Modernize
 name: Publish
 on:
   release:
