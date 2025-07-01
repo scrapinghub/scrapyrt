@@ -1,12 +1,10 @@
-# -*- coding: utf-8 -*-
-from twisted.trial import unittest
 import requests
+from twisted.trial import unittest
 
 from .servers import MockServer, ScrapyrtTestServer
 
 
 class TestRootResourceIntegration(unittest.TestCase):
-
     def setUp(self):
         self.site = MockServer()
         self.site.start()
@@ -23,4 +21,4 @@ class TestRootResourceIntegration(unittest.TestCase):
     def test_root(self):
         res = requests.get(self.root_url)
         assert res.status_code == 404
-        assert 'No Such Resource' in res.text
+        assert "No Such Resource" in res.text

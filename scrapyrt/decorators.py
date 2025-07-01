@@ -1,6 +1,5 @@
-# -*- coding: utf-8 -*-
-from functools import wraps
 import warnings
+from functools import wraps
 
 from .exceptions import ScrapyrtDeprecationWarning
 
@@ -19,8 +18,7 @@ def deprecated(use_instead=None):
             message = "Call to deprecated function %s." % func.__name__
             if use_instead:
                 message += " Use %s instead." % use_instead
-            warnings.warn(message, category=ScrapyrtDeprecationWarning,
-                          stacklevel=2)
+            warnings.warn(message, category=ScrapyrtDeprecationWarning, stacklevel=2)
             return func(*args, **kwargs)
 
         return wrapped

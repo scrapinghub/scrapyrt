@@ -1,11 +1,13 @@
-# -*- coding: utf-8 -*-
+from __future__ import annotations
+
 from copy import deepcopy
 from importlib import import_module
 
 from . import default_settings
 
 
-class Settings(object):
+class Settings:
+    TWISTED_REACTOR: str | None
 
     def __init__(self):
         self.setmodule(default_settings)
@@ -22,7 +24,7 @@ class Settings(object):
         return super(Settings, self).__setattr__(key, value)
 
     def set(self, name, value):
-        if not name.startswith('_') and name.isupper():
+        if not name.startswith("_") and name.isupper():
             # Deepcopy objects here, or we will have issues with mutability,
             # like changing mutable object stored in settings leads to
             # change of object in default_settings module.
@@ -33,7 +35,7 @@ class Settings(object):
 
     @property
     def frozen(self):
-        return bool(getattr(self, '_frozen', False))
+        return bool(getattr(self, "_frozen", False))
 
 
 app_settings = Settings()

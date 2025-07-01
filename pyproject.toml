@@ -1,0 +1,130 @@
+[build-system]
+requires = ["hatchling>=1.27.0"]
+build-backend = "hatchling.build"
+
+[project]
+name = "scrapyrt"
+version = "0.16.0"
+description = "Put Scrapy spiders behind an HTTP API"
+dependencies = [
+    "Scrapy>=2.10",
+]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Environment :: Console",
+    "Environment :: No Input/Output (Daemon)",
+    "Framework :: Scrapy",
+    "Intended Audience :: Developers",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Internet :: WWW/HTTP",
+    "Topic :: Software Development :: Libraries :: Application Frameworks",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
+license = "BSD-3-Clause"
+readme = "README.rst"
+requires-python = ">=3.9"
+authors = [{ name = "Scrapinghub", email = "opensource@zyte.com" }]
+maintainers = [{ name = "Scrapinghub", email = "opensource@zyte.com" }]
+
+[project.urls]
+Documentation = "https://scrapyrt.readthedocs.io/en/latest/index.html"
+Source = "https://github.com/scrapinghub/scrapyrt"
+Tracker = "https://github.com/scrapinghub/scrapyrt/issues"
+"Release notes" = "https://scrapyrt.readthedocs.io/en/latest/api.html#releases"
+
+[project.scripts]
+scrapyrt = "scrapyrt.cmdline:execute"
+
+[tool.bumpversion]
+commit = true
+tag = true
+
+[[tool.bumpversion.files]]
+filename = "docs/source/api.rst"
+search = "\\(unreleased\\)$"
+replace = "({now:%Y-%m-%d})"
+regex = true
+
+[tool.pytest.ini_options]
+python_files = ["test_*.py", "test_*/__init__.py"]
+
+[tool.ruff.lint]
+extend-select = [
+    # flake8-bugbear
+    "B",
+    # flake8-comprehensions
+    "C4",
+    # pydocstyle
+    "D",
+    # flake8-future-annotations
+    "FA",
+    # flynt
+    "FLY",
+    # refurb
+    "FURB",
+    # isort
+    "I",
+    # flake8-implicit-str-concat
+    "ISC",
+    # flake8-logging
+    "LOG",
+    # Perflint
+    "PERF",
+    # pygrep-hooks
+    "PGH",
+    # flake8-pie
+    "PIE",
+    # pylint
+    "PL",
+    # flake8-pytest-style
+    "PT",
+    # flake8-use-pathlib
+    "PTH",
+    # flake8-pyi
+    "PYI",
+    # flake8-quotes
+    "Q",
+    # flake8-return
+    "RET",
+    # flake8-raise
+    "RSE",
+    # Ruff-specific rules
+    "RUF",
+    # flake8-bandit
+    "S",
+    # flake8-simplify
+    "SIM",
+    # flake8-slots
+    "SLOT",
+    # flake8-debugger
+    "T10",
+    # flake8-type-checking
+    "TC",
+    # flake8-tidy-imports
+    "TID",
+    # pyupgrade
+    "UP",
+    # pycodestyle warnings
+    "W",
+    # flake8-2020
+    "YTT",
+]
+
+[tool.ruff.lint.flake8-tidy-imports]
+banned-module-level-imports = [
+    "twisted.internet.reactor",
+]
+
+[tool.ruff.lint.per-file-ignores]
+# Skip security and documentation checks for test files
+"tests/**" = ["D", "S"]
+
+[tool.ruff.lint.pydocstyle]
+convention = "pep257"

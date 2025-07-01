@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import asyncio
 import inspect
 from contextlib import suppress
@@ -21,7 +23,7 @@ def extract_scrapy_request_args(dictionary, raise_error=False):
         if key not in args:
             result.pop(key)
             if raise_error:
-                msg = u"{!r} is not a valid argument for scrapy.Request.__init__"
+                msg = "{!r} is not a valid argument for scrapy.Request.__init__"
                 raise ValueError(msg.format(key))
     return result
 
@@ -29,26 +31,34 @@ def extract_scrapy_request_args(dictionary, raise_error=False):
 try:
     from scrapy.utils.python import to_bytes
 except ImportError:
-    def to_bytes(text, encoding=None, errors='strict'):
+
+    def to_bytes(
+        text: str | bytes, encoding: str | None = None, errors: str = "strict"
+    ) -> bytes:
         """Return the binary representation of `text`. If `text`
-        is already a bytes object, return it as-is."""
+        is already a bytes object, return it as-is.
+        """
         if isinstance(text, bytes):
             return text
         if not isinstance(text, str):
-            raise TypeError('to_bytes must receive a unicode, str or bytes '
-                            'object, got %s' % type(text).__name__)
+            raise TypeError(
+                "to_bytes must receive a unicode, str or bytes "
+                "object, got %s" % type(text).__name__
+            )
         if encoding is None:
-            encoding = 'utf-8'
+            encoding = "utf-8"
         return text.encode(encoding, errors)
 
 
 try:
     from scrapy.utils.reactor import install_reactor
 except ImportError:
-    def install_reactor(reactor_path, event_loop_path=None):
+
+    def install_reactor(reactor_path: str, event_loop_path: str | None = None) -> None:
         """Installs the :mod:`~twisted.internet.reactor` with the specified
         import path. Also installs the asyncio event loop with the specified import
-        path if the asyncio reactor is enabled"""
+        path if the asyncio reactor is enabled
+        """
         reactor_class = load_object(reactor_path)
         if reactor_class is asyncioreactor.AsyncioSelectorReactor:
             with suppress(error.ReactorAlreadyInstalledError):

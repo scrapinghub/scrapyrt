@@ -1,5 +1,4 @@
-# -*- coding: utf-8 -*-
-BOT_NAME = 'testproject'
+BOT_NAME = "testproject"
 
-SPIDER_MODULES = ['testproject.spiders']
-NEWSPIDER_MODULE = 'testproject.spiders'
+SPIDER_MODULES = ["testproject.spiders"]
+NEWSPIDER_MODULE = "testproject.spiders"
