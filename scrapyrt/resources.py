@@ -225,7 +225,7 @@ class CrawlResource(ServiceResource):
                 msg = "crawl_args must be valid url encoded JSON"
                 msg += " this string cannot be decoded with JSON"
                 msg += f" {e!s}"
-                raise Error("400", message=msg)
+                raise Error(400, message=msg.encode())
 
         dfd = self.run_crawl(
             spider_name,
@@ -234,7 +234,7 @@ class CrawlResource(ServiceResource):
             start_requests=start_requests,
             crawl_args=crawl_args,
             *args,
-            **kwargs,
+            **kwargs,  # type: ignore[misc]
         )
         dfd.addCallback(self.prepare_response, request_data=api_params, *args, **kwargs)
         return dfd

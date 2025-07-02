@@ -7,6 +7,17 @@ from . import default_settings
 
 
 class Settings:
+    CRAWL_MANAGER: str
+    DEBUG: bool
+    DEFAULT_ERRBACK_NAME: str | None
+    LOG_DIR: str
+    LOG_ENCODING: str
+    LOG_FILE: str | None
+    PROJECT_SETTINGS: str | None
+    RESOURCES: dict[str, str]
+    SERVICE_ROOT: str
+    SPIDER_LOG_FILE_TIMEFORMAT: str
+    TIMEOUT_LIMIT: int
     TWISTED_REACTOR: str | None
 
     def __init__(self):

@@ -28,7 +28,7 @@ class TestServiceResource(unittest.TestCase):
 class TestRender(TestServiceResource):
     def setUp(self):
         super(TestRender, self).setUp()
-        self.request_write_values = []
+        self.request_write_values: list[bytes] = []
 
         def request_write(value):
             self.request_write_values.append(value)
@@ -114,14 +114,14 @@ class TestHandleErrors(TestServiceResource):
         self._assert_log_err_called(log_msg_mock, failure)
 
     def test_error_400(self, log_msg_mock):
-        exc = Error("400", "blah_400")
+        exc = Error(400, b"blah_400")
         result = self.resource.handle_error(exc, self.request)
         self.assertEqual(self.request.code, 400)
         self.assertFalse(log_msg_mock.called)
         self.assertEqual(result["message"], exc.message)
 
     def test_error_403(self, log_msg_mock):
-        exc = Error("403", "blah_403")
+        exc = Error(403, b"blah_403")
         result = self.resource.handle_error(exc, self.request)
         self.assertEqual(self.request.code, 403)
         self.assertFalse(log_msg_mock.called)
@@ -139,7 +139,7 @@ class TestFormatErrorResponse(TestServiceResource):
     def test_format_error_response(self):
         code = 400
         self.request.code = code
-        exc = Error(str(code), "blah")
+        exc = Error(code, b"blah")
         response = self.resource.format_error_response(exc, self.request)
         self.assertEqual(response["status"], "error")
         self.assertEqual(response["message"], exc.message)
@@ -150,7 +150,7 @@ class TestRenderObject(TestServiceResource):
     def setUp(self):
         super(TestRenderObject, self).setUp()
         self.obj = {"status": "ok", "key": "value"}
-        self.headers = []
+        self.headers: list[tuple[str, str]] = []
         self.request = MagicMock(spec=Request)
 
         def add_header(name, value):
@@ -187,11 +187,11 @@ class TestRenderObject(TestServiceResource):
         )
 
     def test_access_control_allow_methods_header_get(self):
-        self.resource.allowedMethods = ["GET"]
+        self.resource.allowedMethods = [b"GET"]
         self.resource.render_object(self.obj, self.request)
         self._test_access_control_allow_methods_header()
 
     def test_access_control_allow_methods_header_get_post(self):
-        self.resource.allowedMethods = ["GET", "POST"]
+        self.resource.allowedMethods = [b"GET", b"POST"]
         self.resource.render_object(self.obj, self.request)
         self._test_access_control_allow_methods_header()

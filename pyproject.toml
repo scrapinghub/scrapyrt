@@ -52,6 +52,9 @@ search = "\\(unreleased\\)$"
 replace = "({now:%Y-%m-%d})"
 regex = true
 
+[tool.mypy]
+check_untyped_defs = true
+
 [tool.pytest.ini_options]
 python_files = ["test_*.py", "test_*/__init__.py"]
 

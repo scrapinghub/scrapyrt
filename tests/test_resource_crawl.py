@@ -1,6 +1,7 @@
 import json
 import os
 import re
+from typing import Any
 from unittest.mock import MagicMock, Mock, patch
 from urllib.parse import quote
 
@@ -26,7 +27,7 @@ def server(request):
         target_site.stop()
 
     request.addfinalizer(close)
-    server.target_site = target_site
+    server.target_site = target_site  # type: ignore[attr-defined]
     server.start()
     return server
 
@@ -77,7 +78,8 @@ class TestCrawlResource:
             with pytest.raises(Error) as e:
                 resource.render_POST(t_req)
         assert e.value.status == "400"
-        assert re.search("Invalid JSON in POST", e.value.message)
+        assert e.value.message
+        assert re.search(b"Invalid JSON in POST", e.value.message)
         assert not manager.return_value.crawl.called
 
     def test_render_POST_invalid_options(self, t_req, resource):
@@ -89,7 +91,8 @@ class TestCrawlResource:
             with pytest.raises(Error) as e:
                 resource.render_POST(t_req)
         assert e.value.status == "400"
-        msg = "'foo' is not a valid argument"
+        assert e.value.message
+        msg = b"'foo' is not a valid argument"
         assert re.search(msg, e.value.message)
 
     @pytest.mark.parametrize(
@@ -100,7 +103,8 @@ class TestCrawlResource:
             with pytest.raises(Error) as e:
                 resource.validate_options(scrapy_args, api_args)
             assert e.value.status == "400"
-            assert re.search("'url' is required", e.value.message)
+            assert e.value.message
+            assert re.search(b"'url' is required", e.value.message)
         else:
             result = resource.validate_options(scrapy_args, api_args)
             assert result is None
@@ -119,11 +123,11 @@ class TestCrawlResource:
             assert prepared_res[key] == value
 
     def test_prepare_response_user_error_raised(self, resource):
-        result = {"items": [1, 2], "stats": [99], "spider_name": "test"}
+        result: dict[str, Any] = {"items": [1, 2], "stats": [99], "spider_name": "test"}
         result["user_error"] = Exception("my exception")
         with pytest.raises(Exception) as e_info:
             resource.prepare_response(result)
-            assert e_info.message == "my exception"
+            assert str(e_info.value) == "my exception"
 
 
 class TestCrawlResourceGetRequiredArgument(unittest.TestCase):
