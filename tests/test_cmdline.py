@@ -1,9 +1,9 @@
-import os
 import subprocess
 import sys
 import tempfile
 from collections import namedtuple
-from os import chdir, path
+from os import chdir
+from pathlib import Path
 from unittest.mock import patch
 
 import port_for
@@ -18,14 +18,14 @@ from .utils import ASYNCIO_REACTOR_IS_DEFAULT, generate_project, get_testenv
 
 
 def make_fake_args():
-    fake_args = namedtuple("arguments", ["port", "ip", "set", "project", "settings"])
+    fake_args = namedtuple("fake_args", ["port", "ip", "set", "project", "settings"])
     return fake_args(9080, "0.0.0.0", [], "default", "")
 
 
 @pytest.fixture
 def workdir():
-    tmp_dir = tempfile.mkdtemp()
-    workdir = path.join(tmp_dir, "testproject")
+    tmp_dir = Path(tempfile.mkdtemp())
+    workdir = tmp_dir / "testproject"
     generate_project(workdir)
     chdir(workdir)
     return workdir
@@ -80,9 +80,8 @@ class TestCmdLine:
     )
     def test_reactor_launched(self, reactor, expected):
         port = port_for.select_random()
-
-        tmp_dir = tempfile.mkdtemp()
-        cwd = os.path.join(tmp_dir, "testproject")
+        tmp_dir = Path(tempfile.mkdtemp())
+        cwd = tmp_dir / "testproject"
         generate_project(cwd)
         cmd = [
             sys.executable,

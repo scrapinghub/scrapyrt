@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from scrapy import Request, Spider
 
 
@@ -17,7 +19,7 @@ class MetaSpider(Spider):
 class SingleRequestSpider(MetaSpider):
     """Copy-paste from scrapy tests."""
 
-    seed = None
+    seed: Request | str | None = None
     callback_func = None
     errback_func = None
     name = "single_request"
@@ -26,6 +28,7 @@ class SingleRequestSpider(MetaSpider):
         if isinstance(self.seed, Request):
             yield self.seed.replace(callback=self.parse, errback=self.on_error)
         else:
+            assert self.seed is not None
             yield Request(self.seed, callback=self.parse, errback=self.on_error)
 
     def parse(self, response):

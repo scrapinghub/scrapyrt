@@ -59,8 +59,9 @@ class ServiceResource(resource.Resource):
         """
         failure = None
         if isinstance(exception_or_failure, Exception):
-            exception = exception_or_failure
+            exception: BaseException = exception_or_failure
         elif isinstance(exception_or_failure, Failure):
+            assert exception_or_failure.value is not None
             exception = exception_or_failure.value
             failure = exception_or_failure
         else:
@@ -107,8 +108,7 @@ class RealtimeApi(ServiceResource):
         super(RealtimeApi, self).__init__(self)
         for route, resource_path in app_settings.RESOURCES.items():
             resource_cls = load_object(resource_path)
-            route = to_bytes(route)
-            self.putChild(route, resource_cls(self, **kwargs))
+            self.putChild(to_bytes(route), resource_cls(self, **kwargs))
 
 
 class CrawlResource(ServiceResource):
@@ -150,10 +150,8 @@ class CrawlResource(ServiceResource):
         try:
             api_params = json.loads(request_body)
         except Exception as e:
-            message = "Invalid JSON in POST body. {}"
-            message = message.format(e)
-            # TODO should be integer not string?
-            raise Error("400", message=message)
+            message = f"Invalid JSON in POST body. {e}".encode()
+            raise Error(400, message=message)
 
         log.msg(f"{api_params}")
         if api_params.get("start_requests"):
@@ -167,7 +165,7 @@ class CrawlResource(ServiceResource):
                 _request, raise_error=True
             )
         except ValueError as e:
-            raise Error("400", str(e))
+            raise Error(400, str(e).encode())
 
         self.validate_options(scrapy_request_args, api_params)
         return self.prepare_crawl(api_params, scrapy_request_args, **kwargs)
@@ -176,7 +174,7 @@ class CrawlResource(ServiceResource):
         url = scrapy_request_args.get("url")
         start_requests = api_params.get("start_requests")
         if not url and not start_requests:
-            raise Error("400", "'url' is required if start_requests are disabled")
+            raise Error(400, b"'url' is required if start_requests are disabled")
 
     def get_required_argument(self, api_params, name, error_msg=None):
         """Get required API key from dict-like object.
@@ -190,13 +188,13 @@ class CrawlResource(ServiceResource):
 
         """
         if error_msg is None:
-            error_msg = f"Missing required parameter: {name!r}"
+            error_msg = f"Missing required parameter: {name!r}".encode()
         try:
             value = api_params[name]
         except KeyError:
-            raise Error("400", message=error_msg)
+            raise Error(400, message=error_msg)
         if not value:
-            raise Error("400", message=error_msg)
+            raise Error(400, message=error_msg)
         return value
 
     def prepare_crawl(self, api_params, scrapy_request_args, *args, **kwargs):

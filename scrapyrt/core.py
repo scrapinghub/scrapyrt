@@ -91,7 +91,9 @@ class CrawlManager:
             if attr_or_m and callable(attr_or_m):
                 msg = "Crawl argument cannot override spider method."
                 msg += " Got argument {} that overrides spider method {}"
-                raise Error("400", message=msg.format(kw, getattr(spidercls, kw)))
+                raise Error(
+                    400, message=msg.format(kw, getattr(spidercls, kw)).encode()
+                )
         if not self.start_requests:
             self.set_dummy_start_methods(spidercls)
         dfd = self.crawler_runner.crawl(spidercls, *args, **kwargs)
@@ -125,6 +127,7 @@ class CrawlManager:
             spidercls.start_requests = dummy_start_requests
 
     def restore_start_methods(self, result):
+        assert self.crawler is not None
         for method_name in list(self.original_start_methods):
             original_method = self.original_start_methods.pop(method_name)
             setattr(self.crawler.spider.__class__, method_name, original_method)
@@ -163,6 +166,7 @@ class CrawlManager:
         which is totally wrong.
 
         """
+        assert self.crawler is not None
         if (
             spider is self.crawler.spider
             and self.request
@@ -173,7 +177,7 @@ class CrawlManager:
                 assert callable(callback), "Invalid callback"
                 self.request = self.request.replace(callback=callback)
             except (AssertionError, AttributeError):
-                msg = f"Invalid spider callback {self.callback_name}, callback not callable or not a method of a spider {self.spider_name}"
+                msg = f"Invalid spider callback {self.callback_name}, callback not callable or not a method of a spider {self.spider_name}".encode()
                 self.user_error = Error(400, message=msg)
             try:
                 if self.errback_name:
@@ -181,7 +185,7 @@ class CrawlManager:
                     assert callable(errback), "Invalid errback"
                     self.request = self.request.replace(errback=errback)
             except (AssertionError, AttributeError):
-                msg = f"Invalid spider errback {self.errback_name}, errback not callable or not a method of a spider {self.spider_name}"
+                msg = f"Invalid spider errback {self.errback_name}, errback not callable or not a method of a spider {self.spider_name}".encode()
                 self.user_error = Error(400, message=msg)
             if self.user_error:
                 log.msg(self.user_error.message, level=log.ERROR)
@@ -204,6 +208,7 @@ class CrawlManager:
         then limit and runtime doesn't exceed limit as well.
 
         """
+        assert self.crawler is not None
         if spider is self.crawler.spider:
             self.limit_requests(spider)
             self.limit_runtime(spider)
@@ -225,21 +230,25 @@ class CrawlManager:
             self.request_count += 1
 
     def handle_spider_error(self, failure, spider):
+        assert self.crawler is not None
         if spider is self.crawler.spider and self.debug:
             fail_data = failure.getTraceback()
             self.errors.append(fail_data)
 
     def get_item(self, item, response, spider):
+        assert self.crawler is not None
         if spider is self.crawler.spider:
             self.items.append(item)
 
     def collect_dropped(self, item, response, exception, spider):
+        assert self.crawler is not None
         if spider is self.crawler.spider:
             self.items_dropped.append(
                 {"item": item, "exception": str(exception), "response": response}
             )
 
     def return_items(self, result):
+        assert self.crawler is not None
         stats = self.crawler.stats.get_stats()
         stats = OrderedDict((k, v) for k, v in sorted(stats.items()))
         results = {
@@ -260,9 +269,8 @@ class CrawlManager:
         try:
             req = Request(url, **kwargs)
         except (TypeError, ValueError) as e:
-            msg = "Error while creating Scrapy Request, {}"
-            message = msg.format(str(e))
-            raise Error("400", message=message)
+            message = f"Error while creating Scrapy Request, {e}".encode()
+            raise Error(400, message=message)
 
         req.dont_filter = True
         msg = "Created request for spider {} with url {} and kwargs {}"

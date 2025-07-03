@@ -14,6 +14,7 @@ class TestRootResourceIntegration(unittest.TestCase):
 
     def tearDown(self):
         if not self._passed:
+            assert self.server.proc is not None
             print(self.server._non_block_read(self.server.proc.stderr))
         self.server.stop()
         self.site.stop()

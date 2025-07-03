@@ -37,6 +37,7 @@ class CralwerProcessTestCase(unittest.TestCase):
         dfd = crawler_process.crawl(MetaSpider)
         self.assertIsInstance(dfd, Deferred)
         crawler = crawl_manager.crawler
+        assert crawler is not None
         for signal, handler in signals_and_handlers:
             crawler.signals.send_catch_log(
                 signal=getattr(signals, signal), spider=crawler.spider

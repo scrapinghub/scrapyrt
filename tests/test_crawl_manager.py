@@ -61,7 +61,7 @@ class TestSpiderIdle(TestCrawlManager):
         super(TestSpiderIdle, self).setUp()
         self.crawler.spider = self.spider
         # test callback
-        self.spider.parse_something = lambda: None
+        self.spider.parse_something = lambda: None  # type: ignore[attr-defined]
         self.crawl_manager.callback_name = "parse_something"
         self.request = self.crawl_manager.request
 
@@ -77,11 +77,12 @@ class TestSpiderIdle(TestCrawlManager):
         self.crawler.engine.crawl.assert_called_once_with(self.crawl_manager.request)
         self.assertNotEqual(self.request, self.crawl_manager.request)
         self.assertEqual(
-            self.crawl_manager.request.callback, self.spider.parse_something
+            self.crawl_manager.request.callback,
+            self.spider.parse_something,  # type: ignore[attr-defined]
         )
 
     def test_raise_error_if_not_callable(self):
-        self.spider.parse_something = None
+        self.spider.parse_something = None  # type: ignore[attr-defined]
         self._call_spider_idle()
         self.assertIsNotNone(self.crawl_manager.user_error)
         msg = "Invalid spider callback parse_something"
@@ -97,14 +98,14 @@ class TestSpiderIdle(TestCrawlManager):
             request.meta["foo"] = "bar"
             return request
 
-        self.spider.modify_realtime_request = modify_realtime_request
+        self.spider.modify_realtime_request = modify_realtime_request  # type: ignore[attr-defined]
         self._call_spider_idle()
         self.crawler.engine.crawl.assert_called_once_with(self.crawl_manager.request)
         self.assertEqual(self.crawl_manager.request.method, "POST")
         self.assertEqual(self.crawl_manager.request.meta["foo"], "bar")
 
     def test_modify_realtime_request_is_not_callable(self):
-        self.spider.modify_realtime_request = None
+        self.spider.modify_realtime_request = None  # type: ignore[attr-defined]
         self._call_spider_idle()
         self.crawler.engine.crawl.assert_called_once_with(self.crawl_manager.request)
         self.assertNotEqual(self.request, self.crawl_manager.request)
@@ -177,7 +178,7 @@ class TestLimitRuntime(TestCrawlManager):
     def test_string_number_timeout_value(self):
         _timeout = app_settings.TIMEOUT_LIMIT
         try:
-            app_settings.TIMEOUT_LIMIT = "1"
+            app_settings.TIMEOUT_LIMIT = "1"  # type: ignore[assignment]
             self.crawl_manager = self.create_crawl_manager()
             self._test_limit_runtime()
         finally:
@@ -186,7 +187,7 @@ class TestLimitRuntime(TestCrawlManager):
     def test_wrong_timeout_value(self):
         _timeout = app_settings.TIMEOUT_LIMIT
         try:
-            app_settings.TIMEOUT_LIMIT = "foo"
+            app_settings.TIMEOUT_LIMIT = "foo"  # type: ignore[assignment]
             self.assertRaises(
                 ValueError, CrawlManager, self.spider.name, self.kwargs.copy()
             )
@@ -349,7 +350,7 @@ class TestStartRequests(unittest.TestCase):
         # TODO: Test with start() by default, but test with start_requests as
         # well while silencing the warning, and test that when using both
         # things also work as expected.
-        self.spidercls.start_requests = self.start_requests_mock
+        self.spidercls.start_requests = self.start_requests_mock  # type: ignore[method-assign]
         self.crawler = get_crawler(self.spidercls)
 
         class CustomCrawlManager(CrawlManager):
@@ -364,7 +365,7 @@ class TestStartRequests(unittest.TestCase):
         self.crawl_manager.crawler = self.crawler
 
     def tearDown(self):
-        self.spidercls.start_requests = self._start_requests
+        self.spidercls.start_requests = self._start_requests  # type: ignore[method-assign]
 
     @defer.inlineCallbacks
     @patch("scrapy.crawler.ExecutionEngine")

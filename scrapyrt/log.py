@@ -97,16 +97,16 @@ def setup_logging():
         )
     else:
         logfile = sys.stderr
-    observer = ScrapyrtFileLogObserver(logfile, app_settings.LOG_ENCODING)
-    startLoggingWithObserver(observer.emit, setStdout=False)
+    file_observer = ScrapyrtFileLogObserver(logfile, app_settings.LOG_ENCODING)
+    startLoggingWithObserver(file_observer.emit, setStdout=False)
 
     # setup general logging for Scrapy
     if not sys.warnoptions:
         # Route warnings through python logging
         logging.captureWarnings(True)
 
-    observer = log.PythonLoggingObserver("twisted")
-    observer.start()
+    python_observer = log.PythonLoggingObserver("twisted")
+    python_observer.start()
     logging.root.setLevel(logging.NOTSET)
     dictConfig(DEFAULT_LOGGING)
 
@@ -133,6 +133,7 @@ def setup_spider_logging(spider, settings):
     # if settings.getbool('LOG_STDOUT'):
     #     sys.stdout = StreamLogger(logging.getLogger('stdout'))
     filename = settings.get("LOG_FILE")
+    handler: logging.Handler
     if filename:
         encoding = settings.get("LOG_ENCODING")
         handler = logging.FileHandler(filename, encoding=encoding)
@@ -154,7 +155,7 @@ def setup_spider_logging(spider, settings):
     logging.root.addHandler(handler)
 
     _cleanup_functions = [
-        lambda: [handler.removeFilter(f) for f in filters],
+        lambda: [handler.removeFilter(f) for f in filters],  # type: ignore[func-returns-value]
         lambda: logging.root.removeHandler(handler),
         handler.close,
     ]

@@ -106,7 +106,8 @@ def run_application(reactor_type, arguments, app_settings):
 
     msg = f"Running with reactor: {reactor.__class__.__name__}. "
     log.msg(msg)
-    reactor.run()
+    # https://github.com/twisted/twisted/issues/9909#issuecomment-1729606667
+    reactor.run()  # type: ignore[attr-defined]
 
 
 def execute():

@@ -50,9 +50,10 @@ class BaseTestServer:
         )
         self.proc.poll()
         if self.proc.returncode:
+            assert self.proc.stderr is not None
             msg = ("unable to start server. error code: %d - stderr follows: \n%s") % (
                 self.proc.returncode,
-                self.proc.stderr.read(),
+                self.proc.stderr.read().decode(),
             )
             raise RuntimeError(msg)
         try:
