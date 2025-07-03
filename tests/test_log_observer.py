@@ -20,25 +20,25 @@ class TestLogObserver(unittest.TestCase):
 
     def test_emit_called(self, emit_mock):
         self.log_observer.emit(self.event_dict)
-        self.assertTrue(emit_mock.called)
+        assert emit_mock.called
 
     def test_scrapy_filtering(self, emit_mock):
         self.event_dict["system"] = "scrapy"
         self.log_observer.emit(self.event_dict)
-        self.assertFalse(emit_mock.called)
+        assert not emit_mock.called
 
     def test_log_start_messages_filtering(self, emit_mock):
         self.event_dict["system"] = "HTTPChannel"
         self.event_dict["message"] = "Log opened."
         self.log_observer.emit(self.event_dict)
-        self.assertFalse(emit_mock.called)
+        assert not emit_mock.called
 
         self.event_dict["system"] = "other"
         self.log_observer.emit(self.event_dict)
-        self.assertTrue(emit_mock.called)
+        assert emit_mock.called
 
     def test_unicode_message(self, emit_mock):
         original_message = "Привет, мир!"
         msg(original_message)
         transformed_message = emit_mock.call_args[0][1]["message"][0]
-        self.assertEqual(transformed_message, original_message.encode("utf-8"))
+        assert transformed_message == original_message.encode("utf-8")

@@ -1,9 +1,9 @@
 import subprocess
 import sys
 import tempfile
-from collections import namedtuple
 from os import chdir
 from pathlib import Path
+from typing import NamedTuple
 from unittest.mock import patch
 
 import port_for
@@ -17,9 +17,16 @@ from scrapyrt.conf import app_settings
 from .utils import ASYNCIO_REACTOR_IS_DEFAULT, generate_project, get_testenv
 
 
-def make_fake_args():
-    fake_args = namedtuple("fake_args", ["port", "ip", "set", "project", "settings"])
-    return fake_args(9080, "0.0.0.0", [], "default", "")
+class FakeArgs(NamedTuple):
+    port: int
+    ip: str
+    set: list
+    project: str
+    settings: str
+
+
+def make_fake_args() -> FakeArgs:
+    return FakeArgs(9080, "0.0.0.0", [], "default", "")
 
 
 @pytest.fixture
@@ -38,8 +45,8 @@ class TestCmdLine:
         assert workdir in sys.path
 
     def test_find_scrapy_project_invalid_conf(self, workdir):
-        config = closest_scrapy_cfg()
-        with open(config, "wb") as f:
+        config = Path(closest_scrapy_cfg())
+        with config.open("wb") as f:
             f.write(b"[other_section]")
         with pytest.raises(RuntimeError) as err:
             find_scrapy_project("default")
@@ -63,7 +70,7 @@ class TestCmdLine:
         )
 
     @pytest.mark.parametrize(
-        "reactor,expected",
+        ("reactor", "expected"),
         [
             (
                 "twisted.internet.asyncioreactor.AsyncioSelectorReactor",

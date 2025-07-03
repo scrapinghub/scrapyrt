@@ -4,7 +4,7 @@ from . import app_settings
 
 
 def get_scrapyrt_settings(log_file=None):
-    spider_settings = {
+    return {
         "LOG_LEVEL": "DEBUG",
         "LOG_ENABLED": bool(log_file),
         "LOG_FILE": log_file,
@@ -16,7 +16,6 @@ def get_scrapyrt_settings(log_file=None):
             "scrapy.extensions.throttle.AutoThrottle": None,
         },
     }
-    return spider_settings
 
 
 def get_project_settings(module=None, custom_settings=None):

@@ -112,7 +112,7 @@ def setup_logging():
 
 
 def setup_spider_logging(spider, settings):
-    """Initialize and configure default loggers
+    """Initialize and configure default loggers.
 
     Copied from Scrapy and updated, because version from Scrapy:
 

@@ -35,7 +35,7 @@ class CralwerProcessTestCase(unittest.TestCase):
         settings = get_settings()
         crawler_process = ScrapyrtCrawlerRunner(settings, crawl_manager)
         dfd = crawler_process.crawl(MetaSpider)
-        self.assertIsInstance(dfd, Deferred)
+        assert isinstance(dfd, Deferred)
         crawler = crawl_manager.crawler
         assert crawler is not None
         for signal, handler in signals_and_handlers:
@@ -43,4 +43,4 @@ class CralwerProcessTestCase(unittest.TestCase):
                 signal=getattr(signals, signal), spider=crawler.spider
             )
             handler_mock = getattr(crawl_manager, handler)
-            self.assertEqual(handler_mock.call_count, 1)
+            assert handler_mock.call_count == 1

@@ -20,7 +20,7 @@ from .log import setup_spider_logging
 
 class ScrapyrtCrawlerRunner(CrawlerRunner):
     def __init__(self, settings, scrapyrt_manager):
-        super(ScrapyrtCrawlerRunner, self).__init__(settings)
+        super().__init__(settings)
         self.scrapyrt_manager = scrapyrt_manager
 
     def create_crawler(
@@ -46,9 +46,7 @@ class ScrapyrtCrawlerRunner(CrawlerRunner):
 
 
 class CrawlManager:
-    """
-    Runs crawls
-    """
+    """Runs crawls."""
 
     def __init__(
         self, spider_name, request_kwargs, max_requests=None, start_requests=False

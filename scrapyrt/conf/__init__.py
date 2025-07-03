@@ -32,7 +32,7 @@ class Settings:
     def __setattr__(self, key, value):
         if self.frozen:
             raise TypeError("Trying to modify a frozen Settings object")
-        return super(Settings, self).__setattr__(key, value)
+        return super().__setattr__(key, value)
 
     def set(self, name, value):
         if not name.startswith("_") and name.isupper():

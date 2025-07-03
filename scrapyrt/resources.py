@@ -105,7 +105,7 @@ class ServiceResource(resource.Resource):
 
 class RealtimeApi(ServiceResource):
     def __init__(self, **kwargs):
-        super(RealtimeApi, self).__init__(self)
+        super().__init__(self)
         for route, resource_path in app_settings.RESOURCES.items():
             resource_cls = load_object(resource_path)
             self.putChild(to_bytes(route), resource_cls(self, **kwargs))
@@ -121,10 +121,10 @@ class CrawlResource(ServiceResource):
         At the moment kwargs for scrapy request are not supported in GET.
         They are supported in POST handler.
         """
-        api_params = dict(
-            (name.decode("utf-8"), value[0].decode("utf-8"))
+        api_params = {
+            name.decode("utf-8"): value[0].decode("utf-8")
             for name, value in request.args.items()
-        )
+        }
         scrapy_request_args = extract_scrapy_request_args(api_params, raise_error=False)
         self.validate_options(scrapy_request_args, api_params)
 
@@ -256,8 +256,7 @@ class CrawlResource(ServiceResource):
         )
         if crawl_args:
             kwargs.update(crawl_args)
-        dfd = manager.crawl(*args, **kwargs)
-        return dfd
+        return manager.crawl(*args, **kwargs)
 
     def prepare_response(self, result, *args, **kwargs):
         items = result.get("items")

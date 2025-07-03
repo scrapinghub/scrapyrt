@@ -1,6 +1,6 @@
 import json
-import os
 import re
+from pathlib import Path
 from typing import Any
 from unittest.mock import MagicMock, Mock, patch
 from urllib.parse import quote
@@ -21,15 +21,11 @@ def server(request):
     target_site = MockServer()
     target_site.start()
     server = ScrapyrtTestServer(site=target_site)
-
-    def close():
-        server.stop()
-        target_site.stop()
-
-    request.addfinalizer(close)
     server.target_site = target_site  # type: ignore[attr-defined]
     server.start()
-    return server
+    yield server
+    server.stop()
+    target_site.stop()
 
 
 @pytest.fixture
@@ -74,9 +70,11 @@ class TestCrawlResource:
 
     def test_render_POST_invalid_json(self, t_req, resource):
         t_req.content.getvalue.return_value = b"{{{{{"
-        with patch("scrapyrt.core.CrawlManager", spec=True) as manager:
-            with pytest.raises(Error) as e:
-                resource.render_POST(t_req)
+        with (
+            patch("scrapyrt.core.CrawlManager", spec=True) as manager,
+            pytest.raises(Error) as e,
+        ):
+            resource.render_POST(t_req)
         assert e.value.status == "400"
         assert e.value.message
         assert re.search(b"Invalid JSON in POST", e.value.message)
@@ -87,16 +85,16 @@ class TestCrawlResource:
             {"spider_name": "tests", "request": {"foo": "bar"}}
         )
         resource.validate_options = Mock()
-        with patch("scrapyrt.core.CrawlManager", spec=True):
-            with pytest.raises(Error) as e:
-                resource.render_POST(t_req)
+        with patch("scrapyrt.core.CrawlManager", spec=True), pytest.raises(Error) as e:
+            resource.render_POST(t_req)
         assert e.value.status == "400"
         assert e.value.message
         msg = b"'foo' is not a valid argument"
         assert re.search(msg, e.value.message)
 
     @pytest.mark.parametrize(
-        "scrapy_args,api_args,has_error", [({"url": "aa"}, {}, False), ({}, {}, True)]
+        ("scrapy_args", "api_args", "has_error"),
+        [({"url": "aa"}, {}, False), ({}, {}, True)],
     )
     def test_validate_options(self, resource, scrapy_args, api_args, has_error):
         if has_error:
@@ -125,9 +123,9 @@ class TestCrawlResource:
     def test_prepare_response_user_error_raised(self, resource):
         result: dict[str, Any] = {"items": [1, 2], "stats": [99], "spider_name": "test"}
         result["user_error"] = Exception("my exception")
-        with pytest.raises(Exception) as e_info:
+        with pytest.raises(Exception) as e_info:  # noqa: PT011
             resource.prepare_response(result)
-            assert str(e_info.value) == "my exception"
+        assert str(e_info.value) == "my exception"
 
 
 class TestCrawlResourceGetRequiredArgument(unittest.TestCase):
@@ -137,22 +135,18 @@ class TestCrawlResourceGetRequiredArgument(unittest.TestCase):
         self.data = {"url": self.url}
 
     def test_get_argument(self):
-        self.assertEqual(
-            self.resource.get_required_argument(self.data, "url"), self.url
-        )
+        assert self.resource.get_required_argument(self.data, "url") == self.url
 
     def test_raise_error(self):
-        exception = self.assertRaises(
-            Error, self.resource.get_required_argument, self.data, "key"
-        )
-        self.assertEqual(exception.status, "400")
+        with pytest.raises(Error) as exception:
+            self.resource.get_required_argument(self.data, "key")
+        assert exception.value.status == "400"
 
     def test_empty_argument(self):
         self.data["url"] = ""
-        exception = self.assertRaises(
-            Error, self.resource.get_required_argument, self.data, "url"
-        )
-        self.assertEqual(exception.status, "400")
+        with pytest.raises(Error) as exception:
+            self.resource.get_required_argument(self.data, "url")
+        assert exception.value.status == "400"
 
 
 def perform_get(url, api_params, spider_data):
@@ -349,13 +343,13 @@ class TestCrawlResourceIntegration:
         res_json = res.json()
         assert res_json.get("stats").get("log_count/ERROR") == 2
         assert res_json["status"] == "ok"
-        logs_path = os.path.join(server.cwd, "logs", "test")
-        logs_files = os.listdir(logs_path)
-        with open(os.path.join(logs_path, logs_files[0])) as f:
-            log_file = f.read()
+        logs_path = Path(server.cwd) / "logs" / "test"
+        logs_file = next(iter(logs_path.iterdir()))
+        with (logs_path / logs_file).open() as f:
+            log_file_contents = f.read()
 
         msg = "ERROR: Logging some error"
-        assert re.search(msg, log_file)
+        assert re.search(msg, log_file_contents)
 
     @pytest.mark.parametrize("method", [perform_get, perform_post])
     def test_bytes_in_item(self, server, method):

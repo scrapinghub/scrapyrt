@@ -3,6 +3,8 @@
 /build/
 /dist/
 /*.egg-info/
+/venv/
+/.venv/
 
 # twisted
 dropin.cache

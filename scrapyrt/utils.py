@@ -19,7 +19,7 @@ def extract_scrapy_request_args(dictionary, raise_error=False):
     """
     result = dictionary.copy()
     args = inspect.getfullargspec(Request.__init__).args
-    for key in dictionary.keys():
+    for key in dictionary:
         if key not in args:
             result.pop(key)
             if raise_error:
@@ -43,7 +43,7 @@ except ImportError:
         if not isinstance(text, str):
             raise TypeError(
                 "to_bytes must receive a unicode, str or bytes "
-                "object, got %s" % type(text).__name__
+                f"object, got {type(text).__name__}"
             )
         if encoding is None:
             encoding = "utf-8"
@@ -57,7 +57,7 @@ except ImportError:
     def install_reactor(reactor_path: str, event_loop_path: str | None = None) -> None:
         """Installs the :mod:`~twisted.internet.reactor` with the specified
         import path. Also installs the asyncio event loop with the specified import
-        path if the asyncio reactor is enabled
+        path if the asyncio reactor is enabled.
         """
         reactor_class = load_object(reactor_path)
         if reactor_class is asyncioreactor.AsyncioSelectorReactor:
@@ -71,7 +71,7 @@ except ImportError:
                 asyncioreactor.install(eventloop=event_loop)
         else:
             *module, _ = reactor_path.split(".")
-            installer_path = module + ["install"]
+            installer_path = [*module, "install"]
             installer = load_object(".".join(installer_path))
             with suppress(error.ReactorAlreadyInstalledError):
                 installer()

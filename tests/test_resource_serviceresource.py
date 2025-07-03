@@ -27,7 +27,7 @@ class TestServiceResource(unittest.TestCase):
 @patch("twisted.web.resource.Resource.render")
 class TestRender(TestServiceResource):
     def setUp(self):
-        super(TestRender, self).setUp()
+        super().setUp()
         self.request_write_values: list[bytes] = []
 
         def request_write(value):
@@ -39,61 +39,61 @@ class TestRender(TestServiceResource):
         render_mock.return_value = {"status": "ok"}
         result = self.resource.render(self.request)
         obj = json.loads(result.decode("utf8"))
-        self.assertIn("status", obj)
-        self.assertEqual(obj["status"], "ok")
-        self.assertFalse(log_err_mock.called)
+        assert "status" in obj
+        assert obj["status"] == "ok"
+        assert not log_err_mock.called
 
     def test_render_exception(self, render_mock, log_err_mock):
         exc = Exception("boom")
         render_mock.side_effect = exc
         result = self.resource.render(self.request)
         obj = json.loads(result.decode("utf8"))
-        self.assertTrue(log_err_mock.called)
-        self.assertEqual(obj["status"], "error")
-        self.assertEqual(obj["message"], str(exc))
-        self.assertEqual(obj["code"], 500)
+        assert log_err_mock.called
+        assert obj["status"] == "error"
+        assert obj["message"] == str(exc)
+        assert obj["code"] == 500
 
     def test_render_deferred_succeed(self, render_mock, log_err_mock):
         render_mock.return_value = succeed({"status": "ok"})
         result = self.resource.render(self.request)
-        self.assertEqual(result, server.NOT_DONE_YET)
-        self.assertTrue(self.request.write.called)
-        self.assertTrue(self.request.finish.called)
-        self.assertEqual(len(self.request_write_values), 1)
+        assert result == server.NOT_DONE_YET
+        assert self.request.write.called
+        assert self.request.finish.called
+        assert len(self.request_write_values) == 1
         obj = json.loads(self.request_write_values[0].decode("utf8"))
-        self.assertIn("status", obj)
-        self.assertEqual(obj["status"], "ok")
-        self.assertFalse(log_err_mock.called)
+        assert "status" in obj
+        assert obj["status"] == "ok"
+        assert not log_err_mock.called
 
     def test_render_deferred_fail(self, render_mock, log_err_mock):
         exc = Exception("boom")
         render_mock.return_value = fail(exc)
         result = self.resource.render(self.request)
-        self.assertEqual(result, server.NOT_DONE_YET)
-        self.assertTrue(self.request.write.called)
-        self.assertTrue(self.request.finish.called)
-        self.assertEqual(len(self.request_write_values), 1)
+        assert result == server.NOT_DONE_YET
+        assert self.request.write.called
+        assert self.request.finish.called
+        assert len(self.request_write_values) == 1
         obj = json.loads(self.request_write_values[0].decode("utf8"))
-        self.assertEqual(obj["status"], "error")
-        self.assertEqual(obj["message"], str(exc))
-        self.assertEqual(obj["code"], 500)
-        self.assertTrue(log_err_mock.called)
+        assert obj["status"] == "error"
+        assert obj["message"] == str(exc)
+        assert obj["code"] == 500
+        assert log_err_mock.called
 
 
 @patch("twisted.python.log.msg")
 class TestHandleErrors(TestServiceResource):
     def setUp(self):
-        super(TestHandleErrors, self).setUp()
+        super().setUp()
 
     def _assert_log_err_called(self, log_msg_mock, failure):
         log_msg_mock.call_count = 1
         _, kwargs = log_msg_mock.call_args
-        self.assertEqual(kwargs["isError"], 1)
-        self.assertEqual(kwargs["system"], "scrapyrt")
+        assert kwargs["isError"] == 1
+        assert kwargs["system"] == "scrapyrt"
         if isinstance(failure, Failure):
-            self.assertEqual(kwargs["failure"], failure)
+            assert kwargs["failure"] == failure
         else:
-            self.assertEqual(kwargs["failure"].value, failure)
+            assert kwargs["failure"].value == failure
 
     def test_exception(self, log_msg_mock):
         try:
@@ -101,38 +101,38 @@ class TestHandleErrors(TestServiceResource):
         except Exception as e:
             result = self.resource.handle_error(e, self.request)
             exc = e
-        self.assertEqual(self.request.code, 500)
-        self.assertEqual(result["message"], str(exc))
+        assert self.request.code == 500
+        assert result["message"] == str(exc)
         self._assert_log_err_called(log_msg_mock, exc)
 
     def test_failure(self, log_msg_mock):
         exc = Exception("blah")
         failure = Failure(exc)
         result = self.resource.handle_error(failure, self.request)
-        self.assertEqual(self.request.code, 500)
-        self.assertEqual(result["message"], str(exc))
+        assert self.request.code == 500
+        assert result["message"] == str(exc)
         self._assert_log_err_called(log_msg_mock, failure)
 
     def test_error_400(self, log_msg_mock):
         exc = Error(400, b"blah_400")
         result = self.resource.handle_error(exc, self.request)
-        self.assertEqual(self.request.code, 400)
-        self.assertFalse(log_msg_mock.called)
-        self.assertEqual(result["message"], exc.message)
+        assert self.request.code == 400
+        assert not log_msg_mock.called
+        assert result["message"] == exc.message
 
     def test_error_403(self, log_msg_mock):
         exc = Error(403, b"blah_403")
         result = self.resource.handle_error(exc, self.request)
-        self.assertEqual(self.request.code, 403)
-        self.assertFalse(log_msg_mock.called)
-        self.assertEqual(result["message"], exc.message)
+        assert self.request.code == 403
+        assert not log_msg_mock.called
+        assert result["message"] == exc.message
 
     def test_error_not_supported_method(self, log_msg_mock):
         exc = UnsupportedMethod(["GET"])
         result = self.resource.handle_error(exc, self.request)
-        self.assertEqual(self.request.code, 405)
-        self.assertFalse(log_msg_mock.called)
-        self.assertIn("GET", result["message"])
+        assert self.request.code == 405
+        assert not log_msg_mock.called
+        assert "GET" in result["message"]
 
 
 class TestFormatErrorResponse(TestServiceResource):
@@ -141,14 +141,14 @@ class TestFormatErrorResponse(TestServiceResource):
         self.request.code = code
         exc = Error(code, b"blah")
         response = self.resource.format_error_response(exc, self.request)
-        self.assertEqual(response["status"], "error")
-        self.assertEqual(response["message"], exc.message)
-        self.assertEqual(response["code"], code)
+        assert response["status"] == "error"
+        assert response["message"] == exc.message
+        assert response["code"] == code
 
 
 class TestRenderObject(TestServiceResource):
     def setUp(self):
-        super(TestRenderObject, self).setUp()
+        super().setUp()
         self.obj = {"status": "ok", "key": "value"}
         self.headers: list[tuple[str, str]] = []
         self.request = MagicMock(spec=Request)
@@ -161,7 +161,7 @@ class TestRenderObject(TestServiceResource):
     def test_render_object(self):
         result = self.resource.render_object(self.obj, self.request)
         set_header_mock = self.request.setHeader
-        self.assertEqual(set_header_mock.call_count, 5)
+        assert set_header_mock.call_count == 5
         set_header_mock.assert_any_call("Content-Type", "application/json")
         set_header_mock.assert_any_call("Access-Control-Allow-Origin", "*")
         set_header_mock.assert_any_call(
@@ -171,20 +171,19 @@ class TestRenderObject(TestServiceResource):
         # request.setHeader('Access-Control-Allow-Methods',
         #                   ', '.join(getattr(self, 'allowedMethods', [])))
         headers = dict(self.headers)
-        self.assertIn("Access-Control-Allow-Methods", headers)
-        self.assertEqual(headers["Access-Control-Allow-Methods"], "")
+        assert "Access-Control-Allow-Methods" in headers
+        assert headers["Access-Control-Allow-Methods"] == ""
         for key, value in self.obj.items():
-            self.assertIn(key.encode("utf8"), result)
-            self.assertIn(value.encode("utf8"), result)
+            assert key.encode("utf8") in result
+            assert value.encode("utf8") in result
 
     def _test_access_control_allow_methods_header(self):
         headers = dict(self.headers)
-        self.assertIn("Access-Control-Allow-Methods", headers)
+        assert "Access-Control-Allow-Methods" in headers
         access_control_allow_methods = headers["Access-Control-Allow-Methods"]
-        self.assertEqual(
-            self.resource.allowedMethods,
-            [s.strip() for s in access_control_allow_methods.split(",")],
-        )
+        assert self.resource.allowedMethods == [
+            s.strip() for s in access_control_allow_methods.split(",")
+        ]
 
     def test_access_control_allow_methods_header_get(self):
         self.resource.allowedMethods = [b"GET"]

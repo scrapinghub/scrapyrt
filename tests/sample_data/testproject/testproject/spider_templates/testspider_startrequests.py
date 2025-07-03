@@ -10,7 +10,7 @@ class TestSpider(scrapy.Spider):
     def start_requests(self):
         for url in self.initial_urls:
             yield scrapy.Request(
-                url, callback=self.some_callback, meta=dict(referer=url)
+                url, callback=self.some_callback, meta={"referer": url}
             )
 
     def some_callback(self, response):

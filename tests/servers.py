@@ -5,6 +5,7 @@ import socket
 import sys
 import tempfile
 import time
+from pathlib import Path
 from subprocess import PIPE, Popen
 from urllib.parse import urljoin
 
@@ -108,7 +109,7 @@ class BaseTestServer:
 
 class ScrapyrtTestServer(BaseTestServer):
     def __init__(self, site=None, *args, **kwargs):
-        super(ScrapyrtTestServer, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.arguments = [
             sys.executable,
             "-m",
@@ -117,16 +118,16 @@ class ScrapyrtTestServer(BaseTestServer):
             str(self.port),
         ]
         self.stderr = PIPE
-        self.tmp_dir = tempfile.mkdtemp()
-        self.cwd = os.path.join(self.tmp_dir, "testproject")
+        self.tmp_dir = Path(tempfile.mkdtemp())
+        self.cwd = self.tmp_dir / "testproject"
         generate_project(self.cwd, site=site)
 
     def stop(self):
-        super(ScrapyrtTestServer, self).stop()
+        super().stop()
         shutil.rmtree(self.tmp_dir)
 
 
 class MockServer(BaseTestServer):
     def __init__(self, *args, **kwargs):
-        super(MockServer, self).__init__(*args, **kwargs)
-        self.cwd = os.path.join(TESTS_PATH, "testsite")
+        super().__init__(*args, **kwargs)
+        self.cwd = TESTS_PATH / "testsite"

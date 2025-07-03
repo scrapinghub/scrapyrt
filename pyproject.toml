@@ -126,8 +126,12 @@ banned-module-level-imports = [
 ]
 
 [tool.ruff.lint.per-file-ignores]
-# Skip security and documentation checks for test files
-"tests/**" = ["D", "S"]
+# Test files:
+# - Documentation (D)
+# - Security (S)
+# - PLC0415: non-top-level import; sometimes needed in tests
+# - PLR2004: “magic values”, rarely a readability problem in tests
+"tests/**" = ["D", "S", "PLC0415", "PLR2004"]
 
 [tool.ruff.lint.pydocstyle]
 convention = "pep257"

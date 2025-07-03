@@ -9,7 +9,7 @@ class MetaSpider(Spider):
     name = "meta"
 
     def __init__(self, *args, **kwargs):
-        super(MetaSpider, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.meta = {}
 
     def closed(self, reason):
@@ -37,8 +37,10 @@ class SingleRequestSpider(MetaSpider):
             return self.callback_func(response)
         if "next" in response.meta:
             return response.meta["next"]
+        return None
 
     def on_error(self, failure):
         self.meta["failure"] = failure
         if callable(self.errback_func):
             return self.errback_func(failure)
+        return None
