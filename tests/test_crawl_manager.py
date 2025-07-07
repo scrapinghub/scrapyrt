@@ -82,7 +82,7 @@ class TestSpiderIdle(TestCrawlManager):
         self.spider.parse_something = None  # type: ignore[attr-defined]
         self._call_spider_idle()
         assert self.crawl_manager.user_error is not None
-        msg = "Invalid spider callback parse_something"
+        msg = b"Invalid spider callback parse_something"
         assert re.search(msg, self.crawl_manager.user_error.message)
         assert not self.crawler.engine.crawl.called
 
@@ -118,7 +118,7 @@ class TestSpiderIdle(TestCrawlManager):
         assert mng.request.errback is None
 
         assert mng.user_error is not None
-        msg = "Invalid spider errback"
+        msg = b"Invalid spider errback"
         assert re.search(msg, mng.user_error.message)
 
     def test_pass_good_spider_errback(self):
@@ -316,17 +316,17 @@ class TestCreateSpiderRequest(TestCrawlManager):
         self.kwargs["url1"] = "http://localhost/foo"
         with pytest.raises(Error) as exception:
             self.crawl_manager.create_spider_request(self.kwargs)
-        assert exception.value.status == "400"
+        assert exception.value.status == b"400"
 
     def test_invalid_url(self):
         self.kwargs["url"] = "//localhost/foo"
         with pytest.raises(Error) as exception:
             self.crawl_manager.create_spider_request(self.kwargs)
-        assert exception.value.status == "400"
+        assert exception.value.status == b"400"
         self.kwargs["url"] = "localhost/foo"
         with pytest.raises(Error) as exception:
             self.crawl_manager.create_spider_request(self.kwargs)
-        assert exception.value.status == "400"
+        assert exception.value.status == b"400"
 
 
 class TestStartRequests(unittest.TestCase):
@@ -372,8 +372,7 @@ class TestStartRequests(unittest.TestCase):
 
 class TestCreateProperLogFile(TestCrawlManager):
     def test_filename(self):
-        logdir = "some_dir_name"
-        self.crawl_manager.log_dir = logdir
+        self.crawl_manager.log_dir = Path("some_dir_name")
         path = self.crawl_manager._get_log_file_path()
         filename = Path(path).name
         expected_format = "%Y-%m-%dT%H%M%S.%f.log"

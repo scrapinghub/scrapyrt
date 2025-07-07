@@ -75,7 +75,7 @@ class TestCrawlResource:
             pytest.raises(Error) as e,
         ):
             resource.render_POST(t_req)
-        assert e.value.status == "400"
+        assert e.value.status == b"400"
         assert e.value.message
         assert re.search(b"Invalid JSON in POST", e.value.message)
         assert not manager.return_value.crawl.called
@@ -87,7 +87,7 @@ class TestCrawlResource:
         resource.validate_options = Mock()
         with patch("scrapyrt.core.CrawlManager", spec=True), pytest.raises(Error) as e:
             resource.render_POST(t_req)
-        assert e.value.status == "400"
+        assert e.value.status == b"400"
         assert e.value.message
         msg = b"'foo' is not a valid argument"
         assert re.search(msg, e.value.message)
@@ -100,7 +100,7 @@ class TestCrawlResource:
         if has_error:
             with pytest.raises(Error) as e:
                 resource.validate_options(scrapy_args, api_args)
-            assert e.value.status == "400"
+            assert e.value.status == b"400"
             assert e.value.message
             assert re.search(b"'url' is required", e.value.message)
         else:
@@ -140,13 +140,13 @@ class TestCrawlResourceGetRequiredArgument(unittest.TestCase):
     def test_raise_error(self):
         with pytest.raises(Error) as exception:
             self.resource.get_required_argument(self.data, "key")
-        assert exception.value.status == "400"
+        assert exception.value.status == b"400"
 
     def test_empty_argument(self):
         self.data["url"] = ""
         with pytest.raises(Error) as exception:
             self.resource.get_required_argument(self.data, "url")
-        assert exception.value.status == "400"
+        assert exception.value.status == b"400"
 
 
 def perform_get(url, api_params, spider_data):

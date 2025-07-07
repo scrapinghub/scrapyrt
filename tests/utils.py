@@ -42,14 +42,13 @@ def generate_project(directory: Path, site=None):
     source = SAMPLE_DATA / "testproject"
     shutil.copytree(source, directory, ignore=shutil.ignore_patterns("*.pyc"))
     # Pass site url to spider doing start requests
-    spider_name = "testspider_startrequests.py"
+    spider_name = "testspider_startrequests.py.jinja"
     spider_filename = directory / "testproject" / "spider_templates" / spider_name
     spider_target_place = directory / "testproject" / "spiders" / spider_name
     if not site:
         return
-    with spider_filename.open() as spider_file:
-        spider_string = spider_file.read().format(
-            site.url("page1.html"), site.url("page2.html")
-        )
-        with spider_target_place.open("wb") as file_target:
-            file_target.write(spider_string.encode("utf8"))
+    spider_string = spider_filename.read_text().format(
+        site.url("page1.html"), site.url("page2.html")
+    )
+    with spider_target_place.open("wb") as output:
+        output.write(spider_string.encode("utf-8"))

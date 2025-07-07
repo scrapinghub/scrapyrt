@@ -42,7 +42,7 @@ class TestCmdLine:
     def test_find_scrapy_project(self, workdir):
         settings = find_scrapy_project("default")
         assert settings == "testproject.settings"
-        assert workdir in sys.path
+        assert str(workdir) in sys.path
 
     def test_find_scrapy_project_invalid_conf(self, workdir):
         config = Path(closest_scrapy_cfg())
