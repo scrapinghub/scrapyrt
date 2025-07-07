@@ -68,7 +68,7 @@ class ServiceResource(resource.Resource):
             raise TypeError(
                 f"Expected Exception or {Failure} instances, got {exception_or_failure.__class__}"
             )
-        if request.code == 200:
+        if request.code == 200:  # noqa: PLR2004
             # Default code - means that error wasn't handled
             if isinstance(exception, UnsupportedMethod):
                 request.setResponseCode(405)
@@ -77,7 +77,7 @@ class ServiceResource(resource.Resource):
                 request.setResponseCode(code)
             else:
                 request.setResponseCode(500)
-            if request.code == 500:
+            if request.code == 500:  # noqa: PLR2004
                 log.err(failure)
         return self.format_error_response(exception, request)
 
@@ -113,7 +113,7 @@ class RealtimeApi(ServiceResource):
 
 class CrawlResource(ServiceResource):
     isLeaf = True
-    allowedMethods = [b"GET", b"POST"]
+    allowedMethods = (b"GET", b"POST")
 
     def render_GET(self, request, **kwargs):
         """Request querysting must contain following keys: url, spider_name.
@@ -151,7 +151,7 @@ class CrawlResource(ServiceResource):
             api_params = json.loads(request_body)
         except Exception as e:
             message = f"Invalid JSON in POST body. {e}".encode()
-            raise Error(400, message=message)
+            raise Error(400, message=message) from e
 
         log.msg(f"{api_params}")
         if api_params.get("start_requests"):
@@ -165,7 +165,7 @@ class CrawlResource(ServiceResource):
                 _request, raise_error=True
             )
         except ValueError as e:
-            raise Error(400, str(e).encode())
+            raise Error(400, str(e).encode()) from e
 
         self.validate_options(scrapy_request_args, api_params)
         return self.prepare_crawl(api_params, scrapy_request_args, **kwargs)
@@ -192,7 +192,7 @@ class CrawlResource(ServiceResource):
         try:
             value = api_params[name]
         except KeyError:
-            raise Error(400, message=error_msg)
+            raise Error(400, message=error_msg) from None
         if not value:
             raise Error(400, message=error_msg)
         return value
@@ -223,7 +223,7 @@ class CrawlResource(ServiceResource):
                 msg = "crawl_args must be valid url encoded JSON"
                 msg += " this string cannot be decoded with JSON"
                 msg += f" {e!s}"
-                raise Error(400, message=msg.encode())
+                raise Error(400, message=msg.encode()) from e
 
         dfd = self.run_crawl(
             spider_name,
@@ -231,10 +231,10 @@ class CrawlResource(ServiceResource):
             max_requests,
             start_requests=start_requests,
             crawl_args=crawl_args,
-            *args,
+            *args,  # noqa: B026
             **kwargs,  # type: ignore[misc]
         )
-        dfd.addCallback(self.prepare_response, request_data=api_params, *args, **kwargs)
+        dfd.addCallback(self.prepare_response, request_data=api_params, *args, **kwargs)  # noqa: B026
         return dfd
 
     def run_crawl(

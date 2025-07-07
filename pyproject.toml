@@ -119,6 +119,12 @@ extend-select = [
     # flake8-2020
     "YTT",
 ]
+ignore = [
+    # Documentation; we do not have a public Python API
+    "D",
+    # Asserts; we use them for typing purposes
+    "S101",
+]
 
 [tool.ruff.lint.flake8-tidy-imports]
 banned-module-level-imports = [
@@ -126,12 +132,18 @@ banned-module-level-imports = [
 ]
 
 [tool.ruff.lint.per-file-ignores]
-# Test files:
-# - Documentation (D)
-# - Security (S)
-# - PLC0415: non-top-level import; sometimes needed in tests
-# - PLR2004: “magic values”, rarely a readability problem in tests
-"tests/**" = ["D", "S", "PLC0415", "PLR2004"]
+"tests/**" = [
+    # Security
+    "S",
+    # non-top-level import; sometimes needed in tests
+    "PLC0415",
+    # “magic values”, rarely a readability problem in tests
+    "PLR2004",
+]
+"tests/sample_data/testproject/**" = [
+    # relative imports; they seem more readable for this use case
+    "TID252",
+]
 
 [tool.ruff.lint.pydocstyle]
 convention = "pep257"

@@ -1,9 +1,9 @@
 from __future__ import annotations
 
 import datetime
-import os
 from collections import OrderedDict
 from copy import deepcopy
+from pathlib import Path
 
 from scrapy import Spider, signals
 from scrapy.crawler import Crawler, CrawlerRunner
@@ -52,7 +52,7 @@ class CrawlManager:
         self, spider_name, request_kwargs, max_requests=None, start_requests=False
     ):
         self.spider_name = spider_name
-        self.log_dir = app_settings.LOG_DIR
+        self.log_dir = Path(app_settings.LOG_DIR)
         self.items = []
         self.items_dropped = []
         self.errors = []
@@ -135,12 +135,12 @@ class CrawlManager:
         self._cleanup_handler = setup_spider_logging(spider, spider.settings)
 
     def _get_log_file_path(self):
-        log_dir = os.path.join(self.log_dir, self.spider_name)
-        if not os.path.exists(log_dir):
-            os.makedirs(log_dir)
+        log_dir = self.log_dir / self.spider_name
+        if not log_dir.exists():
+            log_dir.mkdir(parents=True, exist_ok=True)
         time_format = app_settings.SPIDER_LOG_FILE_TIMEFORMAT
         filename = datetime.datetime.now().strftime(time_format) + ".log"
-        return os.path.join(log_dir, filename)
+        return log_dir / filename
 
     def get_project_settings(self):
         # set logfile for a job
@@ -268,7 +268,7 @@ class CrawlManager:
             req = Request(url, **kwargs)
         except (TypeError, ValueError) as e:
             message = f"Error while creating Scrapy Request, {e}".encode()
-            raise Error(400, message=message)
+            raise Error(400, message=message) from e
 
         req.dont_filter = True
         msg = "Created request for spider {} with url {} and kwargs {}"

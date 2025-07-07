@@ -1,7 +1,7 @@
 import logging
-import os
 import sys
 from logging.config import dictConfig
+from pathlib import Path
 
 from scrapy.settings import Settings
 from scrapy.utils.log import DEFAULT_LOGGING, TopLevelFormatter
@@ -89,12 +89,11 @@ class SpiderFilter(logging.Filter):
 
 
 def setup_logging():
-    if not os.path.exists(app_settings.LOG_DIR):
-        os.makedirs(app_settings.LOG_DIR)
     if app_settings.LOG_FILE:
-        logfile = DailyLogFile.fromFullPath(
-            os.path.join(app_settings.LOG_DIR, app_settings.LOG_FILE)
-        )
+        log_dir = Path(app_settings.LOG_DIR)
+        if not log_dir.exists():
+            log_dir.mkdir(parents=True, exist_ok=True)
+        logfile = DailyLogFile.fromFullPath(log_dir / app_settings.LOG_FILE)
     else:
         logfile = sys.stderr
     file_observer = ScrapyrtFileLogObserver(logfile, app_settings.LOG_ENCODING)
@@ -161,10 +160,10 @@ def setup_spider_logging(spider, settings):
     ]
 
     def cleanup():
-        for func in _cleanup_functions:
-            try:
+        try:
+            for func in _cleanup_functions:
                 func()
-            except Exception as e:
-                err(e)
+        except Exception as e:
+            err(e)
 
     return cleanup

@@ -1,7 +1,7 @@
 import argparse
-import os
 import sys
 from configparser import ConfigParser, NoOptionError, NoSectionError
+from pathlib import Path
 
 from scrapy.utils.conf import closest_scrapy_cfg
 from scrapy.utils.misc import load_object
@@ -80,16 +80,17 @@ def find_scrapy_project(project):
     project_config_path = closest_scrapy_cfg()
     if not project_config_path:
         raise RuntimeError("Cannot find scrapy.cfg file")
+
     project_config = ConfigParser()
     project_config.read(project_config_path)
     try:
         project_settings = project_config.get("settings", project)
     except (NoSectionError, NoOptionError) as e:
-        raise RuntimeError(e.message)
+        raise RuntimeError(e.message) from e
     if not project_settings:
         raise RuntimeError("Cannot find scrapy project settings")
-    project_location = os.path.dirname(project_config_path)
-    sys.path.append(project_location)
+    project_location = Path(project_config_path).parent
+    sys.path.append(str(project_location))
     return project_settings
 
 
@@ -111,7 +112,7 @@ def run_application(reactor_type, arguments, app_settings):
 
 
 def execute():
-    sys.path.insert(0, os.getcwd())
+    sys.path.insert(0, str(Path.cwd()))
 
     arguments = parse_arguments()
     if arguments.settings:

@@ -10,7 +10,8 @@ from twisted.internet import asyncioreactor, error
 
 
 def extract_scrapy_request_args(dictionary, raise_error=False):
-    """
+    """Return a dictionary of valid scrapy.http.Request arguments.
+
     :param dictionary: Dictionary with parameters passed to API
     :param raise_error: raise ValueError if key is not valid arg for
                         scrapy.http.Request
@@ -36,8 +37,7 @@ except ImportError:
         text: str | bytes, encoding: str | None = None, errors: str = "strict"
     ) -> bytes:
         """Return the binary representation of `text`. If `text`
-        is already a bytes object, return it as-is.
-        """
+        is already a bytes object, return it as-is."""
         if isinstance(text, bytes):
             return text
         if not isinstance(text, str):
@@ -56,9 +56,8 @@ except ImportError:
 
     def install_reactor(reactor_path: str, event_loop_path: str | None = None) -> None:
         """Installs the :mod:`~twisted.internet.reactor` with the specified
-        import path. Also installs the asyncio event loop with the specified import
-        path if the asyncio reactor is enabled.
-        """
+        import path. Also installs the asyncio event loop with the specified
+        import path if the asyncio reactor is enabled."""
         reactor_class = load_object(reactor_path)
         if reactor_class is asyncioreactor.AsyncioSelectorReactor:
             with suppress(error.ReactorAlreadyInstalledError):

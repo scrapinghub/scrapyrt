@@ -1,3 +1,5 @@
+from typing import ClassVar
+
 import scrapy
 
 from ..items import TestprojectItem
@@ -5,7 +7,7 @@ from ..items import TestprojectItem
 
 class TestSpider(scrapy.Spider):
     name = "test_with_sr"
-    initial_urls = ["{0}", "{1}"]
+    initial_urls: ClassVar[list[str]] = ["{0}", "{1}"]
 
     def start_requests(self):
         for url in self.initial_urls:

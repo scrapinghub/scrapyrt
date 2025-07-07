@@ -14,11 +14,11 @@ import port_for
 from . import TESTS_PATH
 from .utils import generate_project, get_testenv
 
-DEVNULL = open(os.devnull, "wb")
+DEVNULL = Path(os.devnull).open("wb")  # noqa: SIM115
 
 
 class BaseTestServer:
-    def __init__(
+    def __init__(  # noqa: PLR0913
         self,
         host="localhost",
         port=None,
@@ -52,11 +52,10 @@ class BaseTestServer:
         self.proc.poll()
         if self.proc.returncode:
             assert self.proc.stderr is not None
-            msg = ("unable to start server. error code: %d - stderr follows: \n%s") % (
-                self.proc.returncode,
-                self.proc.stderr.read().decode(),
+            raise RuntimeError(
+                f"unable to start server. error code: {self.proc.returncode} "
+                f"- stderr follows: \n{self.proc.stderr.read().decode()}"
             )
-            raise RuntimeError(msg)
         try:
             self._wait_for_port()
         finally:
@@ -92,7 +91,7 @@ class BaseTestServer:
                 return
             finally:
                 s.close()
-        raise RuntimeError("Port %d is not open" % self.port)
+        raise RuntimeError(f"Port {self.port} is not open")
 
     @staticmethod
     def _non_block_read(output):
