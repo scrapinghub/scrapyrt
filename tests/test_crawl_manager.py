@@ -6,7 +6,7 @@
 
 # -*- coding: utf-8 -*-
 import contextlib
-import datetime
+import datetime as dt
 import re
 from pathlib import Path
 from time import sleep
@@ -156,7 +156,7 @@ class TestLimitRuntime(TestCrawlManager):
     def setUp(self):
         super().setUp()
         self.crawl_manager.timeout_limit = 1
-        self.crawler.stats.get_value.return_value = datetime.datetime.utcnow()
+        self.crawler.stats.get_value.return_value = dt.datetime.now(dt.timezone.utc)
 
     def _test_limit_runtime(self):
         self.crawl_manager.limit_runtime(self.spider)
@@ -376,8 +376,8 @@ class TestCreateProperLogFile(TestCrawlManager):
         path = self.crawl_manager._get_log_file_path()
         filename = Path(path).name
         expected_format = "%Y-%m-%dT%H%M%S.%f.log"
-        datetime_object = datetime.datetime.strptime(filename, expected_format)
-        now = datetime.datetime.now()
+        datetime_object = dt.datetime.strptime(filename, expected_format)
+        now = dt.datetime.now()
         assert datetime_object
         delta = now - datetime_object
         assert delta.seconds < 60

@@ -5,16 +5,15 @@ import socket
 import sys
 import tempfile
 import time
+from contextlib import suppress
 from pathlib import Path
-from subprocess import PIPE, Popen
+from subprocess import DEVNULL, PIPE, Popen
 from urllib.parse import urljoin
 
 import port_for
 
 from . import TESTS_PATH
 from .utils import generate_project, get_testenv
-
-DEVNULL = Path(os.devnull).open("wb")  # noqa: SIM115
 
 
 class BaseTestServer:
@@ -66,6 +65,9 @@ class BaseTestServer:
             raise RuntimeError("Server wasn't started")
         self.proc.kill()
         self.proc.wait()
+        if self.proc.stderr and hasattr(self.proc.stderr, "close"):
+            with suppress(Exception):
+                self.proc.stderr.close()
         self.proc = None
 
     def __enter__(self):

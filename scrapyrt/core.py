@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-import datetime
+import datetime as dt
 from collections import OrderedDict
 from copy import deepcopy
 from pathlib import Path
@@ -63,7 +63,7 @@ class CrawlManager:
         self.debug = app_settings.DEBUG
         self.crawler_runner = None
         self.crawler = None
-        self.crawl_start_time = datetime.datetime.utcnow()
+        self.crawl_start_time = dt.datetime.now(dt.timezone.utc)
         # callback will be added after instantiation of crawler object
         # because we need to know if spider has method available
         self.callback_name = request_kwargs.pop("callback", None) or "parse"
@@ -139,7 +139,7 @@ class CrawlManager:
         if not log_dir.exists():
             log_dir.mkdir(parents=True, exist_ok=True)
         time_format = app_settings.SPIDER_LOG_FILE_TIMEFORMAT
-        filename = datetime.datetime.now().strftime(time_format) + ".log"
+        filename = dt.datetime.now().strftime(time_format) + ".log"
         return log_dir / filename
 
     def get_project_settings(self):
@@ -213,7 +213,7 @@ class CrawlManager:
 
     def limit_runtime(self, spider):
         """Stop crawl if it takes too long."""
-        time_now = datetime.datetime.utcnow()
+        time_now = dt.datetime.now(dt.timezone.utc)
         if (time_now - self.crawl_start_time).seconds >= self.timeout_limit:
             spider.crawler.engine.close_spider(spider, reason="timeout")
 
