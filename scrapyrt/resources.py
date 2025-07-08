@@ -90,17 +90,16 @@ class ServiceResource(resource.Resource):
         return {"status": "error", "message": msg, "code": request.code}
 
     def render_object(self, obj, request):
-        r = self.json_encoder.encode(obj) + "\n"
-
-        request.setHeader("Content-Type", "application/json")
-        request.setHeader("Access-Control-Allow-Origin", "*")
+        response = self.json_encoder.encode(obj) + "\n"
+        request.setHeader(b"Content-Type", b"application/json")
+        request.setHeader(b"Access-Control-Allow-Origin", b"*")
         request.setHeader(
-            "Access-Control-Allow-Methods",
-            ", ".join(getattr(self, "allowedMethods", [])),
+            b"Access-Control-Allow-Methods",
+            b", ".join(getattr(self, "allowedMethods", [])),
         )
-        request.setHeader("Access-Control-Allow-Headers", "X-Requested-With")
-        request.setHeader("Content-Length", str(len(r)))
-        return r.encode("utf8")
+        request.setHeader(b"Access-Control-Allow-Headers", b"X-Requested-With")
+        request.setHeader(b"Content-Length", str(len(response)).encode())
+        return response.encode("utf-8")
 
 
 class RealtimeApi(ServiceResource):

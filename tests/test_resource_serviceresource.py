@@ -150,7 +150,7 @@ class TestRenderObject(TestServiceResource):
     def setUp(self):
         super().setUp()
         self.obj = {"status": "ok", "key": "value"}
-        self.headers: list[tuple[str, str]] = []
+        self.headers: list[tuple[bytes, bytes]] = []
         self.request = MagicMock(spec=Request)
 
         def add_header(name, value):
@@ -162,35 +162,33 @@ class TestRenderObject(TestServiceResource):
         result = self.resource.render_object(self.obj, self.request)
         set_header_mock = self.request.setHeader
         assert set_header_mock.call_count == 5
-        set_header_mock.assert_any_call("Content-Type", "application/json")
-        set_header_mock.assert_any_call("Access-Control-Allow-Origin", "*")
+        set_header_mock.assert_any_call(b"Content-Type", b"application/json")
+        set_header_mock.assert_any_call(b"Access-Control-Allow-Origin", b"*")
         set_header_mock.assert_any_call(
-            "Access-Control-Allow-Headers", "X-Requested-With"
+            b"Access-Control-Allow-Headers", b"X-Requested-With"
         )
-        set_header_mock.assert_any_call("Content-Length", str(len(result)))
-        # request.setHeader('Access-Control-Allow-Methods',
-        #                   ', '.join(getattr(self, 'allowedMethods', [])))
+        set_header_mock.assert_any_call(b"Content-Length", str(len(result)).encode())
         headers = dict(self.headers)
-        assert "Access-Control-Allow-Methods" in headers
-        assert headers["Access-Control-Allow-Methods"] == ""
+        assert b"Access-Control-Allow-Methods" in headers
+        assert headers[b"Access-Control-Allow-Methods"] == b""
         for key, value in self.obj.items():
             assert key.encode("utf8") in result
             assert value.encode("utf8") in result
 
     def _test_access_control_allow_methods_header(self):
         headers = dict(self.headers)
-        assert "Access-Control-Allow-Methods" in headers
-        access_control_allow_methods = headers["Access-Control-Allow-Methods"]
-        assert self.resource.allowedMethods == [
-            s.strip() for s in access_control_allow_methods.split(",")
-        ]
+        assert b"Access-Control-Allow-Methods" in headers
+        access_control_allow_methods = headers[b"Access-Control-Allow-Methods"]
+        assert self.resource.allowedMethods == tuple(
+            s.strip() for s in access_control_allow_methods.split(b",")
+        )
 
     def test_access_control_allow_methods_header_get(self):
-        self.resource.allowedMethods = [b"GET"]
+        self.resource.allowedMethods = (b"GET",)
         self.resource.render_object(self.obj, self.request)
         self._test_access_control_allow_methods_header()
 
     def test_access_control_allow_methods_header_get_post(self):
-        self.resource.allowedMethods = [b"GET", b"POST"]
+        self.resource.allowedMethods = (b"GET", b"POST")
         self.resource.render_object(self.obj, self.request)
         self._test_access_control_allow_methods_header()

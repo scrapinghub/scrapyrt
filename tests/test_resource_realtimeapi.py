@@ -35,7 +35,7 @@ class TestRealtimeApi(unittest.TestCase):
         from scrapyrt.resources import app_settings
 
         app_settings.RESOURCES["test.json"] = self._get_class_path("SampleResource")
-        expected_entities = {"crawl.json": CrawlResource, "test.json": SampleResource}
+        expected_entities = {b"crawl.json": CrawlResource, b"test.json": SampleResource}
         service_root = RealtimeApi()
         self._check_entities(service_root, expected_entities)
 

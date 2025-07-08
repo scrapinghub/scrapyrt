@@ -162,7 +162,7 @@ def perform_post(url, api_params, spider_data):
 
 class TestCrawlResourceIntegration:
     @pytest.mark.parametrize("method", [perform_get, perform_post])
-    def test_no_parameters(self, server, method):
+    def test_no_parameters(self, method, server):
         res = method(server.url("crawl.json"), {}, {})
         assert res.status_code == 400
         res_json = res.json()
