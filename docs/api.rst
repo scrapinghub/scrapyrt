@@ -586,22 +586,6 @@ But if you still want to save all stdout to some file - you can create custom
 approach described in `Python Logging HOWTO`_ or redirect stdout to a file using
 `bash redirection syntax`_, `supervisord logging`_ etc.
 
-Releases
-========
-ScrapyRT 0.16 (2023-02-14)
---------------------------
-- errback method for spider made configurable, errback for spiders will default to None instead of parse
-
-ScrapyRT 0.12 (2021-03-08)
---------------------------
-- added crawl arguments for API
-- removed Python 2 support
-- added Python 3.9 support
-- docs clean up
-- removed superfluous requirements (demjson, six)
-- fixed API crash when spider returns bytes in items output
-- updated unit tests
-- development improvements, moved from Travis to Github Workflows
 
 .. _toscrape-css spider: https://github.com/scrapy/quotesbot/blob/master/quotesbot/spiders/toscrape-css.py
 .. _Scrapy educational quotesbot project: https://github.com/scrapy/quotesbot

@@ -17,6 +17,10 @@ jobs:
           tox: "pre-commit"
         - python-version: "3.9"
           tox: "mypy"
+        - python-version: "3.13"  # Keep in sync with .readthedocs.yml
+          tox: "docs"
+        - python-version: "3.13"
+          tox: "twinecheck"
         - python-version: "3.9"
           tox: "min"
         - python-version: "3.10"

@@ -48,7 +48,7 @@ commit = true
 tag = true
 
 [[tool.bumpversion.files]]
-filename = "docs/source/api.rst"
+filename = "CHANGES.rst"
 search = "\\(unreleased\\)$"
 replace = "({now:%Y-%m-%d})"
 regex = true

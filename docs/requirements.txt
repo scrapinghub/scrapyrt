@@ -1,0 +1,3 @@
+Sphinx==8.2.3
+sphinx-rtd-theme==3.0.2
+sphinx-scrapy

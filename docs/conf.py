@@ -4,6 +4,9 @@ author = "Zyte Group Ltd"
 version = "0.16"
 release = "0.16.0"
 
-html_theme = "sphinx_rtd_theme"
+extensions = [
+    "sphinx.ext.intersphinx",
+    "sphinx_scrapy",
+]
 
-# TODO: add a RTD config file and a tox env, and make sure they work.
+html_theme = "sphinx_rtd_theme"
