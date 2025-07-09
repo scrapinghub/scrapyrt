@@ -1,6 +1,6 @@
 name: CI
-# TODO: Get rid of warnings when running tox with the latest version of Python.
 # TODO: Support offline coverage gathering (see flake8-scrapy)
+# TODO: Complete coverage, if feasible.
 on:
   push:
     branches:

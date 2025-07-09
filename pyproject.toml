@@ -8,7 +8,7 @@ version = "0.16.0"
 description = "Put Scrapy spiders behind an HTTP API"
 dependencies = [
     "Scrapy>=2.10",
-    "packaging>=14.0",
+    "packaging>=20.0",
 ]
 classifiers = [
     "Development Status :: 5 - Production/Stable",
@@ -51,6 +51,17 @@ tag = true
 filename = "docs/source/api.rst"
 search = "\\(unreleased\\)$"
 replace = "({now:%Y-%m-%d})"
+regex = true
+
+[[tool.bumpversion.files]]
+filename = "docs/conf.py"
+search = 'release = "{current_version}"'
+replace = 'release = "{new_version}"'
+
+[[tool.bumpversion.files]]
+filename = "docs/conf.py"
+search = 'version = "[0-9]+\\.[0-9]+"'
+replace = 'version = "{major}.{minor}"'
 regex = true
 
 [tool.mypy]
