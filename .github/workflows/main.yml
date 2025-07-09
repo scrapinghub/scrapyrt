@@ -1,5 +1,4 @@
 name: CI
-# TODO: Support offline coverage gathering (see flake8-scrapy)
 # TODO: Complete coverage, if feasible.
 on:
   push:
