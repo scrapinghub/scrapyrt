@@ -8,6 +8,7 @@ version = "0.16.0"
 description = "Put Scrapy spiders behind an HTTP API"
 dependencies = [
     "Scrapy>=2.10",
+    "packaging>=14.0",
 ]
 classifiers = [
     "Development Status :: 5 - Production/Stable",

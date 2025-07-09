@@ -1,7 +1,10 @@
 import os
 import shutil
 from pathlib import Path
+from typing import Any
 
+from packaging.version import Version
+from scrapy import __version__ as scrapy_version
 from scrapy.settings import Settings, default_settings
 
 from . import PROJECT_PATH, SAMPLE_DATA
@@ -11,6 +14,8 @@ ASYNCIO_REACTOR_IS_DEFAULT = (
     == "twisted.internet.asyncioreactor.AsyncioSelectorReactor"
 )
 LOCALHOST = "localhost"
+SCRAPY_VERSION = Version(scrapy_version)
+REQUEST_FINGERPRINTER_IMPLEMENTATION_IS_DEPRECATED = Version("2.12") <= SCRAPY_VERSION
 
 
 def get_testenv():
@@ -21,21 +26,22 @@ def get_testenv():
 
 def get_settings():
     """Settings with all extensions disabled."""
-    return Settings(
-        {
-            "EXTENSIONS": {
-                "scrapy.extensions.throttle.AutoThrottle": None,
-                "scrapy.extensions.feedexport.FeedExporter": None,
-                "scrapy.extensions.logstats.LogStats": None,
-                "scrapy.extensions.closespider.CloseSpider": None,
-                "scrapy.extensions.corestats.CoreStats": None,
-                "scrapy.extensions.memusage.MemoryUsage": None,
-                "scrapy.extensions.memdebug.MemoryDebugger": None,
-                "scrapy.extensions.spiderstate.SpiderState": None,
-                "scrapy.extensions.telnet.TelnetConsole": None,
-            }
-        }
-    )
+    settings: dict[str, Any] = {
+        "EXTENSIONS": {
+            "scrapy.extensions.throttle.AutoThrottle": None,
+            "scrapy.extensions.feedexport.FeedExporter": None,
+            "scrapy.extensions.logstats.LogStats": None,
+            "scrapy.extensions.closespider.CloseSpider": None,
+            "scrapy.extensions.corestats.CoreStats": None,
+            "scrapy.extensions.memusage.MemoryUsage": None,
+            "scrapy.extensions.memdebug.MemoryDebugger": None,
+            "scrapy.extensions.spiderstate.SpiderState": None,
+            "scrapy.extensions.telnet.TelnetConsole": None,
+        },
+    }
+    if not REQUEST_FINGERPRINTER_IMPLEMENTATION_IS_DEPRECATED:
+        settings["REQUEST_FINGERPRINTER_IMPLEMENTATION"] = "2.7"
+    return Settings(settings)
 
 
 def generate_project(directory: Path, site=None):
