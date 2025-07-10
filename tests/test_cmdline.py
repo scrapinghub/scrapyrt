@@ -108,7 +108,7 @@ class TestCmdLine:
             env=get_testenv(),
         )
         try:
-            _, logs = process.communicate(timeout=1)
+            _, logs = process.communicate(timeout=2)
         except subprocess.TimeoutExpired:
             process.kill()
             _, logs = process.communicate()

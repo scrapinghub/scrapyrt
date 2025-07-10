@@ -24,6 +24,7 @@ _trial_temp
 /test_urls*
 testing_scripts*
 coverage.xml
+/.coverage.*
 .python-version
 
 # IDE
