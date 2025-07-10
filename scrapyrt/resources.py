@@ -2,6 +2,7 @@ import json
 from urllib.parse import unquote
 
 from scrapy.utils.misc import load_object
+from scrapy.utils.python import to_bytes
 from scrapy.utils.serialize import ScrapyJSONEncoder
 from twisted.internet.defer import Deferred
 from twisted.python.failure import Failure
@@ -10,7 +11,7 @@ from twisted.web.error import Error, UnsupportedMethod
 
 from . import log
 from .conf import app_settings
-from .utils import extract_scrapy_request_args, to_bytes
+from .utils import extract_scrapy_request_args
 
 
 class AdaptedScrapyJSONEncoder(ScrapyJSONEncoder):

@@ -5,6 +5,7 @@ from pathlib import Path
 
 from scrapy.utils.conf import closest_scrapy_cfg
 from scrapy.utils.misc import load_object
+from scrapy.utils.reactor import install_reactor
 from twisted.application import app
 from twisted.application.internet import TCPServer
 from twisted.application.service import Application
@@ -12,7 +13,6 @@ from twisted.python import log
 from twisted.web.server import Site
 
 from scrapyrt.conf.spider_settings import get_project_settings
-from scrapyrt.utils import install_reactor
 
 from .conf import app_settings
 from .log import setup_logging

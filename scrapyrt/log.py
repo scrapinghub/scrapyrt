@@ -5,12 +5,12 @@ from pathlib import Path
 
 from scrapy.settings import Settings
 from scrapy.utils.log import DEFAULT_LOGGING, TopLevelFormatter
+from scrapy.utils.python import to_bytes
 from twisted.python import log
 from twisted.python.log import startLoggingWithObserver
 from twisted.python.logfile import DailyLogFile
 
 from .conf import app_settings
-from .utils import to_bytes
 
 DEBUG = logging.DEBUG
 INFO = logging.INFO
