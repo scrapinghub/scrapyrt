@@ -63,7 +63,7 @@ class BaseTestServer:
     def stop(self):
         if self.proc is None:
             raise RuntimeError("Server wasn't started")
-        self.proc.kill()
+        self.proc.terminate()
         self.proc.wait()
         if self.proc.stderr and hasattr(self.proc.stderr, "close"):
             with suppress(Exception):

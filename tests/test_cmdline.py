@@ -110,6 +110,6 @@ class TestCmdLine:
         try:
             _, logs = process.communicate(timeout=2)
         except subprocess.TimeoutExpired:
-            process.kill()
+            process.terminate()
             _, logs = process.communicate()
         assert f"Running with reactor: {expected}" in logs.decode()

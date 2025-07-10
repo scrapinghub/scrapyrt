@@ -120,6 +120,24 @@ class TestCrawlResource:
         for key, value in expected:
             assert prepared_res[key] == value
 
+    def test_prepare_response_errors(self, resource):
+        result = {
+            "items": [1, 2],
+            "stats": [99],
+            "spider_name": "test",
+            "errors": ["foo"],
+        }
+        actual = resource.prepare_response(result)
+        expected = {
+            "status": "ok",
+            "items": [1, 2],
+            "items_dropped": [],
+            "stats": [99],
+            "spider_name": "test",
+            "errors": ["foo"],
+        }
+        assert expected == actual
+
     def test_prepare_response_user_error_raised(self, resource):
         result: dict[str, Any] = {"items": [1, 2], "stats": [99], "spider_name": "test"}
         result["user_error"] = Exception("my exception")

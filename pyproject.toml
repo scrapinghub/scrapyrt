@@ -66,6 +66,11 @@ search = 'version = "{current_version}"'
 replace = 'version = "{new_version}"'
 regex = true
 
+[tool.coverage.run]
+# https://coverage.readthedocs.io/en/latest/subprocess.html
+parallel = true
+sigterm = true
+
 [tool.mypy]
 check_untyped_defs = true
 
