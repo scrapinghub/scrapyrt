@@ -14,7 +14,6 @@ from twisted.web.error import Error
 from . import log
 from .conf import app_settings
 from .conf.spider_settings import get_project_settings, get_scrapyrt_settings
-from .decorators import deprecated
 from .log import setup_spider_logging
 
 
@@ -147,10 +146,6 @@ class CrawlManager:
         log_file = self._get_log_file_path()
         custom_settings = get_scrapyrt_settings(log_file=log_file)
         return get_project_settings(custom_settings=custom_settings)
-
-    @deprecated(use_instead=".crawl()")
-    def create_crawler(self, **kwargs):
-        return self.crawl()
 
     def spider_idle(self, spider):
         """Handler of spider_idle signal.

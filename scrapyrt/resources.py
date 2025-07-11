@@ -61,14 +61,11 @@ class ServiceResource(resource.Resource):
         failure = None
         if isinstance(exception_or_failure, Exception):
             exception: BaseException = exception_or_failure
-        elif isinstance(exception_or_failure, Failure):
+        else:
+            assert isinstance(exception_or_failure, Failure)
             assert exception_or_failure.value is not None
             exception = exception_or_failure.value
             failure = exception_or_failure
-        else:
-            raise TypeError(
-                f"Expected Exception or {Failure} instances, got {exception_or_failure.__class__}"
-            )
         if request.code == 200:  # noqa: PLR2004
             # Default code - means that error wasn't handled
             if isinstance(exception, UnsupportedMethod):

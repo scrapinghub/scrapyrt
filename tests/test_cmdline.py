@@ -1,8 +1,10 @@
 import subprocess
 import sys
 import tempfile
+from contextlib import contextmanager
 from os import chdir
 from pathlib import Path
+from tempfile import TemporaryDirectory
 from typing import NamedTuple
 from unittest.mock import patch
 
@@ -27,6 +29,40 @@ class FakeArgs(NamedTuple):
 
 def make_fake_args() -> FakeArgs:
     return FakeArgs(9080, "0.0.0.0", [], "default", "")
+
+
+@contextmanager
+def ProjectDirectory():
+    with TemporaryDirectory() as tmp_dir:
+        dir = Path(tmp_dir) / "testproject"
+        generate_project(dir)
+        yield dir
+
+
+def run(dir, args=None, timeout=2) -> bytes:
+    args = args or []
+    port = port_for.select_random()
+    cmd = [
+        sys.executable,
+        "-m",
+        "scrapyrt.cmdline",
+        "-p",
+        str(port),
+        *args,
+    ]
+    process = subprocess.Popen(
+        cmd,
+        cwd=dir,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        env=get_testenv(),
+    )
+    try:
+        _, stderr = process.communicate(timeout=timeout)
+    except subprocess.TimeoutExpired:
+        process.terminate()
+        _, stderr = process.communicate()
+    return stderr
 
 
 @pytest.fixture
@@ -86,30 +122,47 @@ class TestCmdLine:
         ],
     )
     def test_reactor_launched(self, reactor, expected):
-        port = port_for.select_random()
-        tmp_dir = Path(tempfile.mkdtemp())
-        cwd = tmp_dir / "testproject"
-        generate_project(cwd)
-        cmd = [
-            sys.executable,
-            "-m",
-            "scrapyrt.cmdline",
-            "-p",
-            str(port),
-        ]
+        options = []
         if reactor is not None:
-            cmd.extend(["-s", f"TWISTED_REACTOR={reactor}"])
+            options.extend(["-s", f"TWISTED_REACTOR={reactor}"])
+        with ProjectDirectory() as dir:
+            stderr = run(dir, options)
+        assert f"Running with reactor: {expected}".encode() in stderr
 
-        process = subprocess.Popen(
-            cmd,
-            cwd=cwd,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            env=get_testenv(),
+
+def test_settings_option():
+    with ProjectDirectory() as dir:
+        custom_settings = dir / "testproject" / "custom_settings.py"
+        reactor = (
+            ("twisted.internet.epollreactor.EPollReactor", "EPollReactor")
+            if ASYNCIO_REACTOR_IS_DEFAULT
+            else (
+                "twisted.internet.asyncioreactor.AsyncioSelectorReactor",
+                "AsyncioSelectorReactor",
+            )
         )
-        try:
-            _, logs = process.communicate(timeout=2)
-        except subprocess.TimeoutExpired:
-            process.terminate()
-            _, logs = process.communicate()
-        assert f"Running with reactor: {expected}" in logs.decode()
+        custom_settings.write_text(f"TWISTED_REACTOR = {reactor[0]!r}\n")
+        options = ["--settings", "testproject.custom_settings"]
+        stderr = run(dir, options)
+    assert f"Running with reactor: {reactor[1]}".encode() in stderr
+
+
+def test_settings_import_path_is_empty_string():
+    with ProjectDirectory() as dir:
+        (dir / "scrapy.cfg").write_text("[settings]\ndefault=\n")
+        stderr = run(dir)
+    assert b"Cannot find scrapy project settings" in stderr
+
+
+def test_no_scrapy_cfg():
+    with ProjectDirectory() as dir:
+        (dir / "scrapy.cfg").unlink()
+        stderr = run(dir)
+    assert b"Cannot find scrapy.cfg file" in stderr
+
+
+def test_invalid_setting_definition():
+    with ProjectDirectory() as dir:
+        options = ["-s", "FOO"]
+        stderr = run(dir, options)
+    assert b"expected name=value: 'FOO'" in stderr

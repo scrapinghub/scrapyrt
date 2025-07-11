@@ -4,7 +4,15 @@ Changes
 ScrapyRT 0.17.0 (unreleased)
 ----------------------------
 
-- …
+-   …
+
+-   Removed the ``CrawlManager.create_crawler()`` method, , which had been
+    deprecated in 0.10. Use ``CrawlManager.crawl()`` instead.
+
+    Also removed the ``decorators`` and ``exceptions`` modules, which were only
+    used by the deprecated method.
+
+-   …
 
 
 ScrapyRT 0.16 (2023-02-14)
