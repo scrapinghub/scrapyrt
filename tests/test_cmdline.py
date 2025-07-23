@@ -107,7 +107,7 @@ class TestCmdLine:
 
     @pytest.mark.parametrize(
         ("reactor", "expected"),
-        [
+        (
             (
                 "twisted.internet.asyncioreactor.AsyncioSelectorReactor",
                 "AsyncioSelectorReactor",
@@ -119,7 +119,7 @@ class TestCmdLine:
                 else "EPollReactor",
             ),
             ("twisted.internet.epollreactor.EPollReactor", "EPollReactor"),
-        ],
+        ),
     )
     def test_reactor_launched(self, reactor, expected):
         options = []
@@ -166,3 +166,14 @@ def test_invalid_setting_definition():
         options = ["-s", "FOO"]
         stderr = run(dir, options)
     assert b"expected name=value: 'FOO'" in stderr
+
+
+def test_log_file():
+    """Simply tests that nothing breaks by setting a custom log file."""
+    with ProjectDirectory() as dir:
+        settings = dir / "app_settings.py"
+        log_dir = str((dir / "logs").absolute())
+        settings.write_text(f"LOG_FILE = 'foo.log'\nLOG_DIR = {log_dir!r}\n")
+        options = ["-S", "app_settings"]
+        stderr = run(dir, options)
+        assert not stderr

@@ -23,10 +23,7 @@ SILENT = CRITICAL + 1
 def msg(message=None, **kwargs):
     kwargs["logLevel"] = kwargs.pop("level", INFO)
     kwargs.setdefault("system", "scrapyrt")
-    if message is None:
-        log.msg(**kwargs)
-    else:
-        log.msg(message, **kwargs)
+    log.msg(message, **kwargs)
 
 
 def err(_stuff=None, _why=None, **kwargs):
@@ -47,9 +44,6 @@ class ScrapyrtFileLogObserver(log.FileLogObserver):
         :return: adapted event_dict, None if message should be ignored.
 
         """
-        if event_dict.get("category") == "scrapy.exceptions.ScrapyDeprecationWarning":
-            # ignore Scrapy deprecation warning in ScrapyRT log
-            return None
         if event_dict.get("system") == "scrapy":
             return None
         if "HTTPChannel" in event_dict.get(
@@ -127,10 +121,6 @@ def setup_spider_logging(spider, settings):
     """
     if isinstance(settings, dict):
         settings = Settings(settings)
-
-    # Looging stdout is a bad idea when mutiple crawls are running
-    # if settings.getbool('LOG_STDOUT'):
-    #     sys.stdout = StreamLogger(logging.getLogger('stdout'))
     filename = settings.get("LOG_FILE")
     handler: logging.Handler
     if filename:
@@ -160,10 +150,7 @@ def setup_spider_logging(spider, settings):
     ]
 
     def cleanup():
-        try:
-            for func in _cleanup_functions:
-                func()
-        except Exception as e:
-            err(e)
+        for func in _cleanup_functions:
+            func()
 
     return cleanup

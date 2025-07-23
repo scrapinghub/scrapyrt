@@ -145,6 +145,9 @@ ignore = [
     "S101",
 ]
 
+[tool.ruff.lint.flake8-pytest-style]
+parametrize-values-type = "tuple"
+
 [tool.ruff.lint.flake8-tidy-imports]
 banned-module-level-imports = [
     "twisted.internet.reactor",
