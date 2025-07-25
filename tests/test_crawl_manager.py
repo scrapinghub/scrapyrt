@@ -1,5 +1,3 @@
-# TODO: Check all removed tests and make sure we are still testing the same
-# things, even if differently (hopefully with less mocking).
 import contextlib
 import datetime as dt
 import re
