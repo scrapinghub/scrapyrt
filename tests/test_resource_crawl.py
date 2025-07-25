@@ -94,7 +94,7 @@ class TestCrawlResource:
 
     @pytest.mark.parametrize(
         ("scrapy_args", "api_args", "has_error"),
-        [({"url": "aa"}, {}, False), ({}, {}, True)],
+        (({"url": "aa"}, {}, False), ({}, {}, True)),
     )
     def test_validate_options(self, resource, scrapy_args, api_args, has_error):
         if has_error:
@@ -179,7 +179,7 @@ def perform_post(url, api_params, spider_data):
 
 
 class TestCrawlResourceIntegration:
-    @pytest.mark.parametrize("method", [perform_get, perform_post])
+    @pytest.mark.parametrize("method", (perform_get, perform_post))
     def test_no_parameters(self, method, server):
         res = method(server.url("crawl.json"), {}, {})
         assert res.status_code == 400
@@ -192,7 +192,7 @@ class TestCrawlResourceIntegration:
         else:
             assert "request" in res_json["message"]
 
-    @pytest.mark.parametrize("method", [perform_get, perform_post])
+    @pytest.mark.parametrize("method", (perform_get, perform_post))
     def test_no_url_no_start_requests(self, server, method):
         res = method(server.url("crawl.json"), {"spider_name": "test"}, {})
         assert res.status_code == 400
@@ -205,7 +205,7 @@ class TestCrawlResourceIntegration:
         else:
             assert "request" in res_json["message"]
 
-    @pytest.mark.parametrize("method", [perform_get, perform_post])
+    @pytest.mark.parametrize("method", (perform_get, perform_post))
     def test_no_url_but_start_requests_present(self, server, method):
         res = method(
             server.url("crawl.json"),
@@ -262,7 +262,7 @@ class TestCrawlResourceIntegration:
         assert data["status"] == "error"
         assert data.get("items") is None
 
-    @pytest.mark.parametrize("method", [perform_get, perform_post])
+    @pytest.mark.parametrize("method", (perform_get, perform_post))
     def test_url_and_start_requests_present(self, server, method):
         spider_data = {"url": server.target_site.url("page3.html")}
         api_params = {
@@ -285,7 +285,7 @@ class TestCrawlResourceIntegration:
             elif name == "Page 3":
                 assert item.get("referer") is None
 
-    @pytest.mark.parametrize("method", [perform_get, perform_post])
+    @pytest.mark.parametrize("method", (perform_get, perform_post))
     def test_no_spider_name(self, server, method):
         res = method(
             server.url("crawl.json"), {}, {"url": server.target_site.url("page1.html")}
@@ -310,7 +310,7 @@ class TestCrawlResourceIntegration:
             assert res_json[k] == v
         assert "'not_an_argument' is not a valid arg" in res_json["message"]
 
-    @pytest.mark.parametrize("method", [perform_get, perform_post])
+    @pytest.mark.parametrize("method", (perform_get, perform_post))
     def test_invalid_scrapy_request_detected_by_scrapy(self, server, method):
         res = method(
             server.url("crawl.json"), {"spider_name": "test"}, {"url": "no_rules"}
@@ -321,7 +321,7 @@ class TestCrawlResourceIntegration:
         assert res_json["code"] == 400
         assert "Error while creating Scrapy Request" in res_json["message"]
 
-    @pytest.mark.parametrize("method", [perform_get, perform_post])
+    @pytest.mark.parametrize("method", (perform_get, perform_post))
     def test_crawl(self, server, method):
         url = server.url("crawl.json")
         res = method(
@@ -349,7 +349,7 @@ class TestCrawlResourceIntegration:
         msg = "Invalid JSON in POST body"
         assert msg in res_json["message"]
 
-    @pytest.mark.parametrize("method", [perform_get, perform_post])
+    @pytest.mark.parametrize("method", (perform_get, perform_post))
     def test_passing_errback(self, server, method):
         url = server.url("crawl.json")
         res = method(
@@ -369,7 +369,7 @@ class TestCrawlResourceIntegration:
         msg = "ERROR: Logging some error"
         assert re.search(msg, log_file_contents)
 
-    @pytest.mark.parametrize("method", [perform_get, perform_post])
+    @pytest.mark.parametrize("method", (perform_get, perform_post))
     def test_bytes_in_item(self, server, method):
         url = server.url("crawl.json")
         res = method(

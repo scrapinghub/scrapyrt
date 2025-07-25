@@ -19,12 +19,6 @@ Scrapyrt will look for ``scrapy.cfg`` file to determine your project settings,
 and will raise error if it won't find one.  Note that you need to have all
 your project requirements installed.
 
-Pay attention to Scrapy version you're using in your spiders.
-Scrapyrt makes use of recent improvements in `Scrapy Crawler`_ interface that
-are not present in old Scrapy versions. Look closely at ``requirements.txt`` of
-Scrapyrt and install most recent development Scrapy version if possible.
-Unfortunately we are unable to support old Scrapy versions.
-
 If you would like to play with source code and possibly contribute
 to the project, you can install Scrapyrt in 'dev' mode::
 

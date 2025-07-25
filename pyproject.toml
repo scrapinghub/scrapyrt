@@ -7,7 +7,7 @@ name = "scrapyrt"
 version = "0.16.0"
 description = "Put Scrapy spiders behind an HTTP API"
 dependencies = [
-    "Scrapy>=2.10",
+    "scrapy>=2.7",
     "packaging>=20.0",
 ]
 classifiers = [

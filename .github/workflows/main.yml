@@ -1,5 +1,4 @@
 name: CI
-# TODO: Complete coverage, if feasible.
 on:
   push:
     branches:

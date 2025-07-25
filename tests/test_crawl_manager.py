@@ -1,10 +1,5 @@
 # TODO: Check all removed tests and make sure we are still testing the same
 # things, even if differently (hopefully with less mocking).
-#
-# TODO: Use ruff with at least the upgrade plugin to get rid of those utf-8
-# comments.
-
-# -*- coding: utf-8 -*-
 import contextlib
 import datetime as dt
 import re
@@ -47,9 +42,6 @@ class TestCrawlManager(unittest.TestCase):
         crawl_manager = CrawlManager(self.spider.name, kwargs)
         crawl_manager.crawler = self.crawler
         return crawl_manager
-
-
-# TODO: Check branch coverage, make sure all of code.py is tested.
 
 
 class TestGetProjectSettings(TestCrawlManager):

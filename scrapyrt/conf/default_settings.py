@@ -32,8 +32,6 @@ TIMEOUT_LIMIT = 1000
 # disable in production
 DEBUG = True
 
-TWISTED_REACTOR = (
-    scrapy_default_settings.TWISTED_REACTOR
-)  # TODO: Document this change at least in the release notes.
+TWISTED_REACTOR = scrapy_default_settings.TWISTED_REACTOR
 
 DEFAULT_ERRBACK_NAME = None
