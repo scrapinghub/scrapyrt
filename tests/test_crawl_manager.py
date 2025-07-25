@@ -326,9 +326,6 @@ class TestStartRequests(unittest.TestCase):
         self.start_requests_mock = MagicMock()
         self.spidercls = MetaSpider
         self._start_requests = self.spidercls.start_requests
-        # TODO: Test with start() by default, but test with start_requests as
-        # well while silencing the warning, and test that when using both
-        # things also work as expected.
         self.spidercls.start_requests = self.start_requests_mock  # type: ignore[method-assign]
         self.crawler = get_crawler(self.spidercls)
 
