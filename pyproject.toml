@@ -38,7 +38,7 @@ maintainers = [{ name = "Scrapinghub", email = "opensource@zyte.com" }]
 Documentation = "https://scrapyrt.readthedocs.io/en/latest/index.html"
 Source = "https://github.com/scrapinghub/scrapyrt"
 Tracker = "https://github.com/scrapinghub/scrapyrt/issues"
-"Release notes" = "https://scrapyrt.readthedocs.io/en/latest/api.html#releases"
+"Release notes" = "https://scrapyrt.readthedocs.io/en/latest/changes.html"
 
 [project.scripts]
 scrapyrt = "scrapyrt.cmdline:execute"
@@ -74,15 +74,49 @@ sigterm = true
 [tool.mypy]
 check_untyped_defs = true
 
+[tool.pylint.MASTER]
+persistent = "no"
+load-plugins=[
+    "pylint_per_file_ignores",
+]
+
+[tool.pylint."MESSAGES CONTROL"]
+enable = [
+    "useless-suppression",
+]
+# Ruff handles: line-too-long, too-many-arguments (PLR0913)
+# mypy handles: no-member
+# invalid-name disabled because it causes a couple of false positives that do
+# not seem ignorable.
+disable = [
+    "invalid-name",
+    "line-too-long",
+    "missing-class-docstring",
+    "missing-function-docstring",
+    "missing-module-docstring",
+    "no-member",
+    "too-many-arguments",
+]
+per-file-ignores = [
+    "docs/conf.py:invalid-name",
+    "/tests/:broad-exception-caught,consider-using-with,import-outside-toplevel,invalid-name,no-member,pointless-statement,protected-access,redefined-outer-name,reimported,too-many-instance-attributes,too-many-positional-arguments,unused-argument",
+]
+
 [tool.pytest.ini_options]
 python_files = ["test_*.py", "test_*/__init__.py"]
 
 [tool.ruff.lint]
 extend-select = [
+    # flake8-builtins
+    "A",
+    # flake8-async
+    "ASYNC",
     # flake8-bugbear
     "B",
     # flake8-comprehensions
     "C4",
+    # flake8-commas
+    "COM",
     # pydocstyle
     "D",
     # flake8-future-annotations
@@ -144,6 +178,9 @@ ignore = [
     # Asserts; we use them for typing purposes
     "S101",
 ]
+
+[tool.ruff.lint.isort]
+split-on-trailing-comma = false
 
 [tool.ruff.lint.flake8-pytest-style]
 parametrize-values-type = "tuple"

@@ -34,12 +34,12 @@ def make_fake_args() -> FakeArgs:
 @contextmanager
 def ProjectDirectory():
     with TemporaryDirectory() as tmp_dir:
-        dir = Path(tmp_dir) / "testproject"
-        generate_project(dir)
-        yield dir
+        directory = Path(tmp_dir) / "testproject"
+        generate_project(directory)
+        yield directory
 
 
-def run(dir, args=None, timeout=2) -> bytes:
+def run(directory, args=None, timeout=2) -> bytes:
     args = args or []
     port = port_for.select_random()
     cmd = [
@@ -52,7 +52,7 @@ def run(dir, args=None, timeout=2) -> bytes:
     ]
     process = subprocess.Popen(
         cmd,
-        cwd=dir,
+        cwd=directory,
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         env=get_testenv(),
@@ -102,7 +102,9 @@ class TestCmdLine:
             else None
         )
         mock_run_app.assert_called_once_with(
-            expected_first_param, mock_pa(), app_settings
+            expected_first_param,
+            mock_pa(),
+            app_settings,
         )
 
     @pytest.mark.parametrize(
@@ -125,14 +127,14 @@ class TestCmdLine:
         options = []
         if reactor is not None:
             options.extend(["-s", f"TWISTED_REACTOR={reactor}"])
-        with ProjectDirectory() as dir:
-            stderr = run(dir, options)
+        with ProjectDirectory() as directory:
+            stderr = run(directory, options)
         assert f"Running with reactor: {expected}".encode() in stderr
 
 
 def test_settings_option():
-    with ProjectDirectory() as dir:
-        custom_settings = dir / "testproject" / "custom_settings.py"
+    with ProjectDirectory() as directory:
+        custom_settings = directory / "testproject" / "custom_settings.py"
         reactor = (
             ("twisted.internet.epollreactor.EPollReactor", "EPollReactor")
             if ASYNCIO_REACTOR_IS_DEFAULT
@@ -143,37 +145,37 @@ def test_settings_option():
         )
         custom_settings.write_text(f"TWISTED_REACTOR = {reactor[0]!r}\n")
         options = ["--settings", "testproject.custom_settings"]
-        stderr = run(dir, options)
+        stderr = run(directory, options)
     assert f"Running with reactor: {reactor[1]}".encode() in stderr
 
 
 def test_settings_import_path_is_empty_string():
-    with ProjectDirectory() as dir:
-        (dir / "scrapy.cfg").write_text("[settings]\ndefault=\n")
-        stderr = run(dir)
+    with ProjectDirectory() as directory:
+        (directory / "scrapy.cfg").write_text("[settings]\ndefault=\n")
+        stderr = run(directory)
     assert b"Cannot find scrapy project settings" in stderr
 
 
 def test_no_scrapy_cfg():
-    with ProjectDirectory() as dir:
-        (dir / "scrapy.cfg").unlink()
-        stderr = run(dir)
+    with ProjectDirectory() as directory:
+        (directory / "scrapy.cfg").unlink()
+        stderr = run(directory)
     assert b"Cannot find scrapy.cfg file" in stderr
 
 
 def test_invalid_setting_definition():
-    with ProjectDirectory() as dir:
+    with ProjectDirectory() as directory:
         options = ["-s", "FOO"]
-        stderr = run(dir, options)
+        stderr = run(directory, options)
     assert b"expected name=value: 'FOO'" in stderr
 
 
 def test_log_file():
     """Simply tests that nothing breaks by setting a custom log file."""
-    with ProjectDirectory() as dir:
-        settings = dir / "app_settings.py"
-        log_dir = str((dir / "logs").absolute())
+    with ProjectDirectory() as directory:
+        settings = directory / "app_settings.py"
+        log_dir = str((directory / "logs").absolute())
         settings.write_text(f"LOG_FILE = 'foo.log'\nLOG_DIR = {log_dir!r}\n")
         options = ["-S", "app_settings"]
-        stderr = run(dir, options)
+        stderr = run(directory, options)
         assert not stderr

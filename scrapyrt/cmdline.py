@@ -68,7 +68,7 @@ def parse_arguments():
 
 
 def get_application(arguments):
-    ServiceRoot = load_object(app_settings.SERVICE_ROOT)
+    ServiceRoot = load_object(app_settings.SERVICE_ROOT)  # pylint: disable=invalid-name
     site = Site(ServiceRoot())
     application = Application("scrapyrt")
     server = TCPServer(arguments.port, site, interface=arguments.ip)
@@ -94,16 +94,16 @@ def find_scrapy_project(project):
     return project_settings
 
 
-def run_application(reactor_type, arguments, app_settings):
+def run_application(reactor_type, arguments, app_settings_):
     if reactor_type is not None:
         install_reactor(reactor_type)
 
     setup_logging()
 
     application = get_application(arguments)
-    app_settings.freeze()
+    app_settings_.freeze()
     app.startApplication(application, save=False)
-    from twisted.internet import reactor
+    from twisted.internet import reactor  # pylint: disable=import-outside-toplevel
 
     msg = f"Running with reactor: {reactor.__class__.__name__}. "
     log.msg(msg)
@@ -124,7 +124,7 @@ def execute():
     app_settings.set("PROJECT_SETTINGS", find_scrapy_project(arguments.project))
     project_settings = get_project_settings()
     reactor_type = app_settings.TWISTED_REACTOR or project_settings.get(
-        "TWISTED_REACTOR"
+        "TWISTED_REACTOR",
     )
     run_application(reactor_type, arguments, app_settings)
 

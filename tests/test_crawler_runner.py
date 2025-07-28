@@ -40,7 +40,8 @@ class CralwerProcessTestCase(unittest.TestCase):
         assert crawler is not None
         for signal, handler in signals_and_handlers:
             crawler.signals.send_catch_log(
-                signal=getattr(signals, signal), spider=crawler.spider
+                signal=getattr(signals, signal),
+                spider=crawler.spider,
             )
             handler_mock = getattr(crawl_manager, handler)
             assert handler_mock.call_count == 1

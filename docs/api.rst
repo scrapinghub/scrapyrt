@@ -73,18 +73,18 @@ spider_name
 
 url
     - type: string
-    - required if start_requests not enabled
+    - required if ``spider_start`` is not enabled
 
-    Absolute URL to send request to. URL should be urlencoded so that
-    querystring from url will not interfere with api parameters.
+    Target URL.
 
-    By default API will crawl this url and won't execute any other requests.
-    Most importantly it will not execute ``start_requests`` and spider will
-    not visit urls defined in ``start_urls`` spider attribute. There will be
-    only one single request scheduled in API - request for resource identified
-    by url argument.
+    It should be URL-encoded, so that its query string will not interfere with
+    API parameters.
 
-    If you want to execute request pass start_requests argument.
+    By default, the API will crawl this URL and will not send any other
+    requests. Most importantly, it will not execute the spider ``start()`` or
+    ``start_requests()`` methods. As a result, URLs defined in the
+    ``start_urls`` spider attribute will not be visited. To change this, enable
+    ``spider_start``.
 
 callback
     - type: string
@@ -117,18 +117,19 @@ max_requests
     and you don't want to wait forever for it to finish
     you should probably pass it.
 
-start_requests
+spider_start
     - type: boolean
     - optional
 
-    Whether spider should execute ``Scrapy.Spider.start_requests`` method.
-    ``start_requests`` are executed by default when you run Scrapy Spider
-    normally without ScrapyRT, but this method is NOT executed in API by
-    default. By default we assume that spider is expected to crawl ONLY url
-    provided in parameters without making any requests to ``start_urls``
-    defined in ``Spider`` class. start_requests argument overrides this
-    behavior. If this argument is present API will execute start_requests
-    Spider method.
+    Whether to run the ``start()`` or ``start_requests()`` methods of the
+    spider (``True``) or not (``False``, default).
+
+    These methods are executed by default when you run a spider without
+    ScrapyRT, but they are **not** executed by default when using ScrapyRT.
+
+    By default we assume that the spider is expected to crawl **only** the URL
+    provided in the ``url`` parameter, and not make any requests to e.g. the
+    ``start_urls`` defined in the spider class.
 
 crawl_args
     - type: urlencoded JSON string

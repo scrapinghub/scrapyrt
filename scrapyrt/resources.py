@@ -21,19 +21,17 @@ class AdaptedScrapyJSONEncoder(ScrapyJSONEncoder):
         return super().default(o)
 
 
-# XXX super() calls won't work wihout object mixin in Python 2
-# maybe this can be removed at some point?
 class ServiceResource(resource.Resource):
     json_encoder = AdaptedScrapyJSONEncoder()
 
     def __init__(self, root=None):
-        resource.Resource.__init__(self)
+        super().__init__()
         self.root = root
 
     def render(self, request):
         try:
             result = resource.Resource.render(self, request)
-        except Exception as e:
+        except Exception as e:  # pylint: disable=broad-exception-caught
             result = self.handle_error(e, request)
 
         if not isinstance(result, Deferred):
@@ -112,7 +110,7 @@ class CrawlResource(ServiceResource):
     isLeaf = True
     allowedMethods = (b"GET", b"POST")
 
-    def render_GET(self, request, **kwargs):
+    def render_GET(self, request, **kwargs):  # pylint: disable=invalid-name
         """Request querysting must contain following keys: url, spider_name.
 
         At the moment kwargs for scrapy request are not supported in GET.
@@ -127,7 +125,7 @@ class CrawlResource(ServiceResource):
 
         return self.prepare_crawl(api_params, scrapy_request_args, **kwargs)
 
-    def render_POST(self, request, **kwargs):
+    def render_POST(self, request, **kwargs):  # pylint: disable=invalid-name
         """
         :param request:
             body should contain JSON
@@ -151,15 +149,16 @@ class CrawlResource(ServiceResource):
             raise Error(400, message=message) from e
 
         log.msg(f"{api_params}")
-        if api_params.get("start_requests"):
+        if api_params.get("spider_start") or api_params.get("start_requests"):
             # start requests passed so 'request' argument is optional
             _request = api_params.get("request", {})
         else:
-            # no start_requests, 'request' is required
+            # no spider_start/start_requests, 'request' is required
             _request = self.get_required_argument(api_params, "request")
         try:
             scrapy_request_args = extract_scrapy_request_args(
-                _request, raise_error=True
+                _request,
+                raise_error=True,
             )
         except ValueError as e:
             raise Error(400, str(e).encode()) from e
@@ -169,9 +168,11 @@ class CrawlResource(ServiceResource):
 
     def validate_options(self, scrapy_request_args, api_params):
         url = scrapy_request_args.get("url")
-        start_requests = api_params.get("start_requests")
-        if not url and not start_requests:
-            raise Error(400, b"'url' is required if start_requests are disabled")
+        spider_start = api_params.get("spider_start") or api_params.get(
+            "start_requests",
+        )
+        if not url and not spider_start:
+            raise Error(400, b"'url' is required if spider_start is not enabled")
 
     def get_required_argument(self, api_params, name, error_msg=None):
         """Get required API key from dict-like object.
@@ -206,7 +207,6 @@ class CrawlResource(ServiceResource):
             Request object that will be created
         """
         spider_name = self.get_required_argument(api_params, "spider_name")
-        start_requests = api_params.get("start_requests", False)
         try:
             max_requests = api_params["max_requests"]
         except (KeyError, IndexError):
@@ -226,21 +226,23 @@ class CrawlResource(ServiceResource):
             spider_name,
             scrapy_request_args,
             max_requests,
-            start_requests=start_requests,
+            start_requests=api_params.get("start_requests"),
             crawl_args=crawl_args,
+            spider_start=api_params.get("spider_start"),
             *args,  # noqa: B026
             **kwargs,  # type: ignore[misc]
         )
         dfd.addCallback(self.prepare_response, request_data=api_params, *args, **kwargs)  # noqa: B026
         return dfd
 
-    def run_crawl(
+    def run_crawl(  # noqa: PLR0913  # pylint: disable=keyword-arg-before-vararg,too-many-positional-arguments
         self,
         spider_name,
         scrapy_request_args,
         max_requests=None,
         crawl_args=None,
-        start_requests=False,
+        start_requests=None,
+        spider_start=None,
         *args,
         **kwargs,
     ):
@@ -250,12 +252,13 @@ class CrawlResource(ServiceResource):
             scrapy_request_args,
             max_requests,
             start_requests=start_requests,
+            spider_start=spider_start,
         )
         if crawl_args:
             kwargs.update(crawl_args)
         return manager.crawl(*args, **kwargs)
 
-    def prepare_response(self, result, *args, **kwargs):
+    def prepare_response(self, result, request_data, *_args, **_kwargs):
         items = result.get("items")
         user_error = result.get("user_error", None)
         if user_error:
@@ -270,4 +273,8 @@ class CrawlResource(ServiceResource):
         errors = result.get("errors")
         if errors:
             response["errors"] = errors
+        if "start_requests" in request_data:
+            response["warnings"] = [
+                "The start_requests parameter is deprecated, use spider_start instead.",
+            ]
         return response

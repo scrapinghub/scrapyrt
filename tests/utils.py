@@ -46,7 +46,12 @@ def get_settings():
 
 def generate_project(directory: Path, site=None):
     source = SAMPLE_DATA / "testproject"
-    shutil.copytree(source, directory, ignore=shutil.ignore_patterns("*.pyc"))
+    shutil.copytree(
+        source,
+        directory,
+        ignore=shutil.ignore_patterns("*.pyc"),
+        dirs_exist_ok=True,
+    )
     # Pass site url to spider doing start requests
     spider_filename = (
         directory
@@ -60,7 +65,8 @@ def generate_project(directory: Path, site=None):
     if not site:
         return
     spider_string = spider_filename.read_text().format(
-        site.url("page1.html"), site.url("page2.html")
+        site.url("page1.html"),
+        site.url("page2.html"),
     )
     with spider_target_place.open("wb") as output:
         output.write(spider_string.encode("utf-8"))

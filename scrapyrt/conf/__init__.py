@@ -21,6 +21,7 @@ class Settings:
     TWISTED_REACTOR: str | None
 
     def __init__(self):
+        self.frozen = False
         self.setmodule(default_settings)
 
     def setmodule(self, module):
@@ -30,6 +31,9 @@ class Settings:
             self.set(setting, getattr(module, setting))
 
     def __setattr__(self, key, value):
+        if key == "frozen":
+            super().__setattr__(key, value)
+            return None
         if self.frozen:
             raise TypeError("Trying to modify a frozen Settings object")
         return super().__setattr__(key, value)
@@ -42,11 +46,7 @@ class Settings:
             setattr(self, name, deepcopy(value))
 
     def freeze(self):
-        self._frozen = True
-
-    @property
-    def frozen(self):
-        return bool(getattr(self, "_frozen", False))
+        self.frozen = True
 
 
 app_settings = Settings()

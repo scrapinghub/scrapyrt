@@ -18,14 +18,13 @@ from .servers import MockServer, ScrapyrtTestServer
 
 @pytest.fixture
 def server(request):
-    target_site = MockServer()
-    target_site.start()
-    server = ScrapyrtTestServer(site=target_site)
-    server.target_site = target_site  # type: ignore[attr-defined]
+    site = MockServer()
+    site.start()
+    server = ScrapyrtTestServer(site=site)
     server.start()
     yield server
     server.stop()
-    target_site.stop()
+    site.stop()
 
 
 @pytest.fixture
@@ -56,7 +55,7 @@ class TestCrawlResource:
 
     def test_render_POST(self, t_req, resource):
         t_req.content.getvalue.return_value = json.dumps(
-            {"spider_name": "test", "request": {"url": "http://foo.com"}}
+            {"spider_name": "test", "request": {"url": "http://foo.com"}},
         )
         resource.validate_options = Mock()
         with patch("scrapyrt.core.CrawlManager", spec=True) as manager:
@@ -82,7 +81,7 @@ class TestCrawlResource:
 
     def test_render_POST_invalid_options(self, t_req, resource):
         t_req.content.getvalue.return_value = json.dumps(
-            {"spider_name": "tests", "request": {"foo": "bar"}}
+            {"spider_name": "tests", "request": {"foo": "bar"}},
         )
         resource.validate_options = Mock()
         with patch("scrapyrt.core.CrawlManager", spec=True), pytest.raises(Error) as e:
@@ -109,7 +108,7 @@ class TestCrawlResource:
 
     def test_prepare_response(self, resource):
         result = {"items": [1, 2], "stats": [99], "spider_name": "test"}
-        prepared_res = resource.prepare_response(result)
+        prepared_res = resource.prepare_response(result, {})
         expected = [
             ("status", "ok"),
             ("items", [1, 2]),
@@ -127,7 +126,7 @@ class TestCrawlResource:
             "spider_name": "test",
             "errors": ["foo"],
         }
-        actual = resource.prepare_response(result)
+        actual = resource.prepare_response(result, {})
         expected = {
             "status": "ok",
             "items": [1, 2],
@@ -142,7 +141,7 @@ class TestCrawlResource:
         result: dict[str, Any] = {"items": [1, 2], "stats": [99], "spider_name": "test"}
         result["user_error"] = Exception("my exception")
         with pytest.raises(Exception) as e_info:  # noqa: PT011
-            resource.prepare_response(result)
+            resource.prepare_response(result, {})
         assert str(e_info.value) == "my exception"
 
 
@@ -167,15 +166,17 @@ class TestCrawlResourceGetRequiredArgument(unittest.TestCase):
         assert exception.value.status == b"400"
 
 
-def perform_get(url, api_params, spider_data):
+def perform_get(url, api_params, spider_data=None):
+    spider_data = spider_data or {}
     api_params.update(spider_data)
-    return requests.get(url, params=api_params)
+    return requests.get(url, params=api_params, timeout=30)
 
 
-def perform_post(url, api_params, spider_data):
+def perform_post(url, api_params, spider_data=None):
+    spider_data = spider_data or {}
     post_data = {"request": spider_data}
     post_data.update(api_params)
-    return requests.post(url, json=post_data)
+    return requests.post(url, json=post_data, timeout=30)
 
 
 class TestCrawlResourceIntegration:
@@ -206,10 +207,10 @@ class TestCrawlResourceIntegration:
             assert "request" in res_json["message"]
 
     @pytest.mark.parametrize("method", (perform_get, perform_post))
-    def test_no_url_but_start_requests_present(self, server, method):
+    def test_no_url_but_spider_start_present(self, server, method):
         res = method(
             server.url("crawl.json"),
-            {"spider_name": "test_with_sr", "start_requests": True},
+            {"spider_name": "test_with_sr", "spider_start": True},
             {},
         )
         assert res.status_code == 200
@@ -230,31 +231,13 @@ class TestCrawlResourceIntegration:
         assert len(spider_errors) == 0
         assert result["stats"].get("downloader/request_count") == 2
 
-    def test_no_request_but_start_requests_present(self, server):
-        """Test for POST handler checking if everything works fine
-        if there is no 'request' argument, but 'start_requests' are
-        present. Not checked above because of the way default test fixtures
-        are written.
-        """
-        post_data = {
-            "no_request": {},
-            "start_requests": True,
-            "spider_name": "test_with_sr",
-        }
-        post_data.update(post_data)
-        res = requests.post(server.url("crawl.json"), json=post_data)
-        assert res.status_code == 200
-        data = res.json()
-        assert len(data["items"]) == 2
-        assert data.get("errors") is None
-
     def test_no_request_in_POST_handler(self, server):
         """Test for POST handler checking if everything works fine
         if there is no 'request' argument at all.
         """
         post_data = {"no_request": {}, "spider_name": "test_with_sr"}
         post_data.update(post_data)
-        res = requests.post(server.url("crawl.json"), json=post_data)
+        res = requests.post(server.url("crawl.json"), json=post_data, timeout=30)
         assert res.status_code == 400
         data = res.json()
         msg = "Missing required parameter: 'request'"
@@ -263,32 +246,11 @@ class TestCrawlResourceIntegration:
         assert data.get("items") is None
 
     @pytest.mark.parametrize("method", (perform_get, perform_post))
-    def test_url_and_start_requests_present(self, server, method):
-        spider_data = {"url": server.target_site.url("page3.html")}
-        api_params = {
-            "spider_name": "test_with_sr",
-            "start_requests": True,
-        }
-        res = method(server.url("crawl.json"), api_params, spider_data)
-        assert res.status_code == 200
-        output = res.json()
-        assert len(output.get("errors", [])) == 0
-        items = output.get("items", [])
-        assert len(items) == 3
-
-        for item in items:
-            name = item["name"][0]
-            if name == "Page 1":
-                assert "page1" in item["referer"]
-            elif name == "Page 2":
-                assert "page2" in item["referer"]
-            elif name == "Page 3":
-                assert item.get("referer") is None
-
-    @pytest.mark.parametrize("method", (perform_get, perform_post))
     def test_no_spider_name(self, server, method):
         res = method(
-            server.url("crawl.json"), {}, {"url": server.target_site.url("page1.html")}
+            server.url("crawl.json"),
+            {},
+            {"url": server.site.url("page1.html")},
         )
         assert res.status_code == 400
         res_json = res.json()
@@ -301,7 +263,7 @@ class TestCrawlResourceIntegration:
         res = perform_post(
             server.url("crawl.json"),
             {"spider_name": "test"},
-            {"url": server.target_site.url("page1.html"), "not_an_argument": False},
+            {"url": server.site.url("page1.html"), "not_an_argument": False},
         )
         assert res.status_code == 400
         res_json = res.json()
@@ -313,7 +275,9 @@ class TestCrawlResourceIntegration:
     @pytest.mark.parametrize("method", (perform_get, perform_post))
     def test_invalid_scrapy_request_detected_by_scrapy(self, server, method):
         res = method(
-            server.url("crawl.json"), {"spider_name": "test"}, {"url": "no_rules"}
+            server.url("crawl.json"),
+            {"spider_name": "test"},
+            {"url": "no_rules"},
         )
         assert res.status_code == 400
         res_json = res.json()
@@ -325,12 +289,14 @@ class TestCrawlResourceIntegration:
     def test_crawl(self, server, method):
         url = server.url("crawl.json")
         res = method(
-            url, {"spider_name": "test"}, {"url": server.target_site.url("page1.html")}
+            url,
+            {"spider_name": "test"},
+            {"url": server.site.url("page1.html")},
         )
         expected_items = [
             {
                 "name": ["Page 1"],
-            }
+            },
         ]
         res_json = res.json()
         assert res_json["status"] == "ok"
@@ -340,7 +306,7 @@ class TestCrawlResourceIntegration:
         assert res_json["items"] == expected_items
 
     def test_invalid_json_in_post(self, server):
-        res = requests.post(server.url("crawl.json"), data="ads")
+        res = requests.post(server.url("crawl.json"), data="ads", timeout=30)
         assert res.status_code == 400
         res_json = res.json()
         expected_result = {"status": "error", "code": 400}
@@ -355,7 +321,7 @@ class TestCrawlResourceIntegration:
         res = method(
             url,
             {"spider_name": "test"},
-            {"url": server.target_site.url("err/503"), "errback": "some_errback"},
+            {"url": server.site.url("err/503"), "errback": "some_errback"},
         )
 
         res_json = res.json()
@@ -375,7 +341,7 @@ class TestCrawlResourceIntegration:
         res = method(
             url,
             {"spider_name": "test"},
-            {"url": server.target_site.url("page1.html"), "callback": "return_bytes"},
+            {"url": server.site.url("page1.html"), "callback": "return_bytes"},
         )
         assert res.status_code == 200
         assert res.json()["items"] == [{"name": "Some bytes here"}]
@@ -389,7 +355,7 @@ class TestCrawlResourceIntegration:
             url,
             {"spider_name": "test"},
             {
-                "url": server.target_site.url("page1.html"),
+                "url": server.site.url("page1.html"),
                 "crawl_args": argument,
                 "callback": "return_argument",
             },
@@ -397,7 +363,7 @@ class TestCrawlResourceIntegration:
         expected_items = [
             {
                 "name": postcode,
-            }
+            },
         ]
         res_json = res.json()
         assert res_json["status"] == "ok"
@@ -414,14 +380,14 @@ class TestCrawlResourceIntegration:
             url,
             {"spider_name": "test", "crawl_args": argument},
             {
-                "url": server.target_site.url("page1.html"),
+                "url": server.site.url("page1.html"),
                 "callback": "return_argument",
             },
         )
         expected_items = [
             {
                 "name": postcode,
-            }
+            },
         ]
         res_json = res.json()
         assert res.status_code == 200
@@ -440,7 +406,7 @@ class TestCrawlResourceIntegration:
             url,
             {"spider_name": "test"},
             {
-                "url": server.target_site.url("page1.html"),
+                "url": server.site.url("page1.html"),
                 "crawl_args": argument,
                 "callback": "return_argument",
             },
@@ -459,7 +425,7 @@ class TestCrawlResourceIntegration:
             url,
             {"spider_name": "test"},
             {
-                "url": server.target_site.url("page1.html"),
+                "url": server.site.url("page1.html"),
                 "crawl_args": argument,
             },
         )
@@ -480,7 +446,7 @@ class TestCrawlResourceIntegration:
             url,
             {"spider_name": "test", "crawl_args": argument},
             {
-                "url": server.target_site.url("page1.html"),
+                "url": server.site.url("page1.html"),
                 "callback": "return_argument",
             },
         )
@@ -498,7 +464,7 @@ class TestCrawlResourceIntegration:
             url,
             {"spider_name": "test"},
             {
-                "url": server.target_site.url("page1.html"),
+                "url": server.site.url("page1.html"),
                 "crawl_args": argument,
             },
         )

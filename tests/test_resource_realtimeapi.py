@@ -27,9 +27,6 @@ class TestRealtimeApi(unittest.TestCase):
         service_root = RealtimeApi()
         self._check_entities(service_root, expected_entities)
 
-    # XXX: one inconvenience of singleton settings - complexities during tests,
-    # e.g. settings are mutable, when you change them in one test -
-    # changes will be kept unless you cleanup those changes or use mock.
     @patch("scrapyrt.resources.app_settings", deepcopy(app_settings))
     def test_realtimeapi_with_custom_settings(self):
         from scrapyrt.resources import app_settings

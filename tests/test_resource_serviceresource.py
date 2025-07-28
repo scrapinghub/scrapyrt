@@ -82,9 +82,6 @@ class TestRender(TestServiceResource):
 
 @patch("twisted.python.log.msg")
 class TestHandleErrors(TestServiceResource):
-    def setUp(self):
-        super().setUp()
-
     def _assert_log_err_called(self, log_msg_mock, failure):
         log_msg_mock.call_count = 1
         _, kwargs = log_msg_mock.call_args
@@ -97,12 +94,12 @@ class TestHandleErrors(TestServiceResource):
 
     def test_exception(self, log_msg_mock):
         try:
-            raise Exception("blah")
+            raise Exception("blah")  # pylint: disable=broad-exception-raised
         except Exception as e:
             result = self.resource.handle_error(e, self.request)
             exc = e
         assert self.request.code == 500
-        assert result["message"] == str(exc)
+        assert result["message"] == str(exc)  # pylint: disable=used-before-assignment
         self._assert_log_err_called(log_msg_mock, exc)
 
     def test_failure(self, log_msg_mock):
@@ -165,7 +162,8 @@ class TestRenderObject(TestServiceResource):
         set_header_mock.assert_any_call(b"Content-Type", b"application/json")
         set_header_mock.assert_any_call(b"Access-Control-Allow-Origin", b"*")
         set_header_mock.assert_any_call(
-            b"Access-Control-Allow-Headers", b"X-Requested-With"
+            b"Access-Control-Allow-Headers",
+            b"X-Requested-With",
         )
         set_header_mock.assert_any_call(b"Content-Length", str(len(result)).encode())
         headers = dict(self.headers)

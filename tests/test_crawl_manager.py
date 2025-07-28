@@ -3,15 +3,13 @@ import datetime as dt
 import re
 from pathlib import Path
 from time import sleep
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
 import pytest
 from scrapy import Item
 from scrapy.exceptions import DontCloseSpider
 from scrapy.http import Response
 from scrapy.settings import Settings
-from scrapy.utils.test import get_crawler
-from twisted.internet import defer
 from twisted.python.failure import Failure
 from twisted.trial import unittest
 from twisted.web.error import Error
@@ -99,7 +97,7 @@ class TestSpiderIdle(TestCrawlManager):
 
     def test_pass_wrong_spider_errback(self):
         mng = self.create_crawl_manager(
-            {"url": "http://localhost", "errback": "handle_error"}
+            {"url": "http://localhost", "errback": "handle_error"},
         )
 
         with contextlib.suppress(DontCloseSpider):
@@ -113,7 +111,7 @@ class TestSpiderIdle(TestCrawlManager):
 
     def test_pass_good_spider_errback(self):
         mng = self.create_crawl_manager(
-            {"url": "http://localhost", "errback": "handle_error"}
+            {"url": "http://localhost", "errback": "handle_error"},
         )
         self.crawler.spider.handle_error = lambda x: x
         with contextlib.suppress(DontCloseSpider):
@@ -136,7 +134,8 @@ class TestHandleScheduling(TestCrawlManager):
 
     def test_handle_scheduling_another_spider(self):
         self.crawl_manager.handle_scheduling(
-            self.crawl_manager.request, self.another_spider
+            self.crawl_manager.request,
+            self.another_spider,
         )
         assert not self.crawl_manager.limit_requests.called
         assert not self.crawl_manager.limit_runtime.called
@@ -249,7 +248,10 @@ class TestCollectDropped(TestCrawlManager):
     def test_collect_dropped(self):
         assert len(self.crawl_manager.items_dropped) == 0
         self.crawl_manager.collect_dropped(
-            self.item, self.response, self.exception, self.spider
+            self.item,
+            self.response,
+            self.exception,
+            self.spider,
         )
         assert len(self.crawl_manager.items_dropped) == 1
         assert len(self.crawl_manager.items_dropped) == 1
@@ -258,7 +260,10 @@ class TestCollectDropped(TestCrawlManager):
     def test_collect_dropped_another_spider(self):
         assert len(self.crawl_manager.items_dropped) == 0
         self.crawl_manager.collect_dropped(
-            self.item, self.response, self.exception, self.another_spider
+            self.item,
+            self.response,
+            self.exception,
+            self.another_spider,
         )
         assert len(self.crawl_manager.items_dropped) == 0
 
@@ -317,44 +322,6 @@ class TestCreateSpiderRequest(TestCrawlManager):
         with pytest.raises(Error) as exception:
             self.crawl_manager.create_spider_request(self.kwargs)
         assert exception.value.status == b"400"
-
-
-class TestStartRequests(unittest.TestCase):
-    def setUp(self):
-        self.url = "http://localhost"
-        self.kwargs = {"url": self.url}
-        self.start_requests_mock = MagicMock()
-        self.spidercls = MetaSpider
-        self._start_requests = self.spidercls.start_requests
-        self.spidercls.start_requests = self.start_requests_mock  # type: ignore[method-assign]
-        self.crawler = get_crawler(self.spidercls)
-
-        class CustomCrawlManager(CrawlManager):
-            def get_project_settings(self):
-                crawl_settings = super().get_project_settings()
-                crawl_settings.setdict(
-                    {"SPIDER_MODULES": "tests.spiders"}, priority="cmdline"
-                )
-                return crawl_settings
-
-        self.crawl_manager = CustomCrawlManager(self.spidercls.name, self.kwargs.copy())
-        self.crawl_manager.crawler = self.crawler
-
-    def tearDown(self):
-        self.spidercls.start_requests = self._start_requests  # type: ignore[method-assign]
-
-    @defer.inlineCallbacks
-    @patch("scrapy.crawler.ExecutionEngine")
-    def test_start_requests_true(self, _):  # noqa: PT019
-        self.crawl_manager.start_requests = True
-        yield self.crawl_manager.crawl()
-        assert self.start_requests_mock.call_count == 1
-
-    @patch("scrapy.crawler.ExecutionEngine")
-    def test_start_requests_false(self, _):  # noqa: PT019
-        self.crawl_manager.start_requests = False
-        self.crawl_manager.crawl()
-        assert self.start_requests_mock.call_count == 0
 
 
 class TestCreateProperLogFile(TestCrawlManager):

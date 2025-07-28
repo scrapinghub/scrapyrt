@@ -53,7 +53,7 @@ class BaseTestServer:
             assert self.proc.stderr is not None
             raise RuntimeError(
                 f"unable to start server. error code: {self.proc.returncode} "
-                f"- stderr follows: \n{self.proc.stderr.read().decode()}"
+                f"- stderr follows: \n{self.proc.stderr.read().decode()}",
             )
         try:
             self._wait_for_port()
@@ -109,7 +109,7 @@ class BaseTestServer:
 
 
 class ScrapyrtTestServer(BaseTestServer):
-    def __init__(self, site=None, *args, **kwargs):
+    def __init__(self, site, *args, project_generator=generate_project, **kwargs):
         super().__init__(*args, **kwargs)
         self.arguments = [
             sys.executable,
@@ -120,8 +120,9 @@ class ScrapyrtTestServer(BaseTestServer):
         ]
         self.stderr = PIPE
         self.tmp_dir = Path(tempfile.mkdtemp())
-        self.cwd = self.tmp_dir / "testproject"
-        generate_project(self.cwd, site=site)
+        self.cwd = self.tmp_dir
+        project_generator(self.cwd, site=site)
+        self.site: MockServer = site
 
     def stop(self):
         super().stop()

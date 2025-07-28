@@ -20,6 +20,6 @@ class TestRootResourceIntegration(unittest.TestCase):
         self.site.stop()
 
     def test_root(self):
-        res = requests.get(self.root_url)
+        res = requests.get(self.root_url, timeout=30)
         assert res.status_code == 404
         assert "No Such Resource" in res.text

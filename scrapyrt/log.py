@@ -47,17 +47,17 @@ class ScrapyrtFileLogObserver(log.FileLogObserver):
         if event_dict.get("system") == "scrapy":
             return None
         if "HTTPChannel" in event_dict.get(
-            "system"
+            "system",
         ) and "Log opened." in event_dict.get("message", ""):
             # useless log message caused by scrapy.log.start
             return None
         return event_dict
 
-    def _unicode_to_str(self, eventDict):
-        message = eventDict.get("message")
+    def _unicode_to_str(self, event_dict):
+        message = event_dict.get("message")
         if message:
-            eventDict["message"] = tuple(to_bytes(x, self.encoding) for x in message)
-        return eventDict
+            event_dict["message"] = tuple(to_bytes(x, self.encoding) for x in message)
+        return event_dict
 
     def emit(self, eventDict):
         eventDict = self._adapt_eventdict(eventDict)
@@ -67,7 +67,7 @@ class ScrapyrtFileLogObserver(log.FileLogObserver):
         log.FileLogObserver.emit(self, eventDict)
 
 
-class SpiderFilter(logging.Filter):
+class SpiderFilter(logging.Filter):  # pylint: disable=too-few-public-methods
     """Filter messages from other spiders and undefined loggers.
 
     Accept messages that have 'spider' key in extra and it matches given spider.
@@ -75,6 +75,7 @@ class SpiderFilter(logging.Filter):
     """
 
     def __init__(self, spider):
+        super().__init__()
         self.spider = spider
 
     def filter(self, record):
@@ -131,7 +132,8 @@ def setup_spider_logging(spider, settings):
     else:
         handler = logging.NullHandler()
     formatter = logging.Formatter(
-        fmt=settings.get("LOG_FORMAT"), datefmt=settings.get("LOG_DATEFORMAT")
+        fmt=settings.get("LOG_FORMAT"),
+        datefmt=settings.get("LOG_DATEFORMAT"),
     )
     handler.setFormatter(formatter)
     handler.setLevel(settings.get("LOG_LEVEL"))

@@ -4,6 +4,7 @@ import datetime as dt
 from collections import OrderedDict
 from copy import deepcopy
 from pathlib import Path
+from warnings import warn
 
 from scrapy import Spider, signals
 from scrapy.crawler import Crawler, CrawlerRunner
@@ -23,32 +24,42 @@ class ScrapyrtCrawlerRunner(CrawlerRunner):
         self.scrapyrt_manager = scrapyrt_manager
 
     def create_crawler(
-        self, crawler_or_spidercls: type[Spider] | str | Crawler
+        self,
+        crawler_or_spidercls: type[Spider] | str | Crawler,
     ) -> Crawler:
         crawler = super().create_crawler(crawler_or_spidercls)
         self.scrapyrt_manager.crawler = crawler
         crawler.signals.connect(self.scrapyrt_manager.get_item, signals.item_scraped)
         crawler.signals.connect(
-            self.scrapyrt_manager.collect_dropped, signals.item_dropped
+            self.scrapyrt_manager.collect_dropped,
+            signals.item_dropped,
         )
         crawler.signals.connect(self.scrapyrt_manager.spider_idle, signals.spider_idle)
         crawler.signals.connect(
-            self.scrapyrt_manager.handle_spider_error, signals.spider_error
+            self.scrapyrt_manager.handle_spider_error,
+            signals.spider_error,
         )
         crawler.signals.connect(
-            self.scrapyrt_manager.handle_scheduling, signals.request_scheduled
+            self.scrapyrt_manager.handle_scheduling,
+            signals.request_scheduled,
         )
         crawler.signals.connect(
-            self.scrapyrt_manager.read_spider, signals.spider_opened
+            self.scrapyrt_manager.read_spider,
+            signals.spider_opened,
         )
         return crawler
 
 
-class CrawlManager:
+class CrawlManager:  # pylint: disable=too-many-instance-attributes
     """Runs crawls."""
 
-    def __init__(
-        self, spider_name, request_kwargs, max_requests=None, start_requests=False
+    def __init__(  # pylint: disable=too-many-positional-arguments
+        self,
+        spider_name,
+        request_kwargs,
+        max_requests=None,
+        start_requests=None,
+        spider_start=None,
     ):
         self.spider_name = spider_name
         self.log_dir = Path(app_settings.LOG_DIR)
@@ -75,9 +86,45 @@ class CrawlManager:
             self.request = self.create_spider_request(deepcopy(request_kwargs))
         else:
             self.request = None
-        self.start_requests = start_requests
         self._request_scheduled = False
         self.original_start_methods = {}
+        self._cleanup_handler = None
+        self._init_spider_start(start_requests, spider_start)
+
+    def _init_spider_start(self, start_requests, spider_start):
+        if start_requests is not None:
+            warn(
+                "The start_requests parameter of CrawlManager() is "
+                "deprecated, use spider_start instead.",
+                DeprecationWarning,
+                stacklevel=2,
+            )
+            if spider_start is None:
+                spider_start = start_requests
+        if spider_start is None:
+            self.spider_start = False
+        else:
+            self.spider_start = spider_start
+
+    @property
+    def start_requests(self):
+        warn(
+            "CrawlManager.start_requests is deprecated, use "
+            "CrawlManager.spider_start instead.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        return self.spider_start
+
+    @start_requests.setter
+    def start_requests(self, value: bool):
+        warn(
+            "CrawlManager.start_requests is deprecated, use "
+            "CrawlManager.spider_start instead.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        self.spider_start = value
 
     def crawl(self, *args, **kwargs):
         settings = self.get_project_settings()
@@ -89,14 +136,15 @@ class CrawlManager:
                 msg = "Crawl argument cannot override spider method."
                 msg += " Got argument {} that overrides spider method {}"
                 raise Error(
-                    400, message=msg.format(kw, getattr(spidercls, kw)).encode()
+                    400,
+                    message=msg.format(kw, getattr(spidercls, kw)).encode(),
                 )
-        if not self.start_requests:
+        if not self.spider_start:
             self.set_dummy_start_methods(spidercls)
         dfd = self.crawler_runner.crawl(spidercls, *args, **kwargs)
 
         def cleanup_logging(result):
-            if hasattr(self, "_cleanup_handler"):
+            if self._cleanup_handler:
                 self._cleanup_handler()
             return result
 
@@ -108,7 +156,7 @@ class CrawlManager:
     def set_dummy_start_methods(self, spidercls):
         if hasattr(spidercls, "start"):
 
-            async def dummy_start(*args, **kwargs):
+            async def dummy_start(*_args, **_kwargs):
                 return
                 yield
 
@@ -116,7 +164,7 @@ class CrawlManager:
             spidercls.start = dummy_start
         if hasattr(spidercls, "start_requests"):
 
-            def dummy_start_requests(*args, **kwargs):
+            def dummy_start_requests(*_args, **_kwargs):
                 return
                 yield
 
@@ -150,13 +198,13 @@ class CrawlManager:
     def spider_idle(self, spider):
         """Handler of spider_idle signal.
 
-        Schedule request for url given to api, with optional callback
-        and errback that can be passed as GET parameter.
+        Schedule request for url given to api, with optional callback and
+        errback that can be passed as GET parameter.
 
-        spider_idle signal is used because we want to optionally enable
-        start_requests for the spider and if request is scheduled in
-        spider_opened signal handler it's fired earlier then start_requests
-        which is totally wrong.
+        spider_idle signal is used because we want to optionally enable start()
+        or start_requests() for the spider and if request is scheduled in
+        spider_opened signal handler it's fired earlier than start() or
+        start_requests() which is totally wrong.
 
         """
         assert self.crawler is not None
@@ -185,7 +233,9 @@ class CrawlManager:
                 return
 
             modify_request = getattr(
-                self.crawler.spider, "modify_realtime_request", None
+                self.crawler.spider,
+                "modify_realtime_request",
+                None,
             )
             if callable(modify_request):
                 self.request = modify_request(self.request)
@@ -194,7 +244,7 @@ class CrawlManager:
             self._request_scheduled = True
             raise DontCloseSpider
 
-    def handle_scheduling(self, request, spider):
+    def handle_scheduling(self, request, spider):  # pylint: disable=unused-argument
         """Handler of request_scheduled signal.
 
         For every scheduled request check if number of requests is less
@@ -228,7 +278,7 @@ class CrawlManager:
             fail_data = failure.getTraceback()
             self.errors.append(fail_data)
 
-    def get_item(self, item, response, spider):
+    def get_item(self, item, response, spider):  # pylint: disable=unused-argument
         assert self.crawler is not None
         if spider is self.crawler.spider:
             self.items.append(item)
@@ -237,10 +287,10 @@ class CrawlManager:
         assert self.crawler is not None
         if spider is self.crawler.spider:
             self.items_dropped.append(
-                {"item": item, "exception": str(exception), "response": response}
+                {"item": item, "exception": str(exception), "response": response},
             )
 
-    def return_items(self, result):
+    def return_items(self, result):  # pylint: disable=unused-argument
         assert self.crawler is not None
         stats = self.crawler.stats.get_stats()
         stats = OrderedDict((k, v) for k, v in sorted(stats.items()))

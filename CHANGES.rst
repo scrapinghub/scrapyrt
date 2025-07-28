@@ -4,7 +4,15 @@ Changes
 ScrapyRT 0.17.0 (unreleased)
 ----------------------------
 
+-   Added support for Scrapy 2.13+.
+
 -   Lowered the minimum required Scrapy version from 2.10 to 2.7.
+
+-   The ``start_requests`` API parameter is deprecated in favor of a new
+    ``spider_start`` API parameter.
+
+    Same with the corresponding ``__init__`` parameter and attribute of the
+    ``CrawlManager`` class.
 
 
 ScrapyRT 0.16 (2023-02-14)
