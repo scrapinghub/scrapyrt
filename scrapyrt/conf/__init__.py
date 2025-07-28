@@ -1,13 +1,27 @@
-# -*- coding: utf-8 -*-
+from __future__ import annotations
+
 from copy import deepcopy
 from importlib import import_module
 
 from . import default_settings
 
 
-class Settings(object):
+class Settings:
+    CRAWL_MANAGER: str
+    DEBUG: bool
+    DEFAULT_ERRBACK_NAME: str | None
+    LOG_DIR: str
+    LOG_ENCODING: str
+    LOG_FILE: str | None
+    PROJECT_SETTINGS: str | None
+    RESOURCES: dict[str, str]
+    SERVICE_ROOT: str
+    SPIDER_LOG_FILE_TIMEFORMAT: str
+    TIMEOUT_LIMIT: int
+    TWISTED_REACTOR: str | None
 
     def __init__(self):
+        self.frozen = False
         self.setmodule(default_settings)
 
     def setmodule(self, module):
@@ -17,23 +31,22 @@ class Settings(object):
             self.set(setting, getattr(module, setting))
 
     def __setattr__(self, key, value):
+        if key == "frozen":
+            super().__setattr__(key, value)
+            return None
         if self.frozen:
             raise TypeError("Trying to modify a frozen Settings object")
-        return super(Settings, self).__setattr__(key, value)
+        return super().__setattr__(key, value)
 
     def set(self, name, value):
-        if not name.startswith('_') and name.isupper():
+        if not name.startswith("_") and name.isupper():
             # Deepcopy objects here, or we will have issues with mutability,
             # like changing mutable object stored in settings leads to
             # change of object in default_settings module.
             setattr(self, name, deepcopy(value))
 
     def freeze(self):
-        self._frozen = True
-
-    @property
-    def frozen(self):
-        return bool(getattr(self, '_frozen', False))
+        self.frozen = True
 
 
 app_settings = Settings()

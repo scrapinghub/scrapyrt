@@ -1,8 +1,8 @@
-# -*- coding: utf-8 -*-
 import json
 from urllib.parse import unquote
 
 from scrapy.utils.misc import load_object
+from scrapy.utils.python import to_bytes
 from scrapy.utils.serialize import ScrapyJSONEncoder
 from twisted.internet.defer import Deferred
 from twisted.python.failure import Failure
@@ -11,30 +11,27 @@ from twisted.web.error import Error, UnsupportedMethod
 
 from . import log
 from .conf import app_settings
-from .utils import extract_scrapy_request_args, to_bytes
+from .utils import extract_scrapy_request_args
 
 
 class AdaptedScrapyJSONEncoder(ScrapyJSONEncoder):
     def default(self, o):
         if isinstance(o, bytes):
-            return o.decode('utf8')
-        else:
-            return super().default(o)
+            return o.decode("utf8")
+        return super().default(o)
 
 
-# XXX super() calls won't work wihout object mixin in Python 2
-# maybe this can be removed at some point?
-class ServiceResource(resource.Resource, object):
+class ServiceResource(resource.Resource):
     json_encoder = AdaptedScrapyJSONEncoder()
 
     def __init__(self, root=None):
-        resource.Resource.__init__(self)
+        super().__init__()
         self.root = root
 
     def render(self, request):
         try:
             result = resource.Resource.render(self, request)
-        except Exception as e:
+        except Exception as e:  # pylint: disable=broad-exception-caught
             result = self.handle_error(e, request)
 
         if not isinstance(result, Deferred):
@@ -61,17 +58,13 @@ class ServiceResource(resource.Resource, object):
         """
         failure = None
         if isinstance(exception_or_failure, Exception):
-            exception = exception_or_failure
-        elif isinstance(exception_or_failure, Failure):
+            exception: BaseException = exception_or_failure
+        else:
+            assert isinstance(exception_or_failure, Failure)
+            assert exception_or_failure.value is not None
             exception = exception_or_failure.value
             failure = exception_or_failure
-        else:
-            raise TypeError(
-                'Expected Exception or {} instances, got {}'.format(
-                    Failure,
-                    exception_or_failure.__class__
-                ))
-        if request.code == 200:
+        if request.code == 200:  # noqa: PLR2004
             # Default code - means that error wasn't handled
             if isinstance(exception, UnsupportedMethod):
                 request.setResponseCode(405)
@@ -80,7 +73,7 @@ class ServiceResource(resource.Resource, object):
                 request.setResponseCode(code)
             else:
                 request.setResponseCode(500)
-            if request.code == 500:
+            if request.code == 500:  # noqa: PLR2004
                 log.err(failure)
         return self.format_error_response(exception, request)
 
@@ -88,59 +81,51 @@ class ServiceResource(resource.Resource, object):
         # Python exceptions don't have message attribute in Python 3+ anymore.
         # Twisted HTTP Error objects still have 'message' attribute even in 3+
         # and they fail on str(exception) call.
-        msg = exception.message if hasattr(
-            exception, 'message') else str(exception)
+        msg = exception.message if hasattr(exception, "message") else str(exception)
 
-        return {
-            "status": "error",
-            "message": msg,
-            "code": request.code
-        }
+        return {"status": "error", "message": msg, "code": request.code}
 
     def render_object(self, obj, request):
-        r = self.json_encoder.encode(obj) + "\n"
-
-        request.setHeader('Content-Type', 'application/json')
-        request.setHeader('Access-Control-Allow-Origin', '*')
-        request.setHeader('Access-Control-Allow-Methods',
-                          ', '.join(getattr(self, 'allowedMethods', [])))
-        request.setHeader('Access-Control-Allow-Headers', 'X-Requested-With')
-        request.setHeader('Content-Length', str(len(r)))
-        return r.encode("utf8")
+        response = self.json_encoder.encode(obj) + "\n"
+        request.setHeader(b"Content-Type", b"application/json")
+        request.setHeader(b"Access-Control-Allow-Origin", b"*")
+        request.setHeader(
+            b"Access-Control-Allow-Methods",
+            b", ".join(getattr(self, "allowedMethods", [])),
+        )
+        request.setHeader(b"Access-Control-Allow-Headers", b"X-Requested-With")
+        request.setHeader(b"Content-Length", str(len(response)).encode())
+        return response.encode("utf-8")
 
 
 class RealtimeApi(ServiceResource):
-
     def __init__(self, **kwargs):
-        super(RealtimeApi, self).__init__(self)
+        super().__init__(self)
         for route, resource_path in app_settings.RESOURCES.items():
             resource_cls = load_object(resource_path)
-            route = to_bytes(route)
-            self.putChild(route, resource_cls(self, **kwargs))
+            self.putChild(to_bytes(route), resource_cls(self, **kwargs))
 
 
 class CrawlResource(ServiceResource):
-
     isLeaf = True
-    allowedMethods = ['GET', 'POST']
+    allowedMethods = (b"GET", b"POST")
 
-    def render_GET(self, request, **kwargs):
+    def render_GET(self, request, **kwargs):  # pylint: disable=invalid-name
         """Request querysting must contain following keys: url, spider_name.
 
         At the moment kwargs for scrapy request are not supported in GET.
         They are supported in POST handler.
         """
-        api_params = dict(
-            (name.decode('utf-8'), value[0].decode('utf-8'))
+        api_params = {
+            name.decode("utf-8"): value[0].decode("utf-8")
             for name, value in request.args.items()
-        )
-        scrapy_request_args = extract_scrapy_request_args(api_params,
-                                                          raise_error=False)
+        }
+        scrapy_request_args = extract_scrapy_request_args(api_params, raise_error=False)
         self.validate_options(scrapy_request_args, api_params)
 
         return self.prepare_crawl(api_params, scrapy_request_args, **kwargs)
 
-    def render_POST(self, request, **kwargs):
+    def render_POST(self, request, **kwargs):  # pylint: disable=invalid-name
         """
         :param request:
             body should contain JSON
@@ -160,34 +145,34 @@ class CrawlResource(ServiceResource):
         try:
             api_params = json.loads(request_body)
         except Exception as e:
-            message = "Invalid JSON in POST body. {}"
-            message = message.format(e)
-            # TODO should be integer not string?
-            raise Error('400', message=message)
+            message = f"Invalid JSON in POST body. {e}".encode()
+            raise Error(400, message=message) from e
 
-        log.msg("{}".format(api_params))
-        if api_params.get("start_requests"):
+        log.msg(f"{api_params}")
+        if api_params.get("spider_start") or api_params.get("start_requests"):
             # start requests passed so 'request' argument is optional
             _request = api_params.get("request", {})
         else:
-            # no start_requests, 'request' is required
+            # no spider_start/start_requests, 'request' is required
             _request = self.get_required_argument(api_params, "request")
         try:
             scrapy_request_args = extract_scrapy_request_args(
-                _request, raise_error=True
+                _request,
+                raise_error=True,
             )
         except ValueError as e:
-            raise Error('400', str(e))
+            raise Error(400, str(e).encode()) from e
 
         self.validate_options(scrapy_request_args, api_params)
         return self.prepare_crawl(api_params, scrapy_request_args, **kwargs)
 
     def validate_options(self, scrapy_request_args, api_params):
         url = scrapy_request_args.get("url")
-        start_requests = api_params.get("start_requests")
-        if not url and not start_requests:
-            raise Error('400',
-                        "'url' is required if start_requests are disabled")
+        spider_start = api_params.get("spider_start") or api_params.get(
+            "start_requests",
+        )
+        if not url and not spider_start:
+            raise Error(400, b"'url' is required if spider_start is not enabled")
 
     def get_required_argument(self, api_params, name, error_msg=None):
         """Get required API key from dict-like object.
@@ -201,13 +186,13 @@ class CrawlResource(ServiceResource):
 
         """
         if error_msg is None:
-            error_msg = 'Missing required parameter: {}'.format(repr(name))
+            error_msg = f"Missing required parameter: {name!r}".encode()
         try:
             value = api_params[name]
         except KeyError:
-            raise Error('400', message=error_msg)
+            raise Error(400, message=error_msg) from None
         if not value:
-            raise Error('400', message=error_msg)
+            raise Error(400, message=error_msg)
         return value
 
     def prepare_crawl(self, api_params, scrapy_request_args, *args, **kwargs):
@@ -221,10 +206,9 @@ class CrawlResource(ServiceResource):
             should contain positional and keyword arguments for Scrapy
             Request object that will be created
         """
-        spider_name = self.get_required_argument(api_params, 'spider_name')
-        start_requests = api_params.get("start_requests", False)
+        spider_name = self.get_required_argument(api_params, "spider_name")
         try:
-            max_requests = api_params['max_requests']
+            max_requests = api_params["max_requests"]
         except (KeyError, IndexError):
             max_requests = None
 
@@ -235,31 +219,46 @@ class CrawlResource(ServiceResource):
             except Exception as e:
                 msg = "crawl_args must be valid url encoded JSON"
                 msg += " this string cannot be decoded with JSON"
-                msg += f' {str(e)}'
-                raise Error('400', message=msg)
+                msg += f" {e!s}"
+                raise Error(400, message=msg.encode()) from e
 
         dfd = self.run_crawl(
-            spider_name, scrapy_request_args, max_requests,
-            start_requests=start_requests,
+            spider_name,
+            scrapy_request_args,
+            max_requests,
+            start_requests=api_params.get("start_requests"),
             crawl_args=crawl_args,
-            *args,
-            **kwargs)
-        dfd.addCallback(
-            self.prepare_response, request_data=api_params, *args, **kwargs)
+            spider_start=api_params.get("spider_start"),
+            *args,  # noqa: B026
+            **kwargs,  # type: ignore[misc]
+        )
+        dfd.addCallback(self.prepare_response, request_data=api_params, *args, **kwargs)  # noqa: B026
         return dfd
 
-    def run_crawl(self, spider_name, scrapy_request_args,
-                  max_requests=None, crawl_args=None,
-                  start_requests=False, *args, **kwargs):
+    def run_crawl(  # noqa: PLR0913  # pylint: disable=keyword-arg-before-vararg,too-many-positional-arguments
+        self,
+        spider_name,
+        scrapy_request_args,
+        max_requests=None,
+        crawl_args=None,
+        start_requests=None,
+        spider_start=None,
+        *args,
+        **kwargs,
+    ):
         crawl_manager_cls = load_object(app_settings.CRAWL_MANAGER)
         manager = crawl_manager_cls(
-            spider_name, scrapy_request_args, max_requests, start_requests=start_requests)
+            spider_name,
+            scrapy_request_args,
+            max_requests,
+            start_requests=start_requests,
+            spider_start=spider_start,
+        )
         if crawl_args:
             kwargs.update(crawl_args)
-        dfd = manager.crawl(*args, **kwargs)
-        return dfd
+        return manager.crawl(*args, **kwargs)
 
-    def prepare_response(self, result, *args, **kwargs):
+    def prepare_response(self, result, request_data, *_args, **_kwargs):
         items = result.get("items")
         user_error = result.get("user_error", None)
         if user_error:
@@ -274,4 +273,8 @@ class CrawlResource(ServiceResource):
         errors = result.get("errors")
         if errors:
             response["errors"] = errors
+        if "start_requests" in request_data:
+            response["warnings"] = [
+                "The start_requests parameter is deprecated, use spider_start instead.",
+            ]
         return response

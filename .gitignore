@@ -3,6 +3,8 @@
 /build/
 /dist/
 /*.egg-info/
+/venv/
+/.venv/
 
 # twisted
 dropin.cache
@@ -22,6 +24,7 @@ _trial_temp
 /test_urls*
 testing_scripts*
 coverage.xml
+/.coverage.*
 .python-version
 
 # IDE

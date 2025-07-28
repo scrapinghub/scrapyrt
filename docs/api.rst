@@ -19,12 +19,6 @@ Scrapyrt will look for ``scrapy.cfg`` file to determine your project settings,
 and will raise error if it won't find one.  Note that you need to have all
 your project requirements installed.
 
-Pay attention to Scrapy version you're using in your spiders.
-Scrapyrt makes use of recent improvements in `Scrapy Crawler`_ interface that
-are not present in old Scrapy versions. Look closely at ``requirements.txt`` of
-Scrapyrt and install most recent development Scrapy version if possible.
-Unfortunately we are unable to support old Scrapy versions.
-
 If you would like to play with source code and possibly contribute
 to the project, you can install Scrapyrt in 'dev' mode::
 
@@ -40,7 +34,7 @@ need to do following things::
 
 This will download Scrapyrt Docker image for you. Next step you need to run this image. Remember
 about providing proper port and project directory. Project directory from host machine must be mounted in
-directory /scrapyrt/project on guest. Following command will launch Scrapyrt forwarding port 9080 from 
+directory /scrapyrt/project on guest. Following command will launch Scrapyrt forwarding port 9080 from
 guest to host, in demonized mode, with project directory in directory /home/user/quotesbot::
 
     docker run -p 9080:9080 -tid -v /home/user/quotesbot:/scrapyrt/project scrapinghub/scrapyrt
@@ -79,18 +73,18 @@ spider_name
 
 url
     - type: string
-    - required if start_requests not enabled
+    - required if ``spider_start`` is not enabled
 
-    Absolute URL to send request to. URL should be urlencoded so that
-    querystring from url will not interfere with api parameters.
+    Target URL.
 
-    By default API will crawl this url and won't execute any other requests.
-    Most importantly it will not execute ``start_requests`` and spider will
-    not visit urls defined in ``start_urls`` spider attribute. There will be
-    only one single request scheduled in API - request for resource identified
-    by url argument.
+    It should be URL-encoded, so that its query string will not interfere with
+    API parameters.
 
-    If you want to execute request pass start_requests argument.
+    By default, the API will crawl this URL and will not send any other
+    requests. Most importantly, it will not execute the spider ``start()`` or
+    ``start_requests()`` methods. As a result, URLs defined in the
+    ``start_urls`` spider attribute will not be visited. To change this, enable
+    ``spider_start``.
 
 callback
     - type: string
@@ -123,18 +117,19 @@ max_requests
     and you don't want to wait forever for it to finish
     you should probably pass it.
 
-start_requests
+spider_start
     - type: boolean
     - optional
 
-    Whether spider should execute ``Scrapy.Spider.start_requests`` method.
-    ``start_requests`` are executed by default when you run Scrapy Spider
-    normally without ScrapyRT, but this method is NOT executed in API by
-    default. By default we assume that spider is expected to crawl ONLY url
-    provided in parameters without making any requests to ``start_urls``
-    defined in ``Spider`` class. start_requests argument overrides this
-    behavior. If this argument is present API will execute start_requests
-    Spider method.
+    Whether to run the ``start()`` or ``start_requests()`` methods of the
+    spider (``True``) or not (``False``, default).
+
+    These methods are executed by default when you run a spider without
+    ScrapyRT, but they are **not** executed by default when using ScrapyRT.
+
+    By default we assume that the spider is expected to crawl **only** the URL
+    provided in the ``url`` parameter, and not make any requests to e.g. the
+    ``start_urls`` defined in the spider class.
 
 crawl_args
     - type: urlencoded JSON string
@@ -586,22 +581,6 @@ But if you still want to save all stdout to some file - you can create custom
 approach described in `Python Logging HOWTO`_ or redirect stdout to a file using
 `bash redirection syntax`_, `supervisord logging`_ etc.
 
-Releases
-========
-ScrapyRT 0.16 (2023-02-14)
---------------------------
-- errback method for spider made configurable, errback for spiders will default to None instead of parse
-
-ScrapyRT 0.12 (2021-03-08)
---------------------------
-- added crawl arguments for API
-- removed Python 2 support
-- added Python 3.9 support
-- docs clean up
-- removed superfluous requirements (demjson, six)
-- fixed API crash when spider returns bytes in items output
-- updated unit tests
-- development improvements, moved from Travis to Github Workflows
 
 .. _toscrape-css spider: https://github.com/scrapy/quotesbot/blob/master/quotesbot/spiders/toscrape-css.py
 .. _Scrapy educational quotesbot project: https://github.com/scrapy/quotesbot

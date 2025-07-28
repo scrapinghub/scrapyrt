@@ -28,7 +28,7 @@ ScrapyRT (Scrapy realtime)
 Add HTTP API for your `Scrapy <https://scrapy.org/>`_ project in minutes.
 
 You send a request to ScrapyRT with spider name and URL, and in response, you get items collected by a spider
-visiting this URL. 
+visiting this URL.
 
 * All Scrapy project components (e.g. middleware, pipelines, extensions) are supported
 * You run Scrapyrt in Scrapy project directory. It starts HTTP server allowing you to schedule spiders and get spider output in JSON.

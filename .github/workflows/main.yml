@@ -1,39 +1,39 @@
 name: CI
-
 on:
-  # Triggers the workflow on push or pull request events but only for the master branch
   push:
-    branches: [ master ]
+    branches:
+    - master
   pull_request:
-    branches: [ master ]
-
 jobs:
-  build:
-
+  tox:
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
-        python-version: ["3.8", "3.9", "3.10", "3.11"]
-        scrapy-version: ["2.11", "2.10"]
-
+        include:
+        - python-version: "3.13"
+          tox: "pre-commit"
+        - python-version: "3.9"
+          tox: "mypy"
+        - python-version: "3.13"
+          tox: "pylint"
+        - python-version: "3.9"
+          tox: "min"
+        - python-version: "3.10"
+        - python-version: "3.11"
+        - python-version: "3.12"
+        - python-version: "3.13"
+        - python-version: "3.13"  # Keep in sync with .readthedocs.yml
+          tox: "docs"
+        - python-version: "3.13"
+          tox: "twinecheck"
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@v5
       with:
         python-version: ${{ matrix.python-version }}
-        scrapy-version: ${{ matrix.scrapy-version }}
-    - name: Install dependencies
+    - name: Run tox
       run: |
-        python -m pip install --upgrade pip
-        pip install scrapy==${{ matrix.scrapy-version}}
-        pip install -r requirements-dev.txt
-#    - name: Lint with flake8
-#      run: |
-#        # stop the build if there are Python syntax errors or undefined names
-#        flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
-#        # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
-#        flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
-    - name: Test with pytest
-      run: |
-        pytest
+        pip install -U tox
+        tox -e ${{ matrix.tox || 'py' }}
