@@ -1,7 +1,7 @@
 Changes
 =======
 
-ScrapyRT 0.17.0 (unreleased)
+ScrapyRT 0.17.0 (2025-07-28)
 ----------------------------
 
 -   Added support for Scrapy 2.13+.
