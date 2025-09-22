@@ -71,6 +71,17 @@ regex = true
 parallel = true
 sigterm = true
 
+[tool.hatch.build.targets.sdist]
+include = [
+    "/artwork",
+    "/docs",
+    "/scrapyrt",
+    "/tests",
+    "/CHANGES.rst",
+    "/Dockerfile",
+    "/tox.ini",
+]
+
 [tool.mypy]
 check_untyped_defs = true
 
