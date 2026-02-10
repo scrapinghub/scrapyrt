@@ -112,12 +112,9 @@ def run_application(reactor_type, arguments, app_settings_):
     reactor.run()  # type: ignore[attr-defined]
 
 
-# app args > Scrapy non-default (add-ons, project) > app module > app default >
-# Scrapy default
 def _load_settings(arguments) -> Settings:
     sys.path.insert(0, str(Path.cwd()))
-    if arguments.settings:
-        app_settings.setmodule(arguments.settings)
+
     app_settings.set("PROJECT_SETTINGS", find_scrapy_project(arguments.project))
     project_settings = get_project_settings()
 
@@ -125,10 +122,12 @@ def _load_settings(arguments) -> Settings:
         if not setting.isupper():
             continue
         priority = project_settings.getpriority(setting)
-        if priority is None:
+        if priority is None or priority <= SETTINGS_PRIORITIES["default"]:
             continue
-        if not hasattr(app_settings, setting) or priority > SETTINGS_PRIORITIES["default"]:
-            app_settings.set(setting, project_settings[setting])
+        app_settings.set(setting, project_settings[setting])
+
+    if arguments.settings:
+        app_settings.setmodule(arguments.settings)
 
     if arguments.set:
         for name, value in arguments.set:
