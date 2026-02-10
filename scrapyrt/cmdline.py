@@ -15,7 +15,7 @@ from twisted.web.server import Site
 
 from scrapyrt.conf.spider_settings import get_project_settings
 
-from .conf import Settings, app_settings
+from .conf import app_settings
 from .log import setup_logging
 
 
@@ -112,13 +112,13 @@ def run_application(reactor_type, arguments, app_settings_):
     reactor.run()  # type: ignore[attr-defined]
 
 
-def _load_settings(arguments) -> Settings:
+def _update_app_settings(arguments):
     sys.path.insert(0, str(Path.cwd()))
 
     app_settings.set("PROJECT_SETTINGS", find_scrapy_project(arguments.project))
     project_settings = get_project_settings()
 
-    for setting in app_settings.__dict__:
+    for setting in list(app_settings.__dict__):
         if not setting.isupper():
             continue
         priority = project_settings.getpriority(setting)
@@ -133,14 +133,12 @@ def _load_settings(arguments) -> Settings:
         for name, value in arguments.set:
             app_settings.set(name.upper(), value)
 
-    return app_settings
-
 
 def execute():
     arguments = parse_arguments()
-    settings = _load_settings(arguments)
-    reactor_type = settings.TWISTED_REACTOR
-    run_application(reactor_type, arguments, settings)
+    _update_app_settings(arguments)
+    reactor_type = app_settings.TWISTED_REACTOR
+    run_application(reactor_type, arguments, app_settings)
 
 
 if __name__ == "__main__":
