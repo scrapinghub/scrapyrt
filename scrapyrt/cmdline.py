@@ -3,6 +3,7 @@ import sys
 from configparser import ConfigParser, NoOptionError, NoSectionError
 from pathlib import Path
 
+from scrapy.settings import SETTINGS_PRIORITIES
 from scrapy.utils.conf import closest_scrapy_cfg
 from scrapy.utils.misc import load_object
 from scrapy.utils.reactor import install_reactor
@@ -14,7 +15,7 @@ from twisted.web.server import Site
 
 from scrapyrt.conf.spider_settings import get_project_settings
 
-from .conf import app_settings
+from .conf import Settings, app_settings
 from .log import setup_logging
 
 
@@ -111,24 +112,34 @@ def run_application(reactor_type, arguments, app_settings_):
     reactor.run()  # type: ignore[attr-defined]
 
 
-def execute():
+# app args > Scrapy non-default (add-ons, project) > app module > app default >
+# Scrapy default
+def _load_settings(arguments) -> Settings:
     sys.path.insert(0, str(Path.cwd()))
-
-    arguments = parse_arguments()
     if arguments.settings:
         app_settings.setmodule(arguments.settings)
+    app_settings.set("PROJECT_SETTINGS", find_scrapy_project(arguments.project))
+    project_settings = get_project_settings()
+
+    for setting in app_settings.__dict__:
+        if not setting.isupper():
+            continue
+        priority = project_settings.getpriority(setting)
+        if priority is None:
+            continue
+        if not hasattr(app_settings, setting) or priority > SETTINGS_PRIORITIES["default"]:
+            app_settings.set(setting, project_settings[setting])
+
     if arguments.set:
         for name, value in arguments.set:
             app_settings.set(name.upper(), value)
 
-    app_settings.set("PROJECT_SETTINGS", find_scrapy_project(arguments.project))
-    project_settings = get_project_settings()
-    for name, value in project_settings._to_dict().items():
-        app_settings.set(name.upper(), value)
+    return app_settings
 
-    reactor_type = app_settings.TWISTED_REACTOR or project_settings.get(
-        "TWISTED_REACTOR",
-    )
+def execute():
+    arguments = parse_arguments()
+    app_settings = _load_settings(arguments)
+    reactor_type = app_settings.TWISTED_REACTOR
     run_application(reactor_type, arguments, app_settings)
 
 
