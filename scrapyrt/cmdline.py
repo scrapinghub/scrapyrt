@@ -138,9 +138,9 @@ def _load_settings(arguments) -> Settings:
 
 def execute():
     arguments = parse_arguments()
-    app_settings = _load_settings(arguments)
-    reactor_type = app_settings.TWISTED_REACTOR
-    run_application(reactor_type, arguments, app_settings)
+    settings = _load_settings(arguments)
+    reactor_type = settings.TWISTED_REACTOR
+    run_application(reactor_type, arguments, settings)
 
 
 if __name__ == "__main__":
