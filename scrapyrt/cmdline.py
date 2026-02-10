@@ -135,6 +135,7 @@ def _load_settings(arguments) -> Settings:
 
     return app_settings
 
+
 def execute():
     arguments = parse_arguments()
     app_settings = _load_settings(arguments)
