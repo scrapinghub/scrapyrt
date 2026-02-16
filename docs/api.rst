@@ -397,21 +397,35 @@ Use ``scrapyrt -h`` to get help on command line options::
 Configuration
 =============
 
-You can pass custom settings to Scrapyrt using ``-S`` option
-(see `Command line arguments`_)::
+:ref:`Settings <settings>` can be defined in different ways. From highest to
+lowest precedence:
 
-    scrapyrt -S config
+1.  Use the ``-s`` command-line switch to set a given setting to a given value.
+    For example::
 
-Scrapyrt imports passed module, so it should be in one of the directories on
-``sys.path``.
+        scrapyrt -s TIMEOUT_LIMIT=120
 
-Another way to configure server is to use ``-s key=value`` option::
+2.  Use the ``-S`` command-line switch to specify a custom settings module. For
+    example::
 
-    scrapyrt -s TIMEOUT_LIMIT=120
+        scrapyrt -S config
 
-Settings passed using ``-s`` option have the highest priority, settings passed
-in ``-S`` configuration module have priority higher than default settings.
+    In this case, you can define settings in the specified module, for
+    example:
 
+    .. code-block:: python
+
+        # config.py
+        TIMEOUT_LIMIT = 120
+
+3.  Use the settings module of your Scrapy project, e.g. ``settings.py``.
+
+    Note that spider-specific settings are not supported.
+
+4.  Default ScrapyRT settings.
+
+
+.. _settings:
 
 Available settings
 ------------------
@@ -450,7 +464,7 @@ LOG_DIR
 
 Path to directory to store crawl logs from running spiders.
 
-Default: ``log`` directory.
+Default: ``logs`` directory.
 
 TIMEOUT_LIMIT
 ~~~~~~~~~~~~~
@@ -530,6 +544,20 @@ Errback must exist as method of spider and must be callable, otherwise 400 HTTP 
 
 .. _errback: https://docs.scrapy.org/en/latest/topics/request-response.htm#using-errbacks-to-catch-exceptions-in-request-processing
 
+SPIDER_LOG_FILE_TIMEFORMAT
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Default: ``"%Y-%m-%dT%H%M%S.%f"``.
+
+Spider logs will be kept in a file with name set to a timestamp using this
+format string.
+
+TWISTED_REACTOR
+~~~~~~~~~~~~~~~
+
+Default: Scrapy's default ``TWISTED_REACTOR``.
+
+Twisted reactor to install. If not set, Scrapy's default reactor is used.
 
 Spider settings
 ---------------

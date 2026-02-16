@@ -3,6 +3,7 @@ import sys
 from configparser import ConfigParser, NoOptionError, NoSectionError
 from pathlib import Path
 
+from scrapy.settings import SETTINGS_PRIORITIES
 from scrapy.utils.conf import closest_scrapy_cfg
 from scrapy.utils.misc import load_object
 from scrapy.utils.reactor import install_reactor
@@ -111,24 +112,32 @@ def run_application(reactor_type, arguments, app_settings_):
     reactor.run()  # type: ignore[attr-defined]
 
 
-def execute():
+def _update_app_settings(arguments):
     sys.path.insert(0, str(Path.cwd()))
 
-    arguments = parse_arguments()
+    app_settings.set("PROJECT_SETTINGS", find_scrapy_project(arguments.project))
+    project_settings = get_project_settings()
+
+    for setting in list(app_settings.__dict__):
+        if not setting.isupper():
+            continue
+        priority = project_settings.getpriority(setting)
+        if priority is None or priority <= SETTINGS_PRIORITIES["default"]:
+            continue
+        app_settings.set(setting, project_settings[setting])
+
     if arguments.settings:
         app_settings.setmodule(arguments.settings)
+
     if arguments.set:
         for name, value in arguments.set:
             app_settings.set(name.upper(), value)
 
-    app_settings.set("PROJECT_SETTINGS", find_scrapy_project(arguments.project))
-    project_settings = get_project_settings()
-    for name, value in project_settings._to_dict().items():
-        app_settings.set(name.upper(), value)
 
-    reactor_type = app_settings.TWISTED_REACTOR or project_settings.get(
-        "TWISTED_REACTOR",
-    )
+def execute():
+    arguments = parse_arguments()
+    _update_app_settings(arguments)
+    reactor_type = app_settings.TWISTED_REACTOR
     run_application(reactor_type, arguments, app_settings)
 
 
