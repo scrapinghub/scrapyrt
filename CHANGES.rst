@@ -1,6 +1,17 @@
 Changes
 =======
 
+ScrapyRT 0.18.0 (unreleased)
+----------------------------
+
+-   You can now use the settings module of your Scrapy project to configure
+    ScrapyRT settings.
+
+-   Documented the ``SPIDER_LOG_FILE_TIMEFORMAT`` and ``TWISTED_REACTOR``
+    settings.
+
+-   Cleaned up the files packaged in the source distribution.
+
 ScrapyRT 0.17.0 (2025-07-28)
 ----------------------------
 
