@@ -566,10 +566,9 @@ Scrapyrt overrides some Scrapy project settings by default and most importantly
 it disables some `Scrapy extensions`_::
 
         "EXTENSIONS": {
-            'scrapy.contrib.logstats.LogStats': None,
-            'scrapy.webservice.WebService': None,
-            'scrapy.telnet.TelnetConsole': None,
-            'scrapy.contrib.throttle.AutoThrottle': None
+            'scrapy.extensions.logstats.LogStats': None,
+            'scrapy.extensions.telnet.TelnetConsole': None,
+            'scrapy.extensions.throttle.AutoThrottle': None
         }
 
 There's usually no need and thus no simple way to change those settings,

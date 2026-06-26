@@ -11,7 +11,6 @@ def get_scrapyrt_settings(log_file=None):
         "LOG_STDOUT": False,
         "EXTENSIONS": {
             "scrapy.extensions.logstats.LogStats": None,
-            "scrapy.webservice.WebService": None,
             "scrapy.extensions.telnet.TelnetConsole": None,
             "scrapy.extensions.throttle.AutoThrottle": None,
         },
