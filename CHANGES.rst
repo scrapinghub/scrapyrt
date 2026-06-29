@@ -1,7 +1,7 @@
 Changes
 =======
 
-ScrapyRT 0.18.1 (unreleased)
+ScrapyRT 0.18.1 (2026-06-29)
 ----------------------------
 
 -   Fixed a ``ModuleNotFoundError`` for ``scrapy.webservice`` on startup with

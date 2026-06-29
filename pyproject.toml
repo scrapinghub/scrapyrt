@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "scrapyrt"
-version = "0.18.0"
+version = "0.18.1"
 description = "Put Scrapy spiders behind an HTTP API"
 dependencies = [
     "scrapy>=2.7",
