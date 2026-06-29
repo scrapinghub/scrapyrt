@@ -1,6 +1,13 @@
 Changes
 =======
 
+ScrapyRT 0.18.1 (unreleased)
+----------------------------
+
+-   Fixed a ``ModuleNotFoundError`` for ``scrapy.webservice`` on startup with
+    Scrapy 2.15.0+, by removing the reference to that long-gone extension from
+    the default ScrapyRT settings.
+
 ScrapyRT 0.18.0 (2026-03-20)
 ----------------------------
 

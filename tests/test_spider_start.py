@@ -69,8 +69,12 @@ def test(server, spider, start_param, method):
     if start_param:
         if spider != "old" and Version("2.13") <= SCRAPY_VERSION:
             expected_pages.add(1)
-        if spider == "old" or (
-            spider == "universal" and Version("2.13") > SCRAPY_VERSION
+        # start_requests() is only honored by Scrapy < 2.16; from 2.16 on it is
+        # ignored, so a spider relying on it (old, or universal on Scrapy < 2.13
+        # where start() is not yet supported) yields nothing from it.
+        if Version("2.16") > SCRAPY_VERSION and (
+            spider == "old"
+            or (spider == "universal" and Version("2.13") > SCRAPY_VERSION)
         ):
             expected_pages.add(2)
     expected_urls = {f"{server.site.url(f'page{n}.html')}" for n in expected_pages}
