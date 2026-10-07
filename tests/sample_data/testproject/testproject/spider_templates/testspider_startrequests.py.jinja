@@ -1,0 +1,33 @@
+from collections.abc import AsyncIterator
+from typing import Any, ClassVar
+
+import scrapy
+
+from ..items import TestprojectItem
+
+
+class TestSpider(scrapy.Spider):
+    name = "test_with_sr"
+    initial_urls: ClassVar[list[str]] = ["{0}", "{1}"]
+
+    # Define both start() (Scrapy 2.13+) and start_requests() (Scrapy < 2.13)
+    # so this spider behaves the same across all supported Scrapy versions.
+    async def start(self) -> AsyncIterator[Any]:
+        for request in self.start_requests():
+            yield request
+
+    def start_requests(self):
+        for url in self.initial_urls:
+            yield scrapy.Request(
+                url, callback=self.some_callback, meta={{"referer": url}}
+            )
+
+    def some_callback(self, response):
+        name = response.xpath("//h1/text()").extract()
+        return TestprojectItem(name=name, referer=response.meta["referer"])
+
+    def parse(self, response):
+        name = response.xpath("//h1/text()").extract()
+        return TestprojectItem(
+            name=name, referer=response.meta.get("referer"), response=response.url
+        )

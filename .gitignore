@@ -3,6 +3,8 @@
 /build/
 /dist/
 /*.egg-info/
+/venv/
+/.venv/
 
 # twisted
 dropin.cache
@@ -21,9 +23,13 @@ _trial_temp
 /dist/
 /test_urls*
 testing_scripts*
+coverage.xml
+/.coverage.*
+.python-version
 
 # IDE
 /.idea/
+.vscode
 
 # tests
 .coverage
@@ -33,4 +39,3 @@ testing_scripts*
 
 # sphinx
 docs/build/*
-.python-version

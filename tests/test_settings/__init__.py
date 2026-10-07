@@ -1,62 +1,68 @@
-# -*- coding: utf-8 -*-
-from mock import patch
+from unittest.mock import patch
+
+import pytest
 from twisted.trial import unittest
 
 from scrapyrt.conf import Settings
 
-from . import default_settings
+from . import default_settings, settings
 
 
 class TestSettings(unittest.TestCase):
-
-    @patch('scrapyrt.conf.default_settings', default_settings)
+    @patch("scrapyrt.conf.default_settings", default_settings)
     def setUp(self):
         self.settings = Settings()
 
     def test_getattr(self):
-        self.assertEqual(self.settings.A, 'A')
-        self.assertEqual(self.settings.TEST, [1, 2, 3])
+        assert self.settings.A == "A"  #  type: ignore[attr-defined]
+        assert self.settings.TEST == [1, 2, 3]  #  type: ignore[attr-defined]
 
         # invalid (or hidden in this way) settings should not be visible
-        self.assertRaises(AttributeError, getattr, self.settings, '_HIDDEN')
-        self.assertRaises(AttributeError, getattr, self.settings, 'hidden')
-        self.assertRaises(AttributeError, getattr, self.settings, 'HiDdEn')
+        with pytest.raises(AttributeError):
+            self.settings._HIDDEN  #  type: ignore[attr-defined] # noqa: B018
+        with pytest.raises(AttributeError):
+            self.settings.hidden  #  type: ignore[attr-defined] # noqa: B018
+        with pytest.raises(AttributeError):
+            self.settings.HiDdEn  #  type: ignore[attr-defined] # noqa: B018
 
     def test_setmodule(self):
-        from . import settings
-        self.assertEqual(self.settings.A, 'A')
+        assert self.settings.A == "A"  #  type: ignore[attr-defined]
         self.settings.setmodule(settings)
-        self.assertEqual(self.settings.A, 'B')
-        self.assertEqual(self.settings.TEST, [1, 2, 3])
+        assert self.settings.A == "B"  #  type: ignore[attr-defined]
+        assert self.settings.TEST == [1, 2, 3]  #  type: ignore[attr-defined]
 
     def test_setmodule_string(self):
-        self.assertEqual(self.settings.A, 'A')
-        self.settings.setmodule('tests.test_settings.settings')
-        self.assertEqual(self.settings.A, 'B')
-        self.assertEqual(self.settings.TEST, [1, 2, 3])
+        assert self.settings.A == "A"  #  type: ignore[attr-defined]
+        self.settings.setmodule("tests.test_settings.settings")
+        assert self.settings.A == "B"  #  type: ignore[attr-defined]
+        assert self.settings.TEST == [1, 2, 3]  #  type: ignore[attr-defined]
 
     def test_set(self):
-        self.assertEqual(self.settings.A, 'A')
-        self.settings.set('A', 'C')
-        self.assertEqual(self.settings.A, 'C')
+        assert self.settings.A == "A"  #  type: ignore[attr-defined]
+        self.settings.set("A", "C")
+        assert self.settings.A == "C"  #  type: ignore[attr-defined]
 
-        self.assertEqual(self.settings.TEST, [1, 2, 3])
-        self.settings.set('TEST', [])
-        self.assertEqual(self.settings.TEST, [])
+        assert self.settings.TEST == [1, 2, 3]  #  type: ignore[attr-defined]
+        self.settings.set("TEST", [])
+        assert self.settings.TEST == []  #  type: ignore[attr-defined]
 
         # invalid setting names
-        self.settings.set('_HIDDEN', 1)
-        self.assertRaises(AttributeError, getattr, self.settings, '_HIDDEN')
-        self.settings.set('hidden', 1)
-        self.assertRaises(AttributeError, getattr, self.settings, 'hidden')
-        self.settings.set('HiDdEn', 1)
-        self.assertRaises(AttributeError, getattr, self.settings, 'HiDdEn')
+        self.settings.set("_HIDDEN", 1)
+        with pytest.raises(AttributeError):
+            self.settings._HIDDEN  #  type: ignore[attr-defined] # noqa: B018
+        self.settings.set("hidden", 1)
+        with pytest.raises(AttributeError):
+            self.settings.hidden  #  type: ignore[attr-defined] # noqa: B018
+        self.settings.set("HiDdEn", 1)
+        with pytest.raises(AttributeError):
+            self.settings.HiDdEn  # type: ignore[attr-defined] # noqa: B018
 
     def test_freeze(self):
-        self.assertEqual(self.settings.A, 'A')
-        self.settings.set('A', 'D')
-        self.assertEqual(self.settings.A, 'D')
-        self.assertFalse(self.settings.frozen)
+        assert self.settings.A == "A"  # type: ignore[attr-defined]
+        self.settings.set("A", "D")
+        assert self.settings.A == "D"  # type: ignore[attr-defined]
+        assert not self.settings.frozen
         self.settings.freeze()
-        self.assertTrue(self.settings.frozen)
-        self.assertRaises(TypeError, self.settings.set, 'A', 'E')
+        assert self.settings.frozen
+        with pytest.raises(TypeError):
+            self.settings.set("A", "E")
