@@ -305,6 +305,49 @@ class TestCrawlResourceIntegration:
         assert len(res_json["items"]) == len(expected_items)
         assert res_json["items"] == expected_items
 
+    @pytest.mark.parametrize("method", (perform_get, perform_post))
+    @pytest.mark.parametrize(("max_items", "expected"), ((None, 10), (3, 3), ("3", 3)))
+    def test_crawl_max_items(self, server, method, max_items, expected):
+        api_params = {"spider_name": "test"}
+        if max_items is not None:
+            api_params["max_items"] = max_items
+        res = method(
+            server.url("crawl.json"),
+            api_params,
+            {"url": server.site.url("page1.html"), "callback": "return_many"},
+        )
+        assert res.status_code == 200
+        res_json = res.json()
+        assert res_json["status"] == "ok"
+        assert res_json["items"] == [{"name": [str(i)]} for i in range(expected)]
+        if max_items is not None:
+            assert res_json["stats"]["finish_reason"] == (
+                f"stop generating items, only {expected} items allowed"
+            )
+
+    @pytest.mark.parametrize("method", (perform_get, perform_post))
+    @pytest.mark.parametrize("max_items", (0, -1, "abc", "1.5"))
+    def test_crawl_invalid_max_items(self, server, method, max_items):
+        res = method(
+            server.url("crawl.json"),
+            {"spider_name": "test", "max_items": max_items},
+            {"url": server.site.url("page1.html")},
+        )
+        assert res.status_code == 400
+        res_json = res.json()
+        assert res_json["status"] == "error"
+        assert res_json["message"] == "max_items must be a positive integer"
+
+    def test_crawl_invalid_max_items_post_types(self, server):
+        for max_items in (True, [1], 1.5):
+            res = perform_post(
+                server.url("crawl.json"),
+                {"spider_name": "test", "max_items": max_items},
+                {"url": server.site.url("page1.html")},
+            )
+            assert res.status_code == 400, max_items
+            assert res.json()["message"] == "max_items must be a positive integer"
+
     def test_invalid_json_in_post(self, server):
         res = requests.post(server.url("crawl.json"), data="ads", timeout=30)
         assert res.status_code == 400

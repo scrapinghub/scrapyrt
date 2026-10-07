@@ -15,6 +15,10 @@ class TestSpider(scrapy.Spider):
     def return_bytes(self, response):
         return TestprojectItem(name=b"Some bytes here")
 
+    def return_many(self, response):
+        for i in range(10):
+            yield TestprojectItem(name=[str(i)])
+
     def some_errback(self, err):
         self.logger.error(f"Logging some error {err}")
 
