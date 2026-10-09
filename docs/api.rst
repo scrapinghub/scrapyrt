@@ -229,7 +229,7 @@ max_items
     - type: integer
     - optional
 
-    Maximal amount of items to return. See ``max_items`` in GET arguments
+    Maximum number of items to return. See ``max_items`` in GET arguments
     for details.
 
 request
