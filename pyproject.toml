@@ -9,6 +9,7 @@ description = "Put Scrapy spiders behind an HTTP API"
 dependencies = [
     "scrapy>=2.7",
     "packaging>=20.0",
+    'typing-extensions>=4.5.0; python_version < "3.13"',
 ]
 classifiers = [
     "Development Status :: 5 - Production/Stable",

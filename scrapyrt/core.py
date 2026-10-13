@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import datetime as dt
+import sys
 from collections import OrderedDict
 from copy import deepcopy
 from pathlib import Path
@@ -16,6 +17,15 @@ from . import log
 from .conf import app_settings
 from .conf.spider_settings import get_project_settings, get_scrapyrt_settings
 from .log import setup_spider_logging
+
+if sys.version_info >= (3, 13):
+    from warnings import deprecated
+else:
+    from typing_extensions import deprecated
+
+_START_REQUESTS_DEPRECATED = (
+    "CrawlManager.start_requests is deprecated, use CrawlManager.spider_start instead."
+)
 
 
 class ScrapyrtCrawlerRunner(CrawlerRunner):
@@ -109,23 +119,13 @@ class CrawlManager:  # pylint: disable=too-many-instance-attributes
             self.spider_start = spider_start
 
     @property
+    @deprecated(_START_REQUESTS_DEPRECATED)
     def start_requests(self):
-        warn(
-            "CrawlManager.start_requests is deprecated, use "
-            "CrawlManager.spider_start instead.",
-            DeprecationWarning,
-            stacklevel=2,
-        )
         return self.spider_start
 
     @start_requests.setter
+    @deprecated(_START_REQUESTS_DEPRECATED)
     def start_requests(self, value: bool):
-        warn(
-            "CrawlManager.start_requests is deprecated, use "
-            "CrawlManager.spider_start instead.",
-            DeprecationWarning,
-            stacklevel=2,
-        )
         self.spider_start = value
 
     def crawl(self, *args, **kwargs):
