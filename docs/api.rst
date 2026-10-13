@@ -117,6 +117,19 @@ max_requests
     and you don't want to wait forever for it to finish
     you should probably pass it.
 
+max_items
+    - type: integer
+    - optional
+
+    Maximum number of items to return. Must be a positive integer, otherwise
+    the API will return a 400 HTTP error. Once this many items have been scraped
+    the spider is closed, and any items scraped while it is closing are
+    discarded, so the response contains at most ``max_items`` items. The
+    ``finish_reason`` stat is then set to
+    ``stop generating items, only <max_items> items allowed``.
+
+    Example request: ``/crawl.json?url=https://quotes.toscrape.com/&spider_name=toscrape-css&max_items=1``
+
 spider_start
     - type: boolean
     - optional
@@ -211,6 +224,13 @@ max_requests
     - optional
 
     Maximal amount of requests spider can generate.
+
+max_items
+    - type: integer
+    - optional
+
+    Maximum number of items to return. See ``max_items`` in GET arguments
+    for details.
 
 request
     - type: JSON object

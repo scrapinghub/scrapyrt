@@ -53,13 +53,14 @@ class ScrapyrtCrawlerRunner(CrawlerRunner):
 class CrawlManager:  # pylint: disable=too-many-instance-attributes
     """Runs crawls."""
 
-    def __init__(  # pylint: disable=too-many-positional-arguments
+    def __init__(  # noqa: PLR0913  # pylint: disable=too-many-positional-arguments
         self,
         spider_name,
         request_kwargs,
         max_requests=None,
         start_requests=None,
         spider_start=None,
+        max_items=None,
     ):
         self.spider_name = spider_name
         self.log_dir = Path(app_settings.LOG_DIR)
@@ -67,6 +68,7 @@ class CrawlManager:  # pylint: disable=too-many-instance-attributes
         self.items_dropped = []
         self.errors = []
         self.user_error = None
+        self.max_items = int(max_items) if max_items else None
         self.max_requests = int(max_requests) if max_requests else None
         self.timeout_limit = int(app_settings.TIMEOUT_LIMIT)
         self.request_count = 0
@@ -280,8 +282,15 @@ class CrawlManager:  # pylint: disable=too-many-instance-attributes
 
     def get_item(self, item, response, spider):  # pylint: disable=unused-argument
         assert self.crawler is not None
-        if spider is self.crawler.spider:
-            self.items.append(item)
+        if spider is not self.crawler.spider:
+            return
+        if self.max_items and len(self.items) >= self.max_items:
+            # Items scraped while the spider is closing are discarded.
+            return
+        self.items.append(item)
+        if self.max_items and len(self.items) >= self.max_items:
+            reason = f"stop generating items, only {self.max_items} items allowed"
+            spider.crawler.engine.close_spider(spider, reason=reason)
 
     def collect_dropped(self, item, response, exception, spider):
         assert self.crawler is not None

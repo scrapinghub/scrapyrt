@@ -1,6 +1,12 @@
 Changes
 =======
 
+ScrapyRT 0.19.0 (unreleased)
+----------------------------
+
+-   Added a ``max_items`` API parameter to stop the crawl once a given number
+    of items has been scraped.
+
 ScrapyRT 0.18.1 (2026-06-29)
 ----------------------------
 

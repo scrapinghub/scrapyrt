@@ -195,6 +195,23 @@ class CrawlResource(ServiceResource):
             raise Error(400, message=error_msg)
         return value
 
+    @staticmethod
+    def get_max_items(api_params):
+        max_items = api_params.get("max_items")
+        if max_items is None:
+            return None
+        error_msg = b"max_items must be a positive integer"
+        # bool is a subclass of int; floats would be silently truncated.
+        if isinstance(max_items, bool) or not isinstance(max_items, (int, str)):
+            raise Error(400, message=error_msg)
+        try:
+            max_items = int(max_items)
+        except ValueError as e:
+            raise Error(400, message=error_msg) from e
+        if max_items < 1:
+            raise Error(400, message=error_msg)
+        return max_items
+
     def prepare_crawl(self, api_params, scrapy_request_args, *args, **kwargs):
         """Schedule given spider with CrawlManager.
 
@@ -211,6 +228,7 @@ class CrawlResource(ServiceResource):
             max_requests = api_params["max_requests"]
         except (KeyError, IndexError):
             max_requests = None
+        max_items = self.get_max_items(api_params)
 
         crawl_args = api_params.get("crawl_args")
         if isinstance(crawl_args, str):
@@ -229,6 +247,7 @@ class CrawlResource(ServiceResource):
             start_requests=api_params.get("start_requests"),
             crawl_args=crawl_args,
             spider_start=api_params.get("spider_start"),
+            max_items=max_items,
             *args,  # noqa: B026
             **kwargs,  # type: ignore[misc]
         )
@@ -243,16 +262,21 @@ class CrawlResource(ServiceResource):
         crawl_args=None,
         start_requests=None,
         spider_start=None,
+        max_items=None,
         *args,
         **kwargs,
     ):
         crawl_manager_cls = load_object(app_settings.CRAWL_MANAGER)
+        manager_kwargs = {}
+        if max_items is not None:
+            manager_kwargs["max_items"] = max_items
         manager = crawl_manager_cls(
             spider_name,
             scrapy_request_args,
             max_requests,
             start_requests=start_requests,
             spider_start=spider_start,
+            **manager_kwargs,
         )
         if crawl_args:
             kwargs.update(crawl_args)
