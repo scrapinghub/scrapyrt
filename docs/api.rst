@@ -121,8 +121,8 @@ max_items
     - type: integer
     - optional
 
-    Maximum amount of items to return. Must be a positive integer, otherwise
-    API will return 400 HTTP error. Once this many items have been scraped
+    Maximum number of items to return. Must be a positive integer, otherwise
+    the API will return a 400 HTTP error. Once this many items have been scraped
     the spider is closed, and any items scraped while it is closing are
     discarded, so the response contains at most ``max_items`` items. The
     ``finish_reason`` stat is then set to
