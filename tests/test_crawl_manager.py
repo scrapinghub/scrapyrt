@@ -149,10 +149,10 @@ class TestLimitRuntime(TestCrawlManager):
 
     def _test_limit_runtime(self):
         self.crawl_manager.limit_runtime(self.spider)
-        assert not self.crawler.engine.close_spider.called
+        assert not self.crawler.engine.close_spider_async.called
         sleep(1)
         self.crawl_manager.limit_runtime(self.spider)
-        assert self.crawler.engine.close_spider.called
+        assert self.crawler.engine.close_spider_async.called
 
     def test_limit_runtime(self):
         self._test_limit_runtime()
@@ -174,6 +174,22 @@ class TestLimitRuntime(TestCrawlManager):
                 CrawlManager(self.spider.name, self.kwargs.copy())
         finally:
             app_settings.TIMEOUT_LIMIT = _timeout
+
+
+class TestCloseSpiderBeforeScrapy214(TestCrawlManager):
+    def setUp(self):
+        super().setUp()
+        # Engines before Scrapy 2.14 have no close_spider_async().
+        self.crawler.engine = MagicMock(spec=["close_spider"])
+
+    def test_limit_requests(self):
+        self.crawl_manager.max_requests = 1
+        self.crawl_manager.limit_requests(self.spider)
+        self.crawl_manager.limit_requests(self.spider)
+        self.crawler.engine.close_spider.assert_called_once_with(
+            self.spider,
+            reason="stop generating requests, only 1 requests allowed",
+        )
 
 
 class TestHandleSpiderError(TestCrawlManager):
@@ -207,15 +223,15 @@ class TestLimitRequests(TestCrawlManager):
     def test_max_requests_not_set(self):
         for _i in range(100):
             self.crawl_manager.limit_requests(self.spider)
-        assert not self.crawler.engine.close_spider.called
+        assert not self.crawler.engine.close_spider_async.called
 
     def test_max_requests_set(self):
         self.crawl_manager.max_requests = 10
         for _i in range(self.crawl_manager.max_requests):
             self.crawl_manager.limit_requests(self.spider)
-        assert not self.crawler.engine.close_spider.called
+        assert not self.crawler.engine.close_spider_async.called
         self.crawl_manager.limit_requests(self.spider)
-        assert self.crawler.engine.close_spider.called
+        assert self.crawler.engine.close_spider_async.called
 
 
 class TestGetItem(TestCrawlManager):
@@ -238,22 +254,21 @@ class TestGetItem(TestCrawlManager):
         for _i in range(100):
             self.crawl_manager.get_item(self.item, self.response, self.spider)
         assert len(self.crawl_manager.items) == 100
-        assert not self.crawler.engine.close_spider.called
+        assert not self.crawler.engine.close_spider_async.called
 
     def test_max_items_set(self):
         self.crawl_manager.max_items = 10
         for _i in range(9):
             self.crawl_manager.get_item(self.item, self.response, self.spider)
-        assert not self.crawler.engine.close_spider.called
+        assert not self.crawler.engine.close_spider_async.called
         self.crawl_manager.get_item(self.item, self.response, self.spider)
-        self.crawler.engine.close_spider.assert_called_once_with(
-            self.spider,
+        self.crawler.engine.close_spider_async.assert_called_once_with(
             reason="stop generating items, only 10 items allowed",
         )
         # Items scraped while the spider is closing are discarded.
         self.crawl_manager.get_item(self.item, self.response, self.spider)
         assert len(self.crawl_manager.items) == 10
-        assert self.crawler.engine.close_spider.call_count == 1
+        assert self.crawler.engine.close_spider_async.call_count == 1
 
 
 class TestCollectDropped(TestCrawlManager):
