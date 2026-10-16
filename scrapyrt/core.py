@@ -10,12 +10,23 @@ from scrapy import Spider, signals
 from scrapy.crawler import Crawler, CrawlerRunner
 from scrapy.exceptions import DontCloseSpider
 from scrapy.http import Request
+from scrapy.utils.defer import deferred_from_coro
 from twisted.web.error import Error
 
 from . import log
 from .conf import app_settings
 from .conf.spider_settings import get_project_settings, get_scrapyrt_settings
 from .log import setup_spider_logging
+
+
+def _close_spider(spider: Spider, reason: str) -> None:
+    engine = spider.crawler.engine
+    # close_spider() is deprecated since Scrapy 2.14 in favour of
+    # close_spider_async(), which older versions do not have.
+    if hasattr(engine, "close_spider_async"):
+        deferred_from_coro(engine.close_spider_async(reason=reason))
+    else:
+        engine.close_spider(spider, reason=reason)
 
 
 class ScrapyrtCrawlerRunner(CrawlerRunner):
@@ -262,7 +273,7 @@ class CrawlManager:  # pylint: disable=too-many-instance-attributes
         """Stop crawl if it takes too long."""
         time_now = dt.datetime.now(dt.timezone.utc)
         if (time_now - self.crawl_start_time).seconds >= self.timeout_limit:
-            spider.crawler.engine.close_spider(spider, reason="timeout")
+            _close_spider(spider, reason="timeout")
 
     def limit_requests(self, spider):
         """Stop crawl after reaching max_requests."""
@@ -270,7 +281,7 @@ class CrawlManager:  # pylint: disable=too-many-instance-attributes
             reason = (
                 f"stop generating requests, only {self.max_requests} requests allowed"
             )
-            spider.crawler.engine.close_spider(spider, reason=reason)
+            _close_spider(spider, reason=reason)
         else:
             self.request_count += 1
 
@@ -290,7 +301,7 @@ class CrawlManager:  # pylint: disable=too-many-instance-attributes
         self.items.append(item)
         if self.max_items and len(self.items) >= self.max_items:
             reason = f"stop generating items, only {self.max_items} items allowed"
-            spider.crawler.engine.close_spider(spider, reason=reason)
+            _close_spider(spider, reason=reason)
 
     def collect_dropped(self, item, response, exception, spider):
         assert self.crawler is not None
