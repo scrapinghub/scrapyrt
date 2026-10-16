@@ -7,6 +7,10 @@ ScrapyRT 0.19.0 (unreleased)
 -   Added a ``max_items`` API parameter to stop the crawl once a given number
     of items has been scraped.
 
+-   Fixed a deprecation warning on Scrapy 2.14+ when stopping a crawl due to
+    ``max_requests``, ``max_items`` or the ``TIMEOUT_LIMIT`` setting, by using
+    ``ExecutionEngine.close_spider_async()`` where available.
+
 ScrapyRT 0.18.1 (2026-06-29)
 ----------------------------
 
